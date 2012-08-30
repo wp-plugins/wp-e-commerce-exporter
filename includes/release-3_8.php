@@ -131,7 +131,7 @@ if( is_admin() ) {
 							__( 'Active', 'wpsc_ce' ),
 							__( 'Apply to All Products', 'wpsc_ce' ),
 							__( 'Valid From', 'wpsc_ce' ),
-							__( 'Valid To', 'wpsc_ce' ),
+							__( 'Valid To', 'wpsc_ce' )
 						);
 						for( $i = 0; $i < count( $columns ); $i++ ) {
 							if( $i == ( count( $columns ) - 1 ) )
@@ -291,10 +291,6 @@ if( is_admin() ) {
 						'numberposts' => -1
 					);
 					$products = get_posts( $products_args );
-/*
-					$products_sql = "SELECT `ID`, `post_title` as name, `post_name` as permalink, `post_content` as description, `post_excerpt` as additional_description, `post_status` as product_status, `comment_status` as comment_status FROM `" . $wpdb->posts . "` WHERE `post_type` = '" . $post_type . "' AND post_status IN ( 'draft', 'publish', 'trash' )";
-					$products = $wpdb->get_results( $products_sql );
-*/
 					if( $products ) {
 						foreach( $products as $product ) {
 

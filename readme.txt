@@ -11,6 +11,13 @@ Stable tag: 1.3.6
 
 Export store details out of WP e-Commerce into a CSV-formatted file.
 
+Features include:
+
+* Export Products (compatible with Product Importer Deluxe)
+* Export Coupons
+* Export Categories
+* Export Tags
+
 For more information visit: http://www.visser.com.au/wp-ecommerce/
 
 == Installation ==
@@ -22,7 +29,7 @@ That's it!
 
 == Usage ==
 
-1. Open Tools > Store Export from the WordPress Administration
+1. Open Products > Store Export from the WordPress Administration
 2. Select which WP e-Commerce details you would like to export and click Export
 
 Done!

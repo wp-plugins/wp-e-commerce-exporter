@@ -36,7 +36,8 @@ if( is_admin() ) {
 				break;
 
 			case 'tags':
-				$count_sql = "SELECT COUNT(`term_taxonomy_id`) FROM `" . $wpdb->term_taxonomy . "` WHERE taxonomy = 'product_tag'";
+				$term_taxonomy = 'product_tag';
+				$count_sql = "SELECT COUNT(`term_taxonomy_id`) FROM `" . $wpdb->term_taxonomy . "` WHERE `taxonomy` = '" . $term_taxonomy . "'";
 				break;
 
 			case 'categories':
@@ -73,7 +74,7 @@ if( is_admin() ) {
 
 	function wpsc_ce_export_dataset( $dataset ) {
 
-		global $wpdb, $export;
+		global $wpdb, $wpsc_ce, $export;
 
 		$csv = '';
 		$separator = $export->delimiter;
@@ -89,34 +90,35 @@ if( is_admin() ) {
 
 				case 'products':
 					$columns = array(
-						'SKU',
-						'Product Name',
-						'Description',
-						'Additional Description',
-						'Price',
-						'Sale Price',
-						'Permalink',
-						'Weight',
-						'Weight Unit',
-						'Height',
-						'Height Unit',
-						'Width',
-						'Width Unit',
-						'Length',
-						'Length Unit',
-						'Category',
-						'Tag',
-						'Image',
-						'Quantity',
-						'File Download',
-						'External Link',
-						'Merchant Notes',
-						'Local Shipping Fee',
-						'International Shipping Fee',
-						'Product Status'
+						__( 'SKU', 'wpsc_ce' ),
+						__( 'Product Name', 'wpsc_ce' ),
+						__( 'Description', 'wpsc_ce' ),
+						__( 'Additional Description', 'wpsc_ce' ),
+						__( 'Price', 'wpsc_ce' ),
+						__( 'Sale Price', 'wpsc_ce' ),
+						__( 'Permalink', 'wpsc_ce' ),
+						__( 'Weight', 'wpsc_ce' ),
+						__( 'Weight Unit', 'wpsc_ce' ),
+						__( 'Height', 'wpsc_ce' ),
+						__( 'Height Unit', 'wpsc_ce' ),
+						__( 'Width', 'wpsc_ce' ),
+						__( 'Width Unit', 'wpsc_ce' ),
+						__( 'Length', 'wpsc_ce' ),
+						__( 'Length Unit', 'wpsc_ce' ),
+						__( 'Category', 'wpsc_ce' ),
+						__( 'Tag', 'wpsc_ce' ),
+						__( 'Image', 'wpsc_ce' ),
+						__( 'Quantity', 'wpsc_ce' ),
+						__( 'File Download', 'wpsc_ce' ),
+						__( 'External Link', 'wpsc_ce' ),
+						__( 'Merchant Notes', 'wpsc_ce' ),
+						__( 'Local Shipping Fee', 'wpsc_ce' ),
+						__( 'International Shipping Fee', 'wpsc_ce' ),
+						__( 'Product Status', 'wpsc_ce' )
 					);
-					for( $i = 0; $i < count( $columns ); $i++ ) {
-						if( $i == ( count( $columns ) - 1 ) )
+					$size = count( $columns );
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
 							$csv .= '"' . $columns[$i] . "\"\n";
 						else
 							$csv .= '"' . $columns[$i] . '"' . $separator;
@@ -173,11 +175,12 @@ if( is_admin() ) {
 
 						}
 					}
+					unset( $products, $product );
 					break;
 
 			}
 
-			if( WP_DEBUG )
+			if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
 				echo '<code>' . str_replace( "\n", '<br />', $csv ) . '</code>' . '<br />';
 			else
 				echo $csv;

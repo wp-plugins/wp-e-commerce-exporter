@@ -273,8 +273,10 @@ if( is_admin() ) {
 					if( function_exists( 'wpsc_cf_install' ) ) {
 						$attributes = maybe_unserialize( get_option( 'wpsc_cf_data' ) );
 						if( isset( $attributes ) && $attributes ) {
-							foreach( $attributes as $attribute )
+							foreach( $attributes as $attribute ) {
 								$export->columns[] = sprintf( __( 'Attribute - %s', 'wpsc_ce' ), $attribute['name'] );
+							}
+							unset( $attributes, $attribute );
 						}
 					}
 
@@ -386,8 +388,10 @@ if( is_admin() ) {
 
 							foreach( $product as $key => $value ) {
 								if( is_array( $value ) ) {
-									foreach( $value as $array_key => $array_value )
-										$value[$array_key] = escape_csv_value( $array_value );
+									foreach( $value as $array_key => $array_value ) {
+										if( !is_array( $array_value ) )
+											$value[$array_key] = escape_csv_value( $array_value );
+									}
 									$product->$key = $value;
 								} else {
 									$product->$key = escape_csv_value( $value );
@@ -454,6 +458,7 @@ if( is_admin() ) {
 
 						}
 					}
+					unset( $products, $product );
 					break;
 
 			}
@@ -477,14 +482,14 @@ if( is_admin() ) {
 
 	function wpsc_ce_get_product_images( $product_id ) {
 
-		global $wpdb;
+		global $wpdb, $wpsc_ce, $export;
 
 		$images_sql = "SELECT guid FROM `" . $wpdb->posts . "` WHERE `post_parent` = " . $product_id . " AND `post_type` = 'attachment' AND `post_mime_type` LIKE 'image/%'";
 		$images = $wpdb->get_results( $images_sql );
 		if( $images ) {
 			$output = '';
 			foreach( $images as $image )
-				$output .= $image->guid . '|';
+				$output .= $image->guid . $export->category_separator;
 			$output = substr( $output, 0, -1 );
 		}
 		return $output;
@@ -495,9 +500,9 @@ if( is_admin() ) {
 
 		global $export, $wpdb;
 
+		$output = '';
 		$term_taxonomy = 'wpsc_product_category';
 		$categories = wp_get_object_terms( $product_id, $term_taxonomy );
-		$output = '';
 		if( $categories ) {
 			$size = count( $categories );
 			for( $i = 0; $i < $size; $i++ ) {
@@ -531,13 +536,12 @@ if( is_admin() ) {
 
 	function wpsc_ce_get_product_tags( $product_id ) {
 
-		global $wpdb;
+		global $wpdb, $export;
 
-		$tags_sql = "SELECT term_taxonomy.`term_id` as term_id FROM `" . $wpdb->term_taxonomy . "` as term_taxonomy, `" . $wpdb->term_relationships . "` as term_relationships WHERE term_relationships.`term_taxonomy_id` = term_taxonomy.`term_taxonomy_id` AND term_relationships.`object_id` = " . $product_id . " AND term_taxonomy.`taxonomy` = 'product_tag'";
-		$tags = $wpdb->get_results( $tags_sql, ARRAY_A );
+		$output = '';
+		$term_taxonomy = 'product_tag';
+		$tags = wp_get_object_terms( $product_id, $term_taxonomy );
 		if( $tags ) {
-			$term_taxonomy = 'product_tag';
-			$output = '';
 			for( $i = 0; $i < count( $tags ); $i++ ) {
 				$tag = get_term( $tags[$i]['term_id'], $term_taxonomy );
 				$output .= $tag->name . '|';

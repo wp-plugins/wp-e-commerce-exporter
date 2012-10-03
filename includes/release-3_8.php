@@ -6,7 +6,7 @@ if( is_admin() ) {
 	/* WordPress Administration Menu */
 	function wpsc_ce_add_modules_admin_pages( $page_hooks, $base_page ) {
 
-		$page_hooks[] = add_submenu_page( $base_page, __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 7, 'wpsc_ce', 'wpsc_ce_html_page' );
+		$page_hooks[] = add_submenu_page( $base_page, __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
 		return $page_hooks;
 
 	}
@@ -219,11 +219,11 @@ if( is_admin() ) {
 					$export->columns = array(
 						__( 'SKU', 'wpsc_ce' ),
 						__( 'Product Name', 'wpsc_ce' ),
-						__( 'Permalink', 'wpsc_ce' ),
 						__( 'Description', 'wpsc_ce' ),
 						__( 'Additional Description', 'wpsc_ce' ),
 						__( 'Price', 'wpsc_ce' ),
 						__( 'Sale Price', 'wpsc_ce' ),
+						__( 'Permalink', 'wpsc_ce' ),
 						__( 'Weight', 'wpsc_ce' ),
 						__( 'Weight Unit', 'wpsc_ce' ),
 						__( 'Height', 'wpsc_ce' ),
@@ -288,7 +288,8 @@ if( is_admin() ) {
 					$post_type = 'wpsc-product';
 					$products_args = array(
 						'post_type' => $post_type,
-						'numberposts' => -1
+						'numberposts' => -1,
+						'post_status' => wpsc_ce_post_statuses()
 					);
 					$products = get_posts( $products_args );
 					if( $products ) {
@@ -298,7 +299,6 @@ if( is_admin() ) {
 
 							$product->sku = get_product_meta( $product->ID, 'sku', true );
 							$product->name = $product->post_title;
-							$product->permalink = $product->post_name;
 							$product->description = wpsc_ce_clean_html( $product->post_content );
 							$product->additional_description = wpsc_ce_clean_html( $product->post_excerpt );
 							if( get_product_meta( $product->ID, 'price', true ) )
@@ -309,6 +309,7 @@ if( is_admin() ) {
 								$product->sale_price = get_product_meta( $product->ID, 'special_price', true );
 							else
 								$product->sale_price = '0.00';
+							$product->permalink = $product->post_name;
 							$product->weight = wpsc_ce_convert_product_raw_weight( $product_data['weight'], $product_data['weight_unit'] );
 							if( !$product->weight )
 								$product->weight = 0;
@@ -396,11 +397,11 @@ if( is_admin() ) {
 							$csv .= 
 								$product->sku . $export->delimiter . 
 								$product->name . $export->delimiter . 
-								$product->permalink . $export->delimiter . 
 								$product->description . $export->delimiter . 
 								$product->additional_description . $export->delimiter . 
 								$product->price . $export->delimiter . 
 								$product->sale_price . $export->delimiter . 
+								$product->permalink . $export->delimiter . 
 								$product->weight . $export->delimiter . 
 								$product->weight_unit . $export->delimiter . 
 								$product->height . $export->delimiter . 
@@ -498,7 +499,8 @@ if( is_admin() ) {
 		$categories = wp_get_object_terms( $product_id, $term_taxonomy );
 		$output = '';
 		if( $categories ) {
-			for( $i = 0; $i < count( $categories ); $i++ ) {
+			$size = count( $categories );
+			for( $i = 0; $i < $size; $i++ ) {
 				if( $categories[$i]->parent == '0' ) {
 					$output .= $categories[$i]->name . $export->category_separator;
 				} else {
@@ -507,14 +509,21 @@ if( is_admin() ) {
 					// Check if Parent -> Child -> Subchild
 					if( $parent_category->parent == '0' ) {
 						$output .= $parent_category->name . '>' . $categories[$i]->name . $export->category_separator;
+						$output = str_replace( $parent_category->name . $export->category_separator, '', $output );
 					} else {
 						$root_category = get_term( $parent_category->parent, $term_taxonomy );
 						$output .= $root_category->name . '>' . $parent_category->name . '>' . $categories[$i]->name . $export->category_separator;
+						$output = str_replace( array(
+							$root_category->name . '>' . $parent_category->name . $export->category_separator,
+							$parent_category->name . $export->category_separator
+						), '', $output );
 					}
 					unset( $root_category, $parent_category );
 				}
 			}
 			$output = substr( $output, 0, -1 );
+		} else {
+			$output .= __( 'Uncategorized', 'wpsc_ce' );
 		}
 		return $output;
 

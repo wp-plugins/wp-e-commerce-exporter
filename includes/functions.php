@@ -147,6 +147,20 @@ if( is_admin() ) {
 		}
 	}
 
+	function wpsc_ce_post_statuses() {
+
+		$output = array(
+			'publish',
+			'pending',
+			'draft',
+			'future',
+			'private',
+			'trash'
+		);
+		return $output;
+
+	}
+
 	/* End of: WordPress Administration */
 
 }

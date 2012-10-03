@@ -6,7 +6,7 @@ if( is_admin() ) {
 	/* WordPress Administration Menu */
 	function wpsc_ce_add_modules_admin_pages( $page_hooks, $base_page ) {
 
-		$page_hooks[] = add_submenu_page( $base_page,__( 'WP e-Commerce Exporter', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 7, 'wpsc_ce', 'wpsc_ce_html_page' );
+		$page_hooks[] = add_submenu_page( $base_page,__( 'WP e-Commerce Exporter', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
 		return $page_hooks;
 
 	}
@@ -91,11 +91,11 @@ if( is_admin() ) {
 					$columns = array(
 						'SKU',
 						'Product Name',
-						'Permalink',
 						'Description',
 						'Additional Description',
 						'Price',
 						'Sale Price',
+						'Permalink',
 						'Weight',
 						'Weight Unit',
 						'Height',
@@ -146,11 +146,11 @@ if( is_admin() ) {
 							$csv .= 
 								$product->sku . $separator . 
 								$product->name . $separator . 
-								$product->permalink . $separator . 
 								$product->description . $separator . 
 								$product->additional_description . $separator . 
 								$product->price . $separator . 
 								$product->sale_price . $separator . 
+								$product->permalink . $separator . 
 								$product->weight . $separator . 
 								$product->weight_unit . $separator . 
 								$product->height . $separator . 

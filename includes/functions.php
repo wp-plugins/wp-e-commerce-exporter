@@ -161,6 +161,433 @@ if( is_admin() ) {
 
 	}
 
+	function wpsc_ce_get_sale_fields( $format = 'full' ) {
+
+		$fields = array();
+		$fields[] = array( 
+			'name' => 'purchase_id',
+			'label' => __( 'Purchase ID', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'purchase_total',
+			'label' => __( 'Purchase Total', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'payment_gateway',
+			'label' => __( 'Payment Gateway', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'shipping_method',
+			'label' => __( 'Shipping Method', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array( 
+			'name' => 'payment_status',
+			'label' => __( 'Payment Status', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'purchase_date',
+			'label' => __( 'Purchase Date', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'tracking_id',
+			'label' => __( 'Tracking ID', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array( 
+			'name' => 'notes',
+			'label' => __( 'Notes', 'wpsc_ce' ),
+			'default' => 0
+		);
+
+		/* Allow Plugin/Theme authors to add support for additional Sale columns */
+		$fields = apply_filters( 'wpsc_ce_sale_fields', $fields );
+
+		switch( $format ) {
+
+			case 'summary':
+				$output = array();
+				$size = count( $fields );
+				for( $i = 0; $i < $size; $i++ )
+					$output[$fields[$i]['name']] = 'on';
+				return $output;
+				break;
+
+			case 'full':
+			default:
+				return $fields;
+
+		}
+
+	}
+
+	function wpsc_ce_get_sale_field( $name = null, $format = 'name' ) {
+
+		$output = '';
+		if( $name ) {
+			$fields = wpsc_ce_get_sale_fields();
+			$size = count( $fields );
+			for( $i = 0; $i < $size; $i++ ) {
+				if( $fields[$i]['name'] == $name ) {
+					switch( $format ) {
+
+						case 'name':
+							$output = $fields[$i]['label'];
+							break;
+
+						case 'full':
+							$output = $fields[$i];
+							break;
+
+					}
+					$i = $size;
+				}
+			}
+		}
+		return $output;
+
+	}
+
+	function wpsc_ce_get_product_fields( $format = 'full' ) {
+
+		$fields = array();
+		$fields[] = array( 
+			'name' => 'sku',
+			'label' => __( 'SKU', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'name',
+			'label' => __( 'Product Name', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'description',
+			'label' => __( 'Description', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'additional_description',
+			'label' => __( 'Additional Description', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'price',
+			'label' => __( 'Price', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'sale_price',
+			'label' => __( 'Sale Price', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'permalink',
+			'label' => __( 'Permalink', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'weight',
+			'label' => __( 'Weight', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'weight_unit',
+			'label' => __( 'Weight Unit', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'height',
+			'label' => __( 'Height', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'height_unit',
+			'label' => __( 'Height Unit', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'width',
+			'label' => __( 'Width', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'width_unit',
+			'label' => __( 'Width Unit', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'length',
+			'label' => __( 'Length Unit', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'category',
+			'label' => __( 'Category', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'tag',
+			'label' => __( 'Tag', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'image',
+			'label' => __( 'Image', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'quantity',
+			'label' => __( 'Quantity', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'file_download',
+			'label' => __( 'File Download', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'external_link',
+			'label' => __( 'External Link', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'external_link_text',
+			'label' => __( 'External Link Text', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'external_link_target',
+			'label' => __( 'External Link Target', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'local_shipping_fee',
+			'label' => __( 'Local Shipping Fee', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'international_shipping_fee',
+			'label' => __( 'International Shipping Fee', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'product_status',
+			'label' => __( 'Product Status', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'comment_status',
+			'label' => __( 'Comment Status', 'wpsc_ce' ),
+			'default' => 1
+		);
+
+/*
+		$fields[] = array( 
+			'name' => '',
+			'label' => __( '', 'wpsc_ce' ),
+			'default' => 1
+		);
+*/
+
+		/* Allow Plugin/Theme authors to add support for additional Product columns */
+		$fields = apply_filters( 'wpsc_ce_product_fields', $fields );
+
+		/* Advanced Google Product Feed */
+		if( function_exists( 'wpec_gpf_install' ) ) {
+			$fields[] = array(
+				'name' => 'gpf_availability',
+				'label' => __( 'Advanced Google Product Feed - Availability', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_condition',
+				'label' => __( 'Advanced Google Product Feed - Condition', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_brand',
+				'label' => __( 'Advanced Google Product Feed - Brand', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_productype',
+				'label' => __( 'Advanced Google Product Feed - Product Type', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_google_product_category',
+				'label' => __( 'Advanced Google Product Feed - Google Product Category', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_gtin',
+				'label' => __( 'Advanced Google Product Feed - Global Trade Item Number (GTIN)', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_mpn',
+				'label' => __( 'Advanced Google Product Feed - Manufacturer Part Number (MPN)', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_gender',
+				'label' => __( 'Advanced Google Product Feed - Gender', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_agegroup',
+				'label' => __( 'Advanced Google Product Feed - Age Group', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_colour',
+				'label' => __( 'Advanced Google Product Feed - Colour', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array(
+				'name' => 'gpf_size',
+				'label' => __( 'Advanced Google Product Feed - Size', 'wpsc_ce' ),
+				'default' => 0
+			);
+		}
+		/* All in One SEO Pack */
+		if( function_exists( 'aioseop_activate' ) ) {
+			$fields[] = array( 
+				'name' => 'aioseop_keywords',
+				'label' => __( 'All in One SEO - Keywords', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array( 
+				'name' => 'aioseop_description',
+				'label' => __( 'All in One SEO - Description', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array( 
+				'name' => 'aioseop_title',
+				'label' => __( 'All in One SEO - Title', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array( 
+				'name' => 'aioseop_title_attributes',
+				'label' => __( 'All in One SEO - Title Attributes', 'wpsc_ce' ),
+				'default' => 0
+			);
+			$fields[] = array( 
+				'name' => 'aioseop_menu_label',
+				'label' => __( 'All in One SEO - Menu Label', 'wpsc_ce' ),
+				'default' => 0
+			);
+		}
+		/* Custom Fields */
+/*
+		if( function_exists( 'wpsc_cf_install' ) ) {
+			$attributes = maybe_unserialize( get_option( 'wpsc_cf_data' ) );
+			if( isset( $attributes ) && $attributes ) {
+				foreach( $attributes as $attribute ) {
+					$export->columns[] = sprintf( __( 'Attribute - %s', 'wpsc_ce' ), $attribute['name'] );
+				}
+				unset( $attributes, $attribute );
+			}
+		}
+*/
+		/* Related Products */
+		if( function_exists( 'wpsc_rp_pd_options_addons' ) ) {
+			$fields[] = array( 
+				'name' => 'related_products',
+				'label' => __( 'Related Products', 'wpsc_ce' ),
+				'default' => 0
+			);
+		}
+
+		switch( $format ) {
+
+			case 'summary':
+				$output = array();
+				$size = count( $fields );
+				for( $i = 0; $i < $size; $i++ )
+					$output[$fields[$i]['name']] = 'on';
+				return $output;
+				break;
+
+			case 'full':
+			default:
+				return $fields;
+
+		}
+
+	}
+
+	function wpsc_ce_get_product_field( $name = null, $format = 'name' ) {
+
+		$output = '';
+		if( $name ) {
+			$fields = wpsc_ce_get_product_fields();
+			$size = count( $fields );
+			for( $i = 0; $i < $size; $i++ ) {
+				if( $fields[$i]['name'] == $name ) {
+					switch( $format ) {
+
+						case 'name':
+							$output = $fields[$i]['label'];
+							break;
+
+						case 'full':
+							$output = $fields[$i];
+							break;
+
+					}
+					$i = $size;
+				}
+			}
+		}
+		return $output;
+
+	}
+
+	function wpsc_ce_admin_active_tab( $tab_name = null, $tab = null ) {
+
+		if( isset( $_GET['tab'] ) && !$tab )
+			$tab = $_GET['tab'];
+		else
+			$tab = 'overview';
+
+		$output = '';
+		if( isset( $tab_name ) && $tab_name ) {
+			if( $tab_name == $tab ) {
+				$output = ' nav-tab-active';
+			}
+		}
+		echo $output;
+
+	}
+
+	function wpsc_ce_tab_template( $tab ) {
+
+		global $wpsc_ce;
+
+		switch( $tab ) {
+
+			case 'overview':
+			case 'export':
+			case 'tools':
+				 break;
+
+			default:
+				$tab = 'overview';
+				break;
+
+		}
+		if( $tab )
+			include_once( $wpsc_ce['abspath'] . '/templates/admin/wpsc-admin_ce-export_' . $tab . '.php' );
+
+	}
+
 	/* End of: WordPress Administration */
 
 }

@@ -3,7 +3,7 @@ if( is_admin() ) {
 
 	/* Start of: WordPress Administration */
 
-	/* WordPress Administration Menu */
+	/* WordPress Administration menu */
 	function wpsc_ce_add_modules_admin_pages( $page_hooks, $base_page ) {
 
 		$page_hooks[] = add_submenu_page( $base_page, __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
@@ -17,7 +17,7 @@ if( is_admin() ) {
 		global $wpsc_ce;
 
 		$title = $wpsc_ce['menu'];
-		$link = 'admin.php?page=wpsc_ce';
+		$link = add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' );
 		$description = __( 'Export store details out of WP e-Commerce into a CSV-formatted file.', 'wpsc_ce' );
 
 		$menu[] = array( 'title' => $title, 'link' => $link, 'description' => $description );
@@ -33,6 +33,8 @@ if( is_admin() ) {
 
 		$count_sql = null;
 		switch( $dataset ) {
+
+			/* WP e-Commerce */
 
 			case 'products':
 				$post_type = 'wpsc-product';
@@ -97,12 +99,13 @@ if( is_admin() ) {
 					foreach( $count_object as $key => $item )
 						$count = $item + $count;
 				}
+				return $count;
 			} else {
 				$count = $wpdb->get_var( $count_sql );
 			}
 			return $count;
 		} else {
-			return false;
+			return 0;
 		}
 
 	}
@@ -112,16 +115,13 @@ if( is_admin() ) {
 		global $wpdb, $wpsc_ce, $export;
 
 		$csv = '';
-
 		foreach( $dataset as $datatype ) {
 
 			$csv = null;
-
 			switch( $datatype ) {
 
 				case 'coupons':
-					$coupons_sql = "SELECT `coupon_code`, `value` as coupon_value, `is-percentage` as is_percenage, `use-once` as use_once, `active`, `every_product`, `start`, `expiry` FROM `" . $wpdb->prefix . "wpsc_coupon_codes`";
-					$coupons = $wpdb->get_results( $coupons_sql );
+					$coupons = wpsc_ce_get_coupons();
 					if( $coupons ) {
 						$columns = array(
 							__( 'Coupon Code', 'wpsc_ce' ),
@@ -143,7 +143,7 @@ if( is_admin() ) {
 							switch( $coupon->is_percentage ) {
 
 								case '0':
-									/* Dollar-bsaed value */
+									/* Dollar-based value */
 									$coupon->coupon_value = '$' . $coupon->coupon_value;
 									break;
 
@@ -216,70 +216,12 @@ if( is_admin() ) {
 					break;
 
 				case 'products':
-					$export->columns = array(
-						__( 'SKU', 'wpsc_ce' ),
-						__( 'Product Name', 'wpsc_ce' ),
-						__( 'Description', 'wpsc_ce' ),
-						__( 'Additional Description', 'wpsc_ce' ),
-						__( 'Price', 'wpsc_ce' ),
-						__( 'Sale Price', 'wpsc_ce' ),
-						__( 'Permalink', 'wpsc_ce' ),
-						__( 'Weight', 'wpsc_ce' ),
-						__( 'Weight Unit', 'wpsc_ce' ),
-						__( 'Height', 'wpsc_ce' ),
-						__( 'Height Unit', 'wpsc_ce' ),
-						__( 'Width', 'wpsc_ce' ),
-						__( 'Width Unit', 'wpsc_ce' ),
-						__( 'Length', 'wpsc_ce' ),
-						__( 'Length Unit', 'wpsc_ce' ),
-						__( 'Category', 'wpsc_ce' ),
-						__( 'Tag', 'wpsc_ce' ),
-						__( 'Image', 'wpsc_ce' ),
-						__( 'Quantity', 'wpsc_ce' ),
-						__( 'File Download', 'wpsc_ce' ),
-						__( 'External Link', 'wpsc_ce' ),
-						__( 'Local Shipping Fee', 'wpsc_ce' ),
-						__( 'International Shipping Fee', 'wpsc_ce' ),
-						__( 'Product Status', 'wpsc_ce' ),
-						__( 'Comment Status', 'wpsc_ce' )
-					);
-
-					/* Allow Plugin/Theme authors to add support for additional Product details */
-					$export->columns = apply_filters( 'wpsc_ce_options_addons', $export->columns );
-
-					/* Advanced Google Product Feed */
-					if( function_exists( 'wpec_gpf_install' ) ) {
-						$export->columns[] = __( 'Advanced Google Product Feed - Availability', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Condition', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Brand', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Product Type', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Google Product Category', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Global Trade Item Number (GTIN)', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Manufacturer Part Number (MPN)', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Gender', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Age Group', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Colour', 'wpsc_ce' );
-						$export->columns[] = __( 'Advanced Google Product Feed - Size', 'wpsc_ce' );
+					$fields = wpsc_ce_get_product_fields( 'summary' );
+					$export->fields = array_intersect_assoc( $fields, $export->fields );
+					if( $export->fields ) {
+						foreach( $export->fields as $key => $field )
+							$export->columns[] = wpsc_ce_get_product_field( $key );
 					}
-					/* All in One SEO Pack */
-					if( function_exists( 'aioseop_activate' ) ) {
-						$export->columns[] = __( 'All in One SEO - Keywords', 'wpsc_ce' );
-						$export->columns[] = __( 'All in One SEO - Description', 'wpsc_ce' );
-						$export->columns[] = __( 'All in One SEO - Title', 'wpsc_ce' );
-						$export->columns[] = __( 'All in One SEO - Title Attributes', 'wpsc_ce' );
-						$export->columns[] = __( 'All in One SEO - Menu Label', 'wpsc_ce' );
-					}
-					/* Custom Fields */
-					if( function_exists( 'wpsc_cf_install' ) ) {
-						$attributes = maybe_unserialize( get_option( 'wpsc_cf_data' ) );
-						if( isset( $attributes ) && $attributes ) {
-							foreach( $attributes as $attribute ) {
-								$export->columns[] = sprintf( __( 'Attribute - %s', 'wpsc_ce' ), $attribute['name'] );
-							}
-							unset( $attributes, $attribute );
-						}
-					}
-
 					$size = count( $export->columns );
 					for( $i = 0; $i < $size; $i++ ) {
 						if( $i == ( $size - 1 ) )
@@ -287,13 +229,7 @@ if( is_admin() ) {
 						else
 							$csv .= '"' . $export->columns[$i] . '"' . $export->delimiter;
 					}
-					$post_type = 'wpsc-product';
-					$products_args = array(
-						'post_type' => $post_type,
-						'numberposts' => -1,
-						'post_status' => wpsc_ce_post_statuses()
-					);
-					$products = get_posts( $products_args );
+					$products = wpsc_ce_get_products();
 					if( $products ) {
 						foreach( $products as $product ) {
 
@@ -350,6 +286,8 @@ if( is_admin() ) {
 							if( !$product->quantity )
 								$product->quantity = 0;
 							$product->external_link = $product_data['external_link'];
+							$product->external_link_text = $product_data['external_link_text'];
+							$product->external_link_target = $product_data['external_link_target'];
 							if( isset( $product_data['shipping']['local'] ) )
 								$product->local_shipping = $product_data['shipping']['local'];
 							if( isset( $product_data['shipping']['international'] ) )
@@ -385,80 +323,73 @@ if( is_admin() ) {
 								foreach( $custom_fields as $custom_field )
 									$product->custom_fields[$custom_field['slug']] = get_product_meta( $product->ID, $custom_field['slug'], true );
 							}
+							/* Related Products */
+							if( isset( $product_data['wpsc_rp_manual'] ) ) {
+								$product->related_products = wpsc_ce_get_related_products( $product->ID );
+							}
 
-							foreach( $product as $key => $value ) {
-								if( is_array( $value ) ) {
-									foreach( $value as $array_key => $array_value ) {
-										if( !is_array( $array_value ) )
-											$value[$array_key] = escape_csv_value( $array_value );
+							foreach( $export->fields as $key => $field ) {
+								if( isset( $product->$key ) ) {
+									if( is_array( $value ) ) {
+										foreach( $value as $array_key => $array_value ) {
+											if( !is_array( $array_value ) )
+												$csv .= escape_csv_value( $array_value );
+										}
+									} else {
+										$csv .= escape_csv_value( $product->$key );
 									}
-									$product->$key = $value;
-								} else {
-									$product->$key = escape_csv_value( $value );
 								}
-							}
-
-							$csv .= 
-								$product->sku . $export->delimiter . 
-								$product->name . $export->delimiter . 
-								$product->description . $export->delimiter . 
-								$product->additional_description . $export->delimiter . 
-								$product->price . $export->delimiter . 
-								$product->sale_price . $export->delimiter . 
-								$product->permalink . $export->delimiter . 
-								$product->weight . $export->delimiter . 
-								$product->weight_unit . $export->delimiter . 
-								$product->height . $export->delimiter . 
-								$product->height_unit . $export->delimiter . 
-								$product->width . $export->delimiter . 
-								$product->width_unit . $export->delimiter . 
-								$product->length . $export->delimiter . 
-								$product->length_unit . $export->delimiter . 
-								$product->category . $export->delimiter . 
-								$product->tag . $export->delimiter . 
-								$product->image . $export->delimiter . 
-								$product->quantity . $export->delimiter . 
-								$product->file_download . $export->delimiter . 
-								$product->external_link . $export->delimiter . 
-								$product->local_shipping . $export->delimiter . 
-								$product->international_shipping . $export->delimiter . 
-								$product->product_status . $export->delimiter . 
-								$product->comment_status;
-							if( function_exists( 'wpec_gpf_install' ) ) {
-								$csv .= 
-									$export->delimiter . 
-									$product->gpf_availability . $export->delimiter . 
-									$product->gpf_condition . $export->delimiter . 
-									$product->gpf_brand . $export->delimiter . 
-									$product->gpf_product_type . $export->delimiter . 
-									$product->gpf_google_product_category . $export->delimiter . 
-									$product->gpf_gtin . $export->delimiter . 
-									$product->gpf_mpn . $export->delimiter . 
-									$product->gpf_gender . $export->delimiter . 
-									$product->gpf_age_group . $export->delimiter . 
-									$product->gpf_color . $export->delimiter . 
-									$product->gpf_size;
-							}
-							if( function_exists( 'aioseop_activate' ) ) {
-								$csv .= 
-									$export->delimiter . 
-									$product->aioseop_keywords . $export->delimiter . 
-									$product->aioseop_description . $export->delimiter . 
-									$product->aioseop_title . $export->delimiter . 
-									$product->aioseop_titleatr . $export->delimiter . 
-									$product->aioseop_menulabel;
-							}
-							if( $custom_fields ) {
-								$csv .= 
-									$export->delimiter;
-								foreach( $custom_fields as $custom_field )
-									$csv .= $product->custom_fields[$custom_field['slug']] . $export->delimiter;
+								$csv .= $export->delimiter;
 							}
 							$csv .= "\n";
 
 						}
 					}
 					unset( $products, $product );
+					break;
+
+				case 'orders':
+					$fields = wpsc_ce_get_sale_fields( 'summary' );
+					$export->fields = array_intersect_assoc( $fields, $export->fields );
+					if( $export->fields ) {
+						foreach( $export->fields as $key => $field )
+							$export->columns[] = wpsc_ce_get_sale_field( $key );
+					}
+					$size = count( $export->columns );
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$csv .= '"' . $export->columns[$i] . "\"\n";
+						else
+							$csv .= '"' . $export->columns[$i] . '"' . $export->delimiter;
+					}
+					$orders = wpsc_ce_get_orders();
+					if( $orders ) {
+						foreach( $orders as $order ) {
+
+							$order->purchase_id = $order->id;
+							$order->purchase_total = $order->totalprice;
+							$order->payment_gateway = $order->gateway;
+							$order->payment_status = $order->processed;
+							$order->purchase_date = mysql2date( 'd/m/Y', $order->date );
+							$order->tracking_id = $order->track_id;
+
+							foreach( $export->fields as $key => $field ) {
+								if( isset( $order->$key ) ) {
+									if( is_array( $value ) ) {
+										foreach( $value as $array_key => $array_value ) {
+											if( !is_array( $array_value ) )
+												$csv .= escape_csv_value( $array_value );
+										}
+									} else {
+										$csv .= escape_csv_value( $order->$key );
+									}
+								}
+								$csv .= $export->delimiter;
+							}
+							$csv .= "\n";
+
+						}
+					}
 					break;
 
 			}
@@ -477,6 +408,39 @@ if( is_admin() ) {
 		if( $weight && $weight_unit )
 			$output = wpsc_convert_weight( $weight, 'pound', $weight_unit, false );
 		return $output;
+
+	}
+
+	function wpsc_ce_get_orders() {
+
+		global $wpdb;
+
+		$orders_sql = "SELECT * FROM `" . $wpdb->prefix . "wpsc_purchase_logs`";
+		$orders = $wpdb->get_results( $orders_sql );
+		return $orders;
+
+	}
+
+	function wpsc_ce_get_coupons() {
+
+		global $wpdb;
+
+		$coupons_sql = "SELECT `coupon_code`, `value` as coupon_value, `is-percentage` as is_percenage, `use-once` as use_once, `active`, `every_product`, `start`, `expiry` FROM `" . $wpdb->prefix . "wpsc_coupon_codes`";
+		$coupons = $wpdb->get_results( $coupons_sql );
+		return $coupons;
+
+	}
+
+	function wpsc_ce_get_products() {
+
+		$post_type = 'wpsc-product';
+		$products_args = array(
+			'post_type' => $post_type,
+			'numberposts' => -1,
+			'post_status' => wpsc_ce_post_statuses()
+		);
+		$products = get_posts( $products_args );
+		return $products;
 
 	}
 
@@ -542,10 +506,26 @@ if( is_admin() ) {
 		$term_taxonomy = 'product_tag';
 		$tags = wp_get_object_terms( $product_id, $term_taxonomy );
 		if( $tags ) {
-			for( $i = 0; $i < count( $tags ); $i++ ) {
-				$tag = get_term( $tags[$i]['term_id'], $term_taxonomy );
-				$output .= $tag->name . '|';
+			$size = count( $tags );
+			for( $i = 0; $i < $size; $i++ ) {
+				$tag = get_term( $tags[$i]->term_id, $term_taxonomy );
+				$output .= $tag->name . $export->category_separator;
 			}
+			$output = substr( $output, 0, -1 );
+		}
+		return $output;
+
+	}
+
+	function wpsc_ce_get_related_products( $product_id ) {
+
+		global $export;
+
+		$output = '';
+		$product_data = maybe_unserialize( get_product_meta( $product_id, 'product_metadata', true ) );
+		if( isset( $product_data['wpsc_rp_manual'] ) && $product_data['wpsc_rp_manual'] ) {
+			foreach( $product_data['wpsc_rp_manual'] as $related_product )
+				$output .= $related_product . $export->category_separator;
 			$output = substr( $output, 0, -1 );
 		}
 		return $output;

@@ -3,18 +3,47 @@ if( is_admin() ) {
 
 	/* Start of: WordPress Administration */
 
-	function wpsc_ce_template_header() {
+	function wpsc_ce_template_header( $title = '', $icon = 'tools' ) {
 
-		global $wpsc_ce; ?>
+		global $wpsc_ce;
+
+		if( $title )
+			$output = $title;
+		else
+			$output = $wpsc_ce['menu'];
+		$icon = wpsc_is_admin_icon_valid( $icon ); ?>
 <div class="wrap">
-	<div id="icon-tools" class="icon32"><br /></div>
-	<h2><?php echo $wpsc_ce['menu']; ?></h2>
+	<div id="icon-<?php echo $icon; ?>" class="icon32"><br /></div>
+	<h2><?php echo $output; ?></h2>
 <?php
 	}
 
 	function wpsc_ce_template_footer() { ?>
 </div>
 <?php
+	}
+
+	function wpsc_ce_support_donate() {
+
+		global $wpsc_ce;
+
+		$output = '';
+		$show = true;
+		if( function_exists( 'wpsc_vl_we_love_your_plugins' ) ) {
+			if( in_array( $wpsc_ce['dirname'], wpsc_vl_we_love_your_plugins() ) )
+				$show = false;
+		}
+		if( $show ) {
+			$donate_url = 'http://www.visser.com.au/#donations';
+			$rate_url = 'http://wordpress.org/support/view/plugin-reviews/' . $wpsc_ce['dirname'];
+			$output = '
+	<div id="support-donate_rate" class="support-donate_rate">
+		<p>' . sprintf( __( '<strong>Like this Plugin?</strong> %s and %s.', 'wpsc_ce' ), '<a href="' . $donate_url . '" target="_blank">' . __( 'Donate to support this Plugin', 'wpsc_ce' ) . '</a>', '<a href="' . add_query_arg( array( 'rate' => '5' ), $rate_url ) . '#postform" target="_blank">rate / review us on WordPress.org</a>' ) . '</p>
+	</div>
+';
+		}
+		echo $output;
+
 	}
 
 	function wpsc_ce_generate_csv_header( $dataset = '' ) {
@@ -54,86 +83,6 @@ if( is_admin() ) {
 		$data = str_replace( "\n", '<br />', $data );
 
 		return $data;
-
-	}
-
-	function wpsc_ce_format_product_status( $product_status ) {
-
-		switch( $product_status ) {
-
-			case 'publish':
-				$output = __( 'Publish', 'wpsc_ce' );
-				break;
-
-			case 'draft':
-				$output = __( 'Draft', 'wpsc_ce' );
-				break;
-
-			case 'trash':
-				$output = __( 'Trash', 'wpsc_ce' );
-				break;
-
-		}
-		return $output;
-
-	}
-
-	function wpsc_ce_format_comment_status( $comment_status ) {
-
-		switch( $comment_status ) {
-
-			case 'open':
-				$output = __( 'Open', 'wpsc_ce' );
-				break;
-
-			case 'closed':
-				$output = __( 'Closed', 'wpsc_ce' );
-				break;
-
-		}
-		return $output;
-
-	}
-
-	function wpsc_ce_format_gpf_availability( $availability ) {
-
-		switch( $availability ) {
-
-			case 'in stock':
-				$output = __( 'In Stock', 'wpsc_ce' );
-				break;
-
-			case 'available for order':
-				$output = __( 'Available For Order', 'wpsc_ce' );
-				break;
-
-			case 'preorder':
-				$output = __( 'Pre-order', 'wpsc_ce' );
-				break;
-
-		}
-		return $output;
-
-	}
-
-	function wpsc_ce_format_gpf_condition( $condition ) {
-
-		switch( $condition ) {
-
-			case 'new':
-				$output = __( 'New', 'wpsc_ce' );
-				break;
-
-			case 'refurbished':
-				$output = __( 'Refurbished', 'wpsc_ce' );
-				break;
-
-			case 'used':
-				$output = __( 'Used', 'wpsc_ce' );
-				break;
-
-		}
-		return $output;
 
 	}
 
@@ -204,6 +153,7 @@ if( is_admin() ) {
 			'label' => __( 'Notes', 'wpsc_ce' ),
 			'default' => 0
 		);
+		$fields = array_merge_recursive( $fields, wpsc_ce_get_checkout_fields() );
 
 		/* Allow Plugin/Theme authors to add support for additional Sale columns */
 		$fields = apply_filters( 'wpsc_ce_sale_fields', $fields );
@@ -253,142 +203,199 @@ if( is_admin() ) {
 
 	}
 
+	function wpsc_ce_get_checkout_fields( $format = 'full' ) {
+
+		global $wpdb;
+
+		$fields = array();
+		$checkout_fields_sql = "SELECT * FROM `wp_wpsc_checkout_forms` WHERE `active` = 1 AND `type` <> 'heading'";
+		$checkout_fields = $wpdb->get_results( $checkout_fields_sql );
+		if( $checkout_fields ) {
+			foreach( $checkout_fields as $key => $checkout_field ) {
+				$fields[] = array(
+					'name' => sprintf( 'checkout_%d', $checkout_field->id ),
+					'label' => $checkout_field->name,
+					'default' => 1
+				);
+			}
+		}
+		switch( $format ) {
+
+			case 'summary':
+				$output = array();
+				$size = count( $fields );
+				for( $i = 0; $i < $size; $i++ )
+					$output[$fields[$i]['name']] = 'on';
+				return $output;
+				break;
+
+			case 'full':
+			default:
+				return $fields;
+
+		}
+
+	}
+
+	function wpsc_ce_get_submited_form_data( $checkout_fields = '' ) {
+
+		global $wpdb;
+
+		$output = array();
+		if( $checkout_fields ) {
+			foreach( $checkout_fields as $checkout_key => $checkout_field ) {
+				$key = str_replace( 'checkout_', '', $checkout_key );
+				if( $key ) {
+					$value_sql = sprintf( "SELECT `value` FROM `" . $wpdb->prefix . "wpsc_submited_form_data` WHERE `form_id` = '%d' LIMIT 1", $key );
+					$value = $wpdb->get_var( $value_sql );
+					if( $value )
+						$checkout_fields[$checkout_key] = $value;
+					else
+						unset( $checkout_fields[$checkout_key] );
+				}
+			}
+			$output = $checkout_fields;
+		}
+		return $output;
+
+	}
+
 	function wpsc_ce_get_product_fields( $format = 'full' ) {
 
 		$fields = array();
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'sku',
 			'label' => __( 'SKU', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'name',
 			'label' => __( 'Product Name', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'description',
 			'label' => __( 'Description', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'additional_description',
 			'label' => __( 'Additional Description', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'price',
 			'label' => __( 'Price', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'sale_price',
 			'label' => __( 'Sale Price', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'permalink',
 			'label' => __( 'Permalink', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'weight',
 			'label' => __( 'Weight', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'weight_unit',
 			'label' => __( 'Weight Unit', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'height',
 			'label' => __( 'Height', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'height_unit',
 			'label' => __( 'Height Unit', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'width',
 			'label' => __( 'Width', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'width_unit',
 			'label' => __( 'Width Unit', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'length',
 			'label' => __( 'Length Unit', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'category',
 			'label' => __( 'Category', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'tag',
 			'label' => __( 'Tag', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'image',
 			'label' => __( 'Image', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'quantity',
 			'label' => __( 'Quantity', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'file_download',
 			'label' => __( 'File Download', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'external_link',
 			'label' => __( 'External Link', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'external_link_text',
 			'label' => __( 'External Link Text', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'external_link_target',
 			'label' => __( 'External Link Target', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'local_shipping_fee',
 			'label' => __( 'Local Shipping Fee', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'international_shipping_fee',
 			'label' => __( 'International Shipping Fee', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'product_status',
 			'label' => __( 'Product Status', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'comment_status',
 			'label' => __( 'Comment Status', 'wpsc_ce' ),
 			'default' => 1
 		);
 
 /*
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => '',
 			'label' => __( '', 'wpsc_ce' ),
 			'default' => 1
@@ -559,9 +566,8 @@ if( is_admin() ) {
 
 		$output = '';
 		if( isset( $tab_name ) && $tab_name ) {
-			if( $tab_name == $tab ) {
+			if( $tab_name == $tab )
 				$output = ' nav-tab-active';
-			}
 		}
 		echo $output;
 

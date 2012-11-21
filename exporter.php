@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.3.7
+Version: 1.3.8
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -59,6 +59,8 @@ if( is_admin() ) {
 
 		global $wpsc_ce, $export;
 
+		include_once( 'includes/formatting.php' );
+
 		wp_enqueue_script( 'wpsc_ce_scripts', plugins_url( '/templates/admin/wpsc-admin_ce-export.js', __FILE__ ), array( 'jquery' ) );
 
 		$action = wpsc_get_action();
@@ -69,14 +71,14 @@ if( is_admin() ) {
 				$export->delimiter = $_POST['delimiter'];
 				$export->category_separator = $_POST['category_separator'];
 				$dataset = array();
-				if( $_POST['dataset'] == 'categories' )
-					$dataset[] = 'categories';
-				if( $_POST['dataset'] == 'tags' )
-					$dataset[] = 'tags';
 				if( $_POST['dataset'] == 'products' ) {
 					$dataset[] = 'products';
 					$export->fields = $_POST['product_fields'];
 				}
+				if( $_POST['dataset'] == 'categories' )
+					$dataset[] = 'categories';
+				if( $_POST['dataset'] == 'tags' )
+					$dataset[] = 'tags';
 				if( $_POST['dataset'] == 'sales' ) {
 					$dataset[] = 'orders';
 					$export->fields = $_POST['sale_fields'];
@@ -98,6 +100,7 @@ if( is_admin() ) {
 					} else {
 						wpsc_ce_generate_csv_header( $_POST['dataset'] );
 						wpsc_ce_export_dataset( $dataset );
+
 						exit();
 					}
 				}
@@ -122,6 +125,7 @@ if( is_admin() ) {
 		global $wpdb, $wpsc_ce;
 
 		wpsc_ce_template_header();
+		wpsc_ce_support_donate();
 		$action = wpsc_get_action();
 		switch( $action ) {
 
@@ -151,21 +155,6 @@ if( is_admin() ) {
 			$tab = $_GET['tab'];
 
 		$url = add_query_arg( 'page', 'wpsc_ce' );
-		if( function_exists( 'wpsc_pd_init' ) ) {
-			$wpsc_pd_url = add_query_arg( 'page', 'wpsc_pd' );
-			$wpsc_pd_target = false;
-		} else {
-			$wpsc_pd_url = 'http://www.visser.com.au/wp-ecommerce/plugins/product-importer-deluxe/';
-			$wpsc_pd_target = ' target="_blank"';
-		}
-		if( function_exists( 'wpsc_ci_init' ) ) {
-			$wpsc_ci_url = add_query_arg( 'page', 'wpsc_ci' );
-			$wpsc_ci_target = false;
-		} else {
-			$wpsc_ci_url = 'http://www.visser.com.au/wp-ecommerce/plugins/coupon-importer-deluxe/';
-			$wpsc_ci_target = ' target="_blank"';
-		}
-
 
 		include_once( 'templates/admin/wpsc-admin_ce-export.php' );
 

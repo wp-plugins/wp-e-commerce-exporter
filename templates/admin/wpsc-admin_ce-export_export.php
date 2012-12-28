@@ -9,7 +9,7 @@
 <?php if( $customer_fields ) { ?>
 	<li><a href="#export-customers"><?php _e( 'Export: Customers', 'wpsc_ce' ); ?></a> |</li>
 <?php } ?>
-<?php if( $coupons ) { ?>
+<?php if( $coupon_fields ) { ?>
 	<li><a href="#export-coupons"><?php _e( 'Export: Coupons', 'wpsc_ce' ); ?></a> |</li>
 <?php } ?>
 	<li><a href="#export-options"><?php _e( 'Export Options', 'wpsc_ce' ); ?></a></li>
@@ -18,7 +18,7 @@
 <h3><?php _e( 'Export Type', 'wpsc_ce' ); ?></h3>
 <!--
 <p><?php _e( 'When you click the Export button below Store Export will create a CSV file for you to save to your computer.', 'wpsc_ce' ); ?></p>
-<p><?php _e( 'This formatted CSV file will contain the Product details from your Jigoshop store.', 'jigo_ce' ); ?></p>
+<p><?php _e( 'This formatted CSV file will contain the Product details from your Jigoshop store.', 'wpsc_ce' ); ?></p>
 <p><?php echo sprintf( __( 'Once you\'ve saved the download file, you can use <a href="%s"%s>Product Importer Deluxe</a> or <a href="%s"%s>Coupon Importer</a> to merge changes back into your store, or import store details into another WP e-Commerce instance.', 'wpsc_ce' ), $wpsc_pd_url, $wpsc_pd_target, $wpsc_ci_url, $wpsc_ci_target ); ?></p>
 -->
 <form method="post" onsubmit="showProgress()">
@@ -27,7 +27,7 @@
 		<div class="postbox" id="export-type">
 			<h3 class="hndle"><?php _e( 'Export Type', 'wpsc_ce' ); ?></h3>
 			<div class="inside">
-				<p class="description"><?php _e( 'Select the data type you want to export.', 'jigo_ce' ); ?></p>
+				<p class="description"><?php _e( 'Select the data type you want to export.', 'wpsc_ce' ); ?></p>
 				<table class="form-table">
 
 					<tr>
@@ -119,11 +119,12 @@
 		<div class="postbox" id="export-products">
 			<h3 class="hndle"><?php _e( 'Product Fields', 'wpsc_ce' ); ?></h3>
 			<div class="inside">
+	<?php if( $products ) { ?>
 				<p class="description"><?php _e( 'Select the Product fields you would like to export.', 'wpsc_ce' ); ?></p>
 				<!-- <p><a href="#"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="#"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p> -->
 				<table>
 
-	<?php foreach( $product_fields as $product_field ) { ?>
+		<?php foreach( $product_fields as $product_field ) { ?>
 					<tr>
 						<td>
 							<label>
@@ -133,11 +134,14 @@
 						</td>
 					</tr>
 
-	<?php } ?>
+		<?php } ?>
 				</table>
 				<p class="submit">
 					<input type="submit" value="<?php _e( 'Export Products', 'wpsc_ce' ); ?> " class="button-primary" />
 				</p>
+	<?php } else { ?>
+				<p><?php _e( 'No Products have been found.', 'wpsc_ce' ); ?></p>
+	<?php } ?>
 			</div>
 		</div>
 		<!-- .postbox -->
@@ -153,11 +157,12 @@
 		<div class="postbox" id="export-sales">
 			<h3 class="hndle"><?php _e( 'Sale Fields', 'wpsc_ce' ); ?></h3>
 			<div class="inside">
+	<?php if( $sales ) { ?>
 				<p class="description"><?php _e( 'Select the Sale fields you would like to export.', 'wpsc_ce' ); ?></p>
 				<!-- <p><a href="#"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="#"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p> -->
 				<table>
 
-	<?php foreach( $sale_fields as $sale_field ) { ?>
+		<?php foreach( $sale_fields as $sale_field ) { ?>
 					<tr>
 						<td>
 							<label>
@@ -167,15 +172,60 @@
 						</td>
 					</tr>
 
-	<?php } ?>
+		<?php } ?>
 				</table>
 				<p class="submit">
-<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+		<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 					<input type="submit" value="<?php _e( 'Export Sales', 'wpsc_ce' ); ?> " class="button-primary" />
-<?php } else { ?>
+		<?php } else { ?>
 					<input type="button" class="button button-disabled" value="<?php _e( 'Export Sales', 'wpsc_ce' ); ?>" />
-<?php } ?>
+	<?php } ?>
 				</p>
+	<?php } else { ?>
+				<p><?php _e( 'No Orders have been found.', 'wpsc_ce' ); ?></p>
+	<?php } ?>
+			</div>
+		</div>
+		<!-- .postbox -->
+
+	</div>
+
+<?php } ?>
+
+<?php if( $coupon_fields ) { ?>
+	<h3><?php _e( 'Export: Coupons', 'wpsc_ce' ); ?></h3>
+	<div id="poststuff">
+
+		<div class="postbox" id="export-coupons">
+			<h3 class="hndle"><?php _e( 'Coupon Fields', 'wpsc_ce' ); ?></h3>
+			<div class="inside">
+	<?php if( $sales ) { ?>
+				<p class="description"><?php _e( 'Select the Coupon fields you would like to export.', 'wpsc_ce' ); ?></p>
+				<!-- <p><a href="#"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="#"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p> -->
+				<table>
+
+		<?php foreach( $coupon_fields as $coupon_field ) { ?>
+					<tr>
+						<td>
+							<label>
+								<input type="checkbox" name="coupon_fields[<?php echo $coupon_field['name']; ?>]" class="coupon_field"<?php checked( $coupon_field['default'], 1 ); ?><?php disabled( $wpsc_cd_exists, false ); ?> />
+								<?php echo $coupon_field['label']; ?>
+							</label>
+						</td>
+					</tr>
+
+		<?php } ?>
+				</table>
+				<p class="submit">
+		<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+					<input type="submit" value="<?php _e( 'Export Coupons', 'wpsc_ce' ); ?> " class="button-primary" />
+		<?php } else { ?>
+					<input type="button" class="button button-disabled" value="<?php _e( 'Export Coupons', 'wpsc_ce' ); ?>" />
+	<?php } ?>
+				</p>
+	<?php } else { ?>
+				<p><?php _e( 'No Coupons have been found.', 'wpsc_ce' ); ?></p>
+	<?php } ?>
 			</div>
 		</div>
 		<!-- .postbox -->
@@ -191,11 +241,12 @@
 		<div class="postbox" id="export-customers">
 			<h3 class="hndle"><?php _e( 'Customer Fields', 'wpsc_ce' ); ?></h3>
 			<div class="inside">
+	<?php if( $customers ) { ?>
 				<p class="description"><?php _e( 'Select the Customer fields you would like to export.', 'wpsc_ce' ); ?></p>
 				<!-- <p><a href="#"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="#"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p> -->
 				<table>
 
-	<?php foreach( $customer_fields as $customer_field ) { ?>
+		<?php foreach( $customer_fields as $customer_field ) { ?>
 					<tr>
 						<td>
 							<label>
@@ -205,15 +256,18 @@
 						</td>
 					</tr>
 
-	<?php } ?>
+		<?php } ?>
 				</table>
 				<p class="submit">
-<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+		<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 					<input type="submit" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?> " class="button-primary" />
-<?php } else { ?>
+		<?php } else { ?>
 					<input type="button" class="button button-disabled" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?>" />
-<?php } ?>
+		<?php } ?>
 				</p>
+	<?php } else { ?>
+				<p><?php _e( 'No Customers have been found.', 'wpsc_ce' ); ?></p>
+	<?php } ?>
 			</div>
 		</div>
 		<!-- .postbox -->

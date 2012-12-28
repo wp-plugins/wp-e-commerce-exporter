@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.4
+Version: 1.4.1
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -69,20 +69,27 @@ if( is_admin() ) {
 				$export->delimiter = $_POST['delimiter'];
 				$export->category_separator = $_POST['category_separator'];
 				$dataset = array();
-				if( $_POST['dataset'] == 'products' ) {
+				$export->type = $_POST['dataset'];
+				if( $export->type == 'products' ) {
 					$dataset[] = 'products';
 					$export->fields = $_POST['product_fields'];
 				}
-				if( $_POST['dataset'] == 'categories' )
+				if( $export->type == 'categories' )
 					$dataset[] = 'categories';
-				if( $_POST['dataset'] == 'tags' )
+				if( $export->type == 'tags' )
 					$dataset[] = 'tags';
-				if( $_POST['dataset'] == 'sales' ) {
+				if( $export->type == 'sales' ) {
 					$dataset[] = 'orders';
 					$export->fields = $_POST['sale_fields'];
 				}
-				if( $_POST['dataset'] == 'coupons' )
+				if( $export->type == 'customers' ) {
+					$dataset[] = 'customers';
+					$export->fields = $_POST['customer_fields'];
+				}
+				if( $export->type == 'coupons' ) {
 					$dataset[] = 'coupons';
+					$export->fields = $_POST['coupon_fields'];
+				}
 				if( $dataset ) {
 
 					if( isset( $_POST['timeout'] ) )
@@ -96,7 +103,7 @@ if( is_admin() ) {
 					if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
 						wpsc_ce_export_dataset( $dataset );
 					} else {
-						wpsc_ce_generate_csv_header( $_POST['dataset'] );
+						wpsc_ce_generate_csv_header( $export->type );
 						wpsc_ce_export_dataset( $dataset );
 
 						exit();

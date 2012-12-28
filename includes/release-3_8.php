@@ -144,7 +144,6 @@ if( is_admin() ) {
 					$products = wpsc_ce_get_products();
 					if( $products ) {
 						foreach( $products as $product ) {
-
 							foreach( $export->fields as $key => $field ) {
 								if( isset( $product->$key ) ) {
 									if( is_array( $value ) ) {
@@ -214,7 +213,6 @@ if( is_admin() ) {
 								$tag->name
 								 . 
 							"\n";
-
 						}
 						unset( $tags, $tag );
 					}

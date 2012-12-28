@@ -468,6 +468,100 @@ if( is_admin() ) {
 
 	}
 
+	function wpsc_ce_get_coupon_fields( $format = 'full' ) {
+
+		$fields = array();
+		$fields[] = array(
+			'name' => 'coupon_code',
+			'label' => __( 'Coupon Code', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'coupon_value',
+			'label' => __( 'Coupon Value', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'use_once',
+			'label' => __( 'Use Once', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'active',
+			'label' => __( 'Active', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'every_product',
+			'label' => __( 'Apply to All Products', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'start',
+			'label' => __( 'Valid From', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'expiry',
+			'label' => __( 'Valid To', 'wpsc_ce' ),
+			'default' => 1
+		);
+/*
+		$fields[] = array(
+			'name' => '',
+			'label' => __( '', 'wpsc_ce' ),
+			'default' => 1
+		);
+*/
+
+		/* Allow Plugin/Theme authors to add support for additional Coupon columns */
+		$fields = apply_filters( 'wpsc_ce_coupon_fields', $fields );
+
+		switch( $format ) {
+
+			case 'summary':
+				$output = array();
+				$size = count( $fields );
+				for( $i = 0; $i < $size; $i++ )
+					$output[$fields[$i]['name']] = 'on';
+				return $output;
+				break;
+
+			case 'full':
+			default:
+				return $fields;
+
+		}
+
+	}
+
+	function wpsc_ce_get_coupon_field( $name = null, $format = 'name' ) {
+
+		$output = '';
+		if( $name ) {
+			$fields = wpsc_ce_get_coupon_fields();
+			$size = count( $fields );
+			for( $i = 0; $i < $size; $i++ ) {
+				if( $fields[$i]['name'] == $name ) {
+					switch( $format ) {
+
+						case 'name':
+							$output = $fields[$i]['label'];
+							break;
+
+						case 'full':
+							$output = $fields[$i];
+							break;
+
+					}
+					$i = $size;
+				}
+			}
+		}
+		return $output;
+
+	}
+
 	function wpsc_ce_get_sale_fields( $format = 'full' ) {
 
 		$fields = array();
@@ -702,6 +796,7 @@ if( is_admin() ) {
 				$product_fields = wpsc_ce_get_product_fields();
 				$sale_fields = wpsc_ce_get_sale_fields();
 				$customer_fields = wpsc_ce_get_customer_fields();
+				$coupon_fields = wpsc_ce_get_coupon_fields();
 				break;
 
 			case 'tools':

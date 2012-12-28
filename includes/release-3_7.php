@@ -3,7 +3,7 @@ if( is_admin() ) {
 
 	/* Start of: WordPress Administration */
 
-	/* WordPress Administration Menu */
+	/* WordPress Administration menu */
 	function wpsc_ce_add_modules_admin_pages( $page_hooks, $base_page ) {
 
 		$page_hooks[] = add_submenu_page( $base_page,__( 'WP e-Commerce Exporter', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
@@ -18,6 +18,8 @@ if( is_admin() ) {
 
 		$count_sql = null;
 		switch( $dataset ) {
+
+			/* WP e-Commerce */
 
 			case 'products':
 				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->prefix . "wpsc_product_list`";
@@ -37,7 +39,7 @@ if( is_admin() ) {
 
 			case 'tags':
 				$term_taxonomy = 'product_tag';
-				$count_sql = "SELECT COUNT(`term_taxonomy_id`) FROM `" . $wpdb->term_taxonomy . "` WHERE `taxonomy` = '" . $term_taxonomy . "'";
+				$count = wp_count_terms( $term_taxonomy );
 				break;
 
 			case 'categories':
@@ -45,7 +47,9 @@ if( is_admin() ) {
 				break;
 
 			case 'orders':
-				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->prefix . "wpsc_purchase_logs`";
+			case 'coupons':
+				if( function_exists( 'wpsc_cd_return_count' ) )
+					$count = wpsc_cd_return_count( $dataset );
 				break;
 
 			case 'wishlist':
@@ -53,21 +57,34 @@ if( is_admin() ) {
 				break;
 
 			case 'enquiries':
-				$count_sql = "SELECT COUNT(`ID`) FROM `" . $wpdb->posts . "` WHERE `post_type` = 'wpsc-enquiry'";
+				$post_type = 'wpsc-enquiry';
+				$count = wp_count_posts( $post_type );
 				break;
 
-			case 'credit-card':
+			case 'credit-cards':
+				$post_type = 'offline_payment';
+				$count = wp_count_posts( $post_type );
 				break;
 
 			case 'related-products':
 				break;
 
 		}
-		if( $count_sql ) {
-			$count = $wpdb->get_var( $count_sql );
+		if( isset( $count ) || $count_sql ) {
+			if( isset( $count ) ) {
+				if( is_object( $count ) ) {
+					$count_object = $count;
+					$count = 0;
+					foreach( $count_object as $key => $item )
+						$count = $item + $count;
+				}
+				return $count;
+			} else {
+				$count = $wpdb->get_var( $count_sql );
+			}
 			return $count;
 		} else {
-			return false;
+			return 0;
 		}
 
 	}
@@ -174,8 +191,17 @@ if( is_admin() ) {
 							"\n";
 
 						}
+						unset( $products, $product );
 					}
-					unset( $products, $product );
+					break;
+
+				/* Orders */
+				/* Coupons */
+				/* Customers */
+				case 'orders':
+				case 'coupons':
+				case 'customers':
+					$csv = do_action( 'wpsc_ce_export_dataset', $datatype );
 					break;
 
 			}

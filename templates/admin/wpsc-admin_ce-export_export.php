@@ -1,19 +1,3 @@
-<?php
-if( isset( $_POST['dataset'] ) )
-	$dataset = $_POST['dataset'];
-else
-	$dataset = 'products';
-
-$products = wpsc_ce_return_count( 'products' );
-$categories = wpsc_ce_return_count( 'orders' );
-$tags = wpsc_ce_return_count( 'tags' );
-$sales = wpsc_ce_return_count( 'orders' );
-$coupons = wpsc_ce_return_count( 'coupons' );
-// $customers = wpsc_ce_return_count( 'customers' );
-
-$product_fields = wpsc_ce_get_product_fields();
-$sale_fields = wpsc_ce_get_sale_fields();
-?>
 <ul class="subsubsub">
 	<li><a href="#export-type"><?php _e( 'Export Type', 'wpsc_ce' ); ?></a> |</li>
 <?php if( $product_fields ) { ?>
@@ -22,7 +6,12 @@ $sale_fields = wpsc_ce_get_sale_fields();
 <?php if( $sale_fields ) { ?>
 	<li><a href="#export-sales"><?php _e( 'Export: Sales', 'wpsc_ce' ); ?></a> |</li>
 <?php } ?>
-	<!-- <li><a href="#export-coupons"><?php _e( 'Export: Coupons', 'wpsc_ce' ); ?></a> |</li> -->
+<?php if( $customer_fields ) { ?>
+	<li><a href="#export-customers"><?php _e( 'Export: Customers', 'wpsc_ce' ); ?></a> |</li>
+<?php } ?>
+<?php if( $coupons ) { ?>
+	<li><a href="#export-coupons"><?php _e( 'Export: Coupons', 'wpsc_ce' ); ?></a> |</li>
+<?php } ?>
 	<li><a href="#export-options"><?php _e( 'Export Options', 'wpsc_ce' ); ?></a></li>
 </ul>
 <br class="clear" />
@@ -38,63 +27,80 @@ $sale_fields = wpsc_ce_get_sale_fields();
 		<div class="postbox" id="export-type">
 			<h3 class="hndle"><?php _e( 'Export Type', 'wpsc_ce' ); ?></h3>
 			<div class="inside">
+				<p class="description"><?php _e( 'Select the data type you want to export.', 'jigo_ce' ); ?></p>
 				<table class="form-table">
 
 					<tr>
 						<th>
+							<input type="radio" id="products" name="dataset" value="products"<?php disabled( $products, 0 ); ?><?php checked( $dataset, 'products' ); ?> />
 							<label for="products"><?php _e( 'Products', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
-							<input type="radio" id="products" name="dataset" value="products"<?php echo disabled( $products, 0 ) . checked( $dataset, 'products' ); ?> /> (<?php echo $products; ?>)
+							<span class="description">(<?php echo $products; ?>)</span>
 						</td>
 					</tr>
 
 					<tr>
 						<th>
+							<input type="radio" id="categories" name="dataset" value="categories"<?php disabled( $categories, 0 ); ?><?php checked( $dataset, 'categories' ); ?> />
 							<label for="categories"><?php _e( 'Categories', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
-							<input type="radio" id="categories" name="dataset" value="categories"<?php echo disabled( $categories, 0 ) . checked( $dataset, 'categories' ); ?> /> (<?php echo $categories; ?>)
+							<span class="description">(<?php echo $categories; ?>)</span>
 						</td>
 					</tr>
 
 					<tr>
 						<th>
+							<input type="radio" id="tags" name="dataset" value="tags"<?php disabled( $tags, 0 ); ?><?php checked( $dataset, 'tags' ); ?> />
 							<label for="tags"><?php _e( 'Tags', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
-							<input type="radio" id="tags" name="dataset" value="tags"<?php echo disabled( $tags, 0 ) . checked( $dataset, 'tags' ); ?> /> (<?php echo $tags; ?>)
+							<span class="description">(<?php echo $tags; ?>)</span>
 						</td>
 					</tr>
 
 					<tr>
 						<th>
+							<input type="radio" id="sales" name="dataset" value="sales"<?php disabled( $sales, 0 ); ?><?php checked( $dataset, 'sales' ); ?>/>
 							<label for="sales"><?php _e( 'Sales', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
-							<input type="radio" id="sales" name="dataset" value="sales"<?php echo disabled( $sales, 0 ) . checked( $dataset, 'sales' ) ?>/> (<?php echo $sales; ?>)
+<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+							<span class="description">(<?php echo $sales; ?>)</span>
+<?php } else { ?>
+							<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
+<?php } ?>
 						</td>
 					</tr>
 
 					<tr>
 						<th>
+							<input type="radio" id="coupons" name="dataset" value="coupons"<?php disabled( $coupons, 0 ); ?><?php checked( $dataset, 'coupons' ); ?> />
 							<label for="coupons"><?php _e( 'Coupons', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
-							<input type="radio" id="coupons" name="dataset" value="coupons"<?php echo disabled( $coupons, 0 ) . checked( $dataset, 'coupons' ); ?> /> (<?php echo $coupons; ?>)
+<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+							<span class="description">(<?php echo $coupons; ?>)</span>
+<?php } else { ?>
+							<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
+<?php } ?>
 						</td>
 					</tr>
 
-<!--
 					<tr>
 						<th>
+							<input type="radio" id="customers" name="dataset" value="customers"<?php disabled( $customers, 0 ); ?><?php checked( $dataset, 'customers' ); ?>/>
 							<label for="customers"><?php _e( 'Customers', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
-							<input type="radio" id="customers" name="dataset" value="customers"<?php echo disabled( $customers, 0 ) . checked( $dataset, 'customers' ); ?>/> (<?php echo $customers; ?>)
+<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+							<span class="description">(<?php echo $customers; ?>)</span>
+<?php } else { ?>
+							<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
+<?php } ?>
 						</td>
 					</tr>
--->
 
 				</table>
 				<p class="submit">
@@ -155,7 +161,7 @@ $sale_fields = wpsc_ce_get_sale_fields();
 					<tr>
 						<td>
 							<label>
-								<input type="checkbox" name="sale_fields[<?php echo $sale_field['name']; ?>]" class="sale_field"<?php checked( $sale_field['default'], 1 ); ?> />
+								<input type="checkbox" name="sale_fields[<?php echo $sale_field['name']; ?>]" class="sale_field"<?php checked( $sale_field['default'], 1 ); ?><?php disabled( $wpsc_cd_exists, false ); ?> />
 								<?php echo $sale_field['label']; ?>
 							</label>
 						</td>
@@ -164,7 +170,11 @@ $sale_fields = wpsc_ce_get_sale_fields();
 	<?php } ?>
 				</table>
 				<p class="submit">
+<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 					<input type="submit" value="<?php _e( 'Export Sales', 'wpsc_ce' ); ?> " class="button-primary" />
+<?php } else { ?>
+					<input type="button" class="button button-disabled" value="<?php _e( 'Export Sales', 'wpsc_ce' ); ?>" />
+<?php } ?>
 				</p>
 			</div>
 		</div>
@@ -174,6 +184,43 @@ $sale_fields = wpsc_ce_get_sale_fields();
 
 <?php } ?>
 
+<?php if( $customer_fields ) { ?>
+	<h3><?php _e( 'Export: Customers', 'wpsc_ce' ); ?></h3>
+	<div id="poststuff">
+
+		<div class="postbox" id="export-customers">
+			<h3 class="hndle"><?php _e( 'Customer Fields', 'wpsc_ce' ); ?></h3>
+			<div class="inside">
+				<p class="description"><?php _e( 'Select the Customer fields you would like to export.', 'wpsc_ce' ); ?></p>
+				<!-- <p><a href="#"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="#"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p> -->
+				<table>
+
+	<?php foreach( $customer_fields as $customer_field ) { ?>
+					<tr>
+						<td>
+							<label>
+								<input type="checkbox" name="customer_fields[<?php echo $customer_field['name']; ?>]" class="customer_field"<?php checked( $customer_field['default'], 1 ); ?><?php disabled( $wpsc_cd_exists, false ); ?> />
+								<?php echo $customer_field['label']; ?>
+							</label>
+						</td>
+					</tr>
+
+	<?php } ?>
+				</table>
+				<p class="submit">
+<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+					<input type="submit" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?> " class="button-primary" />
+<?php } else { ?>
+					<input type="button" class="button button-disabled" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?>" />
+<?php } ?>
+				</p>
+			</div>
+		</div>
+		<!-- .postbox -->
+
+	</div>
+
+<?php } ?>
 	<h3><?php _e( 'Export Options', 'wpsc_ce' ); ?></h3>
 	<div id="poststuff">
 

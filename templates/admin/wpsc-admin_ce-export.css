@@ -11,6 +11,44 @@
 	padding-left:7px;
 }
 
+/* Export */
+
+.wpsc-product_page_wpsc_ce #export-type th {
+	padding:0;
+}
+.wpsc-product_page_wpsc_ce #export-type td {
+	padding:0;
+}
+.wpsc-product_page_wpsc_ce .postbox .submit {
+	padding:0.3em 0;
+}
+
+.wpsc-product_page_wpsc_ce .overview-left {
+	float:left;
+	width:75%;
+}
+.wpsc-product_page_wpsc_ce .overview-right {
+	float:left;
+	width:23%;
+}
+	.wpsc-product_page_wpsc_ce .overview-right h3 {
+		font-size:16px;
+	}
+		.wpsc-product_page_wpsc_ce .overview-right h3 span {
+			float:right;
+			font-size:11px;
+			font-weight:normal;
+		}
+	.wpsc-product_page_wpsc_ce .overview-right p {
+		font-size:12px;
+		color:#333;
+		line-height:1.6em;
+	}
+	.wpsc-product_page_wpsc_ce .overview-right ul {
+		font-size:12px;
+		line-height:1.2em;
+	}
+
 /* Support - Donate / Rate */
 
 .wpsc-product_page_wpsc_ce .support-donate_rate {

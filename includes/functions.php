@@ -33,6 +33,8 @@ if( is_admin() ) {
 			if( in_array( $wpsc_ce['dirname'], wpsc_vl_we_love_your_plugins() ) )
 				$show = false;
 		}
+		if( function_exists( 'wpsc_cd_admin_init' ) )
+			$show = false;
 		if( $show ) {
 			$donate_url = 'http://www.visser.com.au/#donations';
 			$rate_url = 'http://wordpress.org/support/view/plugin-reviews/' . $wpsc_ce['dirname'];
@@ -110,99 +112,6 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_sale_fields( $format = 'full' ) {
-
-		$fields = array();
-		$fields[] = array( 
-			'name' => 'purchase_id',
-			'label' => __( 'Purchase ID', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'purchase_total',
-			'label' => __( 'Purchase Total', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'payment_gateway',
-			'label' => __( 'Payment Gateway', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'shipping_method',
-			'label' => __( 'Shipping Method', 'wpsc_ce' ),
-			'default' => 0
-		);
-		$fields[] = array( 
-			'name' => 'payment_status',
-			'label' => __( 'Payment Status', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'purchase_date',
-			'label' => __( 'Purchase Date', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'tracking_id',
-			'label' => __( 'Tracking ID', 'wpsc_ce' ),
-			'default' => 0
-		);
-		$fields[] = array( 
-			'name' => 'notes',
-			'label' => __( 'Notes', 'wpsc_ce' ),
-			'default' => 0
-		);
-		$fields = array_merge_recursive( $fields, wpsc_ce_get_checkout_fields() );
-
-		/* Allow Plugin/Theme authors to add support for additional Sale columns */
-		$fields = apply_filters( 'wpsc_ce_sale_fields', $fields );
-
-		switch( $format ) {
-
-			case 'summary':
-				$output = array();
-				$size = count( $fields );
-				for( $i = 0; $i < $size; $i++ )
-					$output[$fields[$i]['name']] = 'on';
-				return $output;
-				break;
-
-			case 'full':
-			default:
-				return $fields;
-
-		}
-
-	}
-
-	function wpsc_ce_get_sale_field( $name = null, $format = 'name' ) {
-
-		$output = '';
-		if( $name ) {
-			$fields = wpsc_ce_get_sale_fields();
-			$size = count( $fields );
-			for( $i = 0; $i < $size; $i++ ) {
-				if( $fields[$i]['name'] == $name ) {
-					switch( $format ) {
-
-						case 'name':
-							$output = $fields[$i]['label'];
-							break;
-
-						case 'full':
-							$output = $fields[$i];
-							break;
-
-					}
-					$i = $size;
-				}
-			}
-		}
-		return $output;
-
-	}
-
 	function wpsc_ce_get_checkout_fields( $format = 'full' ) {
 
 		global $wpdb;
@@ -246,7 +155,7 @@ if( is_admin() ) {
 			foreach( $checkout_fields as $checkout_key => $checkout_field ) {
 				$key = str_replace( 'checkout_', '', $checkout_key );
 				if( $key ) {
-					$value_sql = sprintf( "SELECT `value` FROM `" . $wpdb->prefix . "wpsc_submited_form_data` WHERE `form_id` = '%d' LIMIT 1", $key );
+					$value_sql = $wpdb->prepare( "SELECT `value` FROM `" . $wpdb->prefix . "wpsc_submited_form_data` WHERE `form_id` = %d LIMIT 1", $key );
 					$value = $wpdb->get_var( $value_sql );
 					if( $value )
 						$checkout_fields[$checkout_key] = $value;
@@ -274,6 +183,11 @@ if( is_admin() ) {
 			'default' => 1
 		);
 		$fields[] = array(
+			'name' => 'permalink',
+			'label' => __( 'Permalink', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
 			'name' => 'description',
 			'label' => __( 'Description', 'wpsc_ce' ),
 			'default' => 1
@@ -291,11 +205,6 @@ if( is_admin() ) {
 		$fields[] = array(
 			'name' => 'sale_price',
 			'label' => __( 'Sale Price', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'permalink',
-			'label' => __( 'Permalink', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
@@ -393,7 +302,6 @@ if( is_admin() ) {
 			'label' => __( 'Comment Status', 'wpsc_ce' ),
 			'default' => 1
 		);
-
 /*
 		$fields[] = array(
 			'name' => '',
@@ -463,6 +371,7 @@ if( is_admin() ) {
 				'default' => 0
 			);
 		}
+
 		/* All in One SEO Pack */
 		if( function_exists( 'aioseop_activate' ) ) {
 			$fields[] = array( 
@@ -491,6 +400,7 @@ if( is_admin() ) {
 				'default' => 0
 			);
 		}
+
 		/* Custom Fields */
 /*
 		if( function_exists( 'wpsc_cf_install' ) ) {
@@ -503,6 +413,7 @@ if( is_admin() ) {
 			}
 		}
 */
+
 		/* Related Products */
 		if( function_exists( 'wpsc_rp_pd_options_addons' ) ) {
 			$fields[] = array( 
@@ -557,6 +468,190 @@ if( is_admin() ) {
 
 	}
 
+	function wpsc_ce_get_sale_fields( $format = 'full' ) {
+
+		$fields = array();
+		$fields[] = array( 
+			'name' => 'purchase_id',
+			'label' => __( 'Purchase ID', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'purchase_total',
+			'label' => __( 'Purchase Total', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'payment_gateway',
+			'label' => __( 'Payment Gateway', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'shipping_method',
+			'label' => __( 'Shipping Method', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array( 
+			'name' => 'payment_status',
+			'label' => __( 'Payment Status', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'purchase_date',
+			'label' => __( 'Purchase Date', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'tracking_id',
+			'label' => __( 'Tracking ID', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array( 
+			'name' => 'notes',
+			'label' => __( 'Notes', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields = array_merge_recursive( $fields, wpsc_ce_get_checkout_fields() );
+/*
+		$fields[] = array( 
+			'name' => '',
+			'label' => __( '', 'woo_ce' ),
+			'default' => 1
+		);
+*/
+
+		/* Allow Plugin/Theme authors to add support for additional Sale columns */
+		$fields = apply_filters( 'wpsc_ce_sale_fields', $fields );
+
+		switch( $format ) {
+
+			case 'summary':
+				$output = array();
+				$size = count( $fields );
+				for( $i = 0; $i < $size; $i++ )
+					$output[$fields[$i]['name']] = 'on';
+				return $output;
+				break;
+
+			case 'full':
+			default:
+				return $fields;
+
+		}
+
+	}
+
+	function wpsc_ce_get_sale_field( $name = null, $format = 'name' ) {
+
+		$output = '';
+		if( $name ) {
+			$fields = wpsc_ce_get_sale_fields();
+			$size = count( $fields );
+			for( $i = 0; $i < $size; $i++ ) {
+				if( $fields[$i]['name'] == $name ) {
+					switch( $format ) {
+
+						case 'name':
+							$output = $fields[$i]['label'];
+							break;
+
+						case 'full':
+							$output = $fields[$i];
+							break;
+
+					}
+					$i = $size;
+				}
+			}
+		}
+		return $output;
+
+	}
+
+	function wpsc_ce_get_customer_fields( $format = 'full' ) {
+
+		$fields = array();
+		$fields[] = array( 
+			'name' => 'full_name',
+			'label' => __( 'Full Name', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'first_name',
+			'label' => __( 'First Name', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'last_name',
+			'label' => __( 'Last Name', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'street_address',
+			'label' => __( 'Street Address', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'city',
+			'label' => __( 'City', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'state',
+			'label' => __( 'State', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'zip_code',
+			'label' => __( 'ZIP Code', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'country',
+			'label' => __( 'Country', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'phone_number',
+			'label' => __( 'Phone Number', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array( 
+			'name' => 'email',
+			'label' => __( 'E-mail Address', 'wpsc_ce' ),
+			'default' => 1
+		);
+		return $fields;
+
+	}
+
+	function wpsc_ce_get_customer_field( $name = null, $format = 'name' ) {
+
+		$output = '';
+		if( $name ) {
+			$fields = wpsc_ce_get_customer_fields();
+			$size = count( $fields );
+			for( $i = 0; $i < $size; $i++ ) {
+				if( $fields[$i]['name'] == $name ) {
+					switch( $format ) {
+
+						case 'name':
+							$output = $fields[$i]['label'];
+							break;
+
+						case 'full':
+							$output = $fields[$i];
+							break;
+
+					}
+					$i = $size;
+				}
+			}
+		}
+		return $output;
+
+	}
+
 	function wpsc_ce_admin_active_tab( $tab_name = null, $tab = null ) {
 
 		if( isset( $_GET['tab'] ) && !$tab )
@@ -573,19 +668,59 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_tab_template( $tab ) {
+	function wpsc_ce_tab_template( $tab = '' ) {
 
 		global $wpsc_ce;
 
+		if( !$tab )
+			$tab = 'overview';
+
+		/* Store Exporter Deluxe */
+		$wpsc_cd_exists = false;
+		if( !function_exists( 'wpsc_cd_admin_init' ) ) {
+			$wpsc_cd_url = 'http://www.visser.com.au/wp-ecommerce/plugins/exporter-deluxe/';
+			$wpsc_cd_link = sprintf( '<a href="%s" target="_blank">' . __( 'Store Exporter Deluxe', 'wpsc_ce' ) . '</a>', $wpsc_cd_url );
+		} else {
+			$wpsc_cd_exists = true;
+		}
+
 		switch( $tab ) {
 
-			case 'overview':
 			case 'export':
-			case 'tools':
-				 break;
+				if( isset( $_POST['dataset'] ) )
+					$dataset = $_POST['dataset'];
+				else
+					$dataset = 'products';
 
-			default:
-				$tab = 'overview';
+				$products = wpsc_ce_return_count( 'products' );
+				$categories = wpsc_ce_return_count( 'orders' );
+				$tags = wpsc_ce_return_count( 'tags' );
+				$sales = wpsc_ce_return_count( 'orders' );
+				$coupons = wpsc_ce_return_count( 'coupons' );
+				$customers = wpsc_ce_return_count( 'customers' );
+
+				$product_fields = wpsc_ce_get_product_fields();
+				$sale_fields = wpsc_ce_get_sale_fields();
+				$customer_fields = wpsc_ce_get_customer_fields();
+				break;
+
+			case 'tools':
+				/* Product Importer Deluxe */
+				if( function_exists( 'wpsc_pd_init' ) ) {
+					$wpsc_pd_url = add_query_arg( 'page', 'wpsc_pd' );
+					$wpsc_pd_target = false;
+				} else {
+					$wpsc_pd_url = 'http://www.visser.com.au/wp-ecommerce/plugins/product-importer-deluxe/';
+					$wpsc_pd_target = ' target="_blank"';
+				}
+				/* Coupon Importer Deluxe */
+				if( function_exists( 'wpsc_ci_init' ) ) {
+					$wpsc_ci_url = add_query_arg( 'page', 'wpsc_ci' );
+					$wpsc_ci_target = false;
+				} else {
+					$wpsc_ci_url = 'http://www.visser.com.au/wp-ecommerce/plugins/coupon-importer-deluxe/';
+					$wpsc_ci_target = ' target="_blank"';
+				}
 				break;
 
 		}

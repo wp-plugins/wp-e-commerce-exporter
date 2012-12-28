@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.3.8
+Version: 1.4
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -47,7 +47,7 @@ if( is_admin() ) {
 		static $this_plugin;
 		if( !$this_plugin ) $this_plugin = plugin_basename( __FILE__ );
 		if( $file == $this_plugin ) {
-			$settings_link = '<a href="' . add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' ) . '">' . __( 'Export', 'wpsc_ce' ) . '</a>';
+			$settings_link = sprintf( '<a href="%s">' . __( 'Export', 'wpsc_ce' ) . '</a>', add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' ) );
 			array_unshift( $links, $settings_link );
 		}
 		return $links;
@@ -60,8 +60,6 @@ if( is_admin() ) {
 		global $wpsc_ce, $export;
 
 		include_once( 'includes/formatting.php' );
-
-		wp_enqueue_script( 'wpsc_ce_scripts', plugins_url( '/templates/admin/wpsc-admin_ce-export.js', __FILE__ ), array( 'jquery' ) );
 
 		$action = wpsc_get_action();
 		switch( $action ) {
@@ -107,10 +105,21 @@ if( is_admin() ) {
 				break;
 
 		}
-		wp_enqueue_style( 'wpsc_ce_styles', plugins_url( '/templates/admin/wpsc-admin_ce-export.css', __FILE__ ) );
 
 	}
 	add_action( 'admin_init', 'wpsc_ce_admin_init' );
+
+	function wpsc_ce_enqueue_scripts( $hook ) {
+
+		/* Export */
+		$page = 'wpsc-product_page_wpsc_ce';
+		if( $page == $hook ) {
+			wp_enqueue_style( 'wpsc_ce_styles', plugins_url( '/templates/admin/wpsc-admin_ce-export.css', __FILE__ ) );
+			wp_enqueue_script( 'wpsc_ce_scripts', plugins_url( '/templates/admin/wpsc-admin_ce-export.js', __FILE__ ), array( 'jquery' ) );
+		}
+
+	}
+	add_action( 'admin_enqueue_scripts', 'wpsc_ce_enqueue_scripts' );
 
 	function wpsc_ce_store_admin_menu() {
 
@@ -124,7 +133,8 @@ if( is_admin() ) {
 
 		global $wpdb, $wpsc_ce;
 
-		wpsc_ce_template_header();
+		$title = apply_filters( 'wpsc_ce_template_header', '' );
+		wpsc_ce_template_header( $title );
 		wpsc_ce_support_donate();
 		$action = wpsc_get_action();
 		switch( $action ) {

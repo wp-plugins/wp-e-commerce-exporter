@@ -42,13 +42,13 @@ if( is_admin() ) {
 				break;
 
 			case 'variations':
-				$term_taxonomy = 'wpsc-variation';
-				$count_sql = "SELECT COUNT(`term_id`) FROM `" . $wpdb->term_taxonomy . "` WHERE `taxonomy` = '" . $term_taxonomy . "'";
+				$post_type = 'wpsc-variation';
+				$count = wp_count_posts( $post_type );
 				break;
 
 			case 'images':
 				$post_type = 'attachment';
-				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->posts . "` WHERE `post_type` = '" . $post_type . "' AND `post_mime_type` LIKE 'image/%'";
+				$count_sql = $wpdb->prepare( "SELECT COUNT(`id`) FROM `" . $wpdb->posts . "` WHERE `post_type` = '%s' AND `post_mime_type` LIKE 'image/%'", $post_type );
 				break;
 
 			case 'files':
@@ -56,23 +56,24 @@ if( is_admin() ) {
 				$count = wp_count_posts( $post_type );
 				break;
 
-			case 'tags':
-				$term_taxonomy = 'product_tag';
-				$count = wp_count_terms( $term_taxonomy );
-				break;
-
 			case 'categories':
 				$term_taxonomy = 'wpsc_product_category';
 				$count = wp_count_terms( $term_taxonomy );
 				break;
 
-			case 'coupons':
-				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->prefix . "wpsc_coupon_codes`";
+			case 'tags':
+				$term_taxonomy = 'product_tag';
+				$count = wp_count_terms( $term_taxonomy );
 				break;
 
 			case 'orders':
-				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->prefix . "wpsc_purchase_logs`";
+			case 'coupons':
+			case 'customers':
+				if( function_exists( 'wpsc_cd_return_count' ) )
+					$count = wpsc_cd_return_count( $dataset );
 				break;
+
+			/* 3rd Party */
 
 			case 'wishlist':
 				$post_type = 'wpsc-wishlist';
@@ -84,7 +85,9 @@ if( is_admin() ) {
 				$count = wp_count_posts( $post_type );
 				break;
 
-			case 'credit-card':
+			case 'credit-cards':
+				$post_type = 'offline_payment';
+				$count = wp_count_posts( $post_type );
 				break;
 
 			case 'related-products':
@@ -115,11 +118,15 @@ if( is_admin() ) {
 		global $wpdb, $wpsc_ce, $export;
 
 		$csv = '';
+		$separator = $export->delimiter;
+
 		foreach( $dataset as $datatype ) {
 
 			$csv = null;
+
 			switch( $datatype ) {
 
+				/* Products */
 				case 'products':
 					$fields = wpsc_ce_get_product_fields( 'summary' );
 					$export->fields = array_intersect_assoc( $fields, $export->fields );
@@ -132,7 +139,7 @@ if( is_admin() ) {
 						if( $i == ( $size - 1 ) )
 							$csv .= escape_csv_value( $export->columns[$i] ) . "\n";
 						else
-							$csv .= escape_csv_value( $export->columns[$i] ) . $export->delimiter;
+							$csv .= escape_csv_value( $export->columns[$i] ) . $separator;
 					}
 					$products = wpsc_ce_get_products();
 					if( $products ) {
@@ -149,7 +156,7 @@ if( is_admin() ) {
 										$csv .= escape_csv_value( $product->$key );
 									}
 								}
-								$csv .= $export->delimiter;
+								$csv .= $separator;
 							}
 							$csv .= "\n";
 
@@ -158,6 +165,7 @@ if( is_admin() ) {
 					}
 					break;
 
+				/* Categories */
 				case 'categories':
 					$term_taxonomy = 'wpsc_product_category';
 					$args = array(
@@ -172,7 +180,7 @@ if( is_admin() ) {
 							if( $i == ( count( $columns ) - 1 ) )
 								$csv .= $columns[$i] . "\n";
 							else
-								$csv .= $columns[$i] . $export->delimiter;
+								$csv .= $columns[$i] . $separator;
 						}
 						foreach( $categories as $category ) {
 							$csv .= 
@@ -184,10 +192,13 @@ if( is_admin() ) {
 					}
 					break;
 
+				/* Tags */
 				case 'tags':
 					$term_taxonomy = 'product_tag';
-					$tags_sql = "SELECT terms.`name` as name FROM `" . $wpdb->term_taxonomy . "` as term_taxonomy, `" . $wpdb->terms . "` as terms WHERE term_taxonomy.term_id = terms.term_id AND term_taxonomy.`taxonomy` = '" . $term_taxonomy . "' ORDER BY terms.`name` ASC";
-					$tags = $wpdb->get_results( $tags_sql );
+					$args = array(
+						'hide_empty' => 0
+					);
+					$tags = get_terms( $term_taxonomy, $args );
 					if( $tags ) {
 						$columns = array(
 							__( 'Tags', 'wpsc_ce' )
@@ -196,105 +207,26 @@ if( is_admin() ) {
 							if( $i == ( count( $columns ) - 1 ) )
 								$csv .= $columns[$i] . "\n";
 							else
-								$csv .= $columns[$i] . $export->delimiter;
+								$csv .= $columns[$i] . $separator;
 						}
 						foreach( $tags as $tag ) {
 							$csv .= 
 								$tag->name
 								 . 
 							"\n";
+
 						}
 						unset( $tags, $tag );
 					}
 					break;
 
+				/* Orders */
+				/* Coupons */
+				/* Customers */
 				case 'orders':
-					$fields = wpsc_ce_get_sale_fields( 'summary' );
-					$export->fields = array_intersect_assoc( $fields, $export->fields );
-					if( $export->fields ) {
-						foreach( $export->fields as $key => $field )
-							$export->columns[] = wpsc_ce_get_sale_field( $key );
-					}
-					$size = count( $export->columns );
-					for( $i = 0; $i < $size; $i++ ) {
-						if( $i == ( $size - 1 ) )
-							$csv .= '"' . $export->columns[$i] . "\"\n";
-						else
-							$csv .= '"' . $export->columns[$i] . '"' . $export->delimiter;
-					}
-					$orders = wpsc_ce_get_orders();
-					if( $orders ) {
-						foreach( $orders as $order ) {
-
-							foreach( $export->fields as $key => $field ) {
-								if( isset( $order->$key ) ) {
-									if( is_array( $value ) ) {
-										foreach( $value as $array_key => $array_value ) {
-											if( !is_array( $array_value ) )
-												$csv .= escape_csv_value( $array_value );
-										}
-									} else {
-										$csv .= escape_csv_value( $order->$key );
-									}
-								}
-								$csv .= $export->delimiter;
-							}
-							$csv .= "\n";
-
-						}
-						unset( $orders, $order );
-					}
-					break;
-
 				case 'coupons':
-					$coupons = wpsc_ce_get_coupons();
-					if( $coupons ) {
-						$columns = array(
-							__( 'Coupon Code', 'wpsc_ce' ),
-							__( 'Coupon Value', 'wpsc_ce' ),
-							__( 'Use Once', 'wpsc_ce' ),
-							__( 'Active', 'wpsc_ce' ),
-							__( 'Apply to All Products', 'wpsc_ce' ),
-							__( 'Valid From', 'wpsc_ce' ),
-							__( 'Valid To', 'wpsc_ce' )
-						);
-						for( $i = 0; $i < count( $columns ); $i++ ) {
-							if( $i == ( count( $columns ) - 1 ) )
-								$csv .= $columns[$i] . "\n";
-							else
-								$csv .= $columns[$i] . $export->delimiter;
-						}
-						foreach( $coupons as $coupon ) {
-							switch( $coupon->is_percentage ) {
-
-								case '0':
-									/* Dollar-based value */
-									$coupon->coupon_value = '$' . $coupon->coupon_value;
-									break;
-
-								case '1':
-									/* Percentage-based value */
-									$coupon->coupon_value = (int)$coupon->coupon_value . '%';
-									break;
-
-								case '2':
-									$coupon->coupon_value = __( 'Free Shipping', 'wpsc_ce' );
-									/* Free Shipping */
-									break;
-
-							}
-							$csv .= 
-								$coupon->coupon_code . $export->delimiter . 
-								$coupon->coupon_value . $export->delimiter . 
-								$coupon->use_once . $export->delimiter . 
-								$coupon->active . $export->delimiter . 
-								$coupon->every_product . $export->delimiter . 
-								$coupon->start . $export->delimiter . 
-								$coupon->expiry . 
-							"\n";
-						}
-						unset( $coupons, $coupon );
-					}
+				case 'customers':
+					$csv = apply_filters( 'wpsc_ce_export_dataset', $datatype, $export );
 					break;
 
 			}
@@ -305,44 +237,6 @@ if( is_admin() ) {
 				echo $csv;
 
 		}
-
-	}
-
-	function wpsc_ce_get_orders() {
-
-		global $wpdb;
-
-		$orders_sql = "SELECT * FROM `" . $wpdb->prefix . "wpsc_purchase_logs`";
-		$orders = $wpdb->get_results( $orders_sql );
-		if( $orders ) {
-			foreach( $orders as $key => $order ) {
-				$orders[$key]->purchase_id = $order->id;
-				$orders[$key]->purchase_total = $order->totalprice;
-				$orders[$key]->payment_gateway = $order->gateway;
-				$orders[$key]->payment_status = $order->processed;
-				$orders[$key]->purchase_date = mysql2date( 'd/m/Y', $order->date );
-				$orders[$key]->tracking_id = $order->track_id;
-				$checkout_fields = wpsc_ce_get_checkout_fields( 'summary' );
-				if( $checkout_fields ) {
-					$checkout_form = wpsc_ce_get_submited_form_data( $checkout_fields );
-					if( $checkout_form ) {
-						foreach( $checkout_form as $checkout_key => $checkout_field )
-							$orders[$key]->$checkout_key = $checkout_field;
-					}
-				}
-			}
-		}
-		return $orders;
-
-	}
-
-	function wpsc_ce_get_coupons() {
-
-		global $wpdb;
-
-		$coupons_sql = "SELECT `coupon_code`, `value` as coupon_value, `is-percentage` as is_percenage, `use-once` as use_once, `active`, `every_product`, `start`, `expiry` FROM `" . $wpdb->prefix . "wpsc_coupon_codes`";
-		$coupons = $wpdb->get_results( $coupons_sql );
-		return $coupons;
 
 	}
 
@@ -468,7 +362,7 @@ if( is_admin() ) {
 
 		global $wpdb, $wpsc_ce, $export;
 
-		$images_sql = "SELECT guid FROM `" . $wpdb->posts . "` WHERE `post_parent` = " . $product_id . " AND `post_type` = 'attachment' AND `post_mime_type` LIKE 'image/%'";
+		$images_sql = $wpdb->prepare( "SELECT guid FROM `" . $wpdb->posts . "` WHERE `post_parent` = %d AND `post_type` = 'attachment' AND `post_mime_type` LIKE 'image/%'", $product_id );
 		$images = $wpdb->get_results( $images_sql );
 		if( $images ) {
 			$output = '';

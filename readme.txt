@@ -2,10 +2,10 @@
 
 Contributors: visser
 Donate link: http://www.visser.com.au/#donations
-Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv
+Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 3.4.2
-Stable tag: 1.3.8
+Tested up to: 3.5
+Stable tag: 1.4
 
 == Description ==
 
@@ -13,13 +13,15 @@ Export store details out of WP e-Commerce into a CSV-formatted file.
 
 Features include:
 
-* Export Products(*)
+* Export Products (*)
 * Export Categories
 * Export Tags
-* Export Sales
-* Export Coupons
+* Export Sales (**)
+* Export Coupons (**)
+* Export Customers (**)
 
 (*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products and more.
+(**) Requries the Pro upgrade to enable additional store export functionality.
 
 For more information visit: http://www.visser.com.au/wp-ecommerce/
 
@@ -44,6 +46,15 @@ If you have any problems, questions or suggestions please join the members discu
 http://www.visser.com.au/wp-ecommerce/forums/
 
 == Changelog ==
+
+= 1.4 =
+* Added: Customers support
+* Added: Integration with Exporter Deluxe
+
+= 1.3.9 =
+* Changed: Moved styles to admin_enqueue_scripts
+* Changed: Categories now using wp_terms
+* Changed: Options engine
 
 = 1.3.8 =
 * Fixed: Export of Tags

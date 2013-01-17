@@ -122,8 +122,7 @@ if( is_admin() ) {
 
 		foreach( $dataset as $datatype ) {
 
-			$csv = null;
-
+			$csv = '';
 			switch( $datatype ) {
 
 				/* Products */
@@ -228,6 +227,7 @@ if( is_admin() ) {
 					break;
 
 			}
+			$csv = utf8_decode( $csv );
 
 			if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
 				echo '<code>' . str_replace( "\n", '<br />', $csv ) . '</code>' . '<br />';

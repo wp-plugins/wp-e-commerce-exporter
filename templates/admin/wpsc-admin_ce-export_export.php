@@ -303,6 +303,22 @@
 						</td>
 					</tr>
 
+<!--
+					<tr>
+						<th>
+							<label for="encoding"><?php _e( 'Encoding', 'wpsc_ce' ); ?>: </label>
+						</th>
+						<td>
+							<select id="encoding" name="encoding">
+								<option><?php _e( 'System default', 'wpsc_ce' ); ?></option>
+<?php foreach( mb_list_encodings() as $chr ) { ?>
+								<option value="<?php echo $chr; ?>"><?php echo $chr; ?></option>
+<?php } ?>
+							</select>
+						</td>
+					</tr>
+-->
+
 <?php if( !ini_get( 'safe_mode' ) ) { ?>
 					<tr>
 						<th>

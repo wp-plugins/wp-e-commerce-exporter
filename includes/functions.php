@@ -51,11 +51,13 @@ if( is_admin() ) {
 	function wpsc_ce_generate_csv_header( $dataset = '' ) {
 
 		$filename = 'wpsc-export_' . $dataset . '.csv';
-
-		header( 'Content-type: application/csv' );
-		header( 'Content-Disposition: attachment; filename=' . $filename );
-		header( 'Pragma: no-cache' );
-		header( 'Expires: 0' );
+		if( $filename ) {
+			header( 'Content-type: application/csv;' );
+			// header( 'Content-type: application/csv; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename=' . $filename );
+			header( 'Pragma: no-cache' );
+			header( 'Expires: 0' );
+		}
 
 	}
 
@@ -75,27 +77,6 @@ if( is_admin() ) {
 		}
 		return $value;
 
-	}
-
-	function wpsc_ce_clean_html( $data ) {
-
-		$output_encoding = 'ISO-8859-1';
-		$data = mb_convert_encoding( trim( $data ), 'UTF-8', $output_encoding );
-		$data = str_replace( ',', '&#44;', $data );
-		$data = str_replace( "\n", '<br />', $data );
-
-		return $data;
-
-	}
-
-	if( !function_exists( 'escape_csv_value' ) ) {
-		function escape_csv_value( $value ) {
-
-			$value = str_replace( '"', '""', $value ); // First off escape all " and make them ""
-			$value = str_replace( PHP_EOL, ' ', $value );
-			return '"' . $value . '"'; // If I have new lines or commas escape them
-
-		}
 	}
 
 	function wpsc_ce_post_statuses() {

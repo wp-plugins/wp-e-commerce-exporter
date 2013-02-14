@@ -48,6 +48,15 @@ if( is_admin() ) {
 
 	}
 
+	/* WordPress Administration menu */
+	function wpsc_ce_add_modules_admin_pages( $page_hooks, $base_page ) {
+
+		$page_hooks[] = add_submenu_page( $base_page, __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
+		return $page_hooks;
+
+	}
+	add_filter( 'wpsc_additional_pages', 'wpsc_ce_add_modules_admin_pages', 10, 2 );
+
 	function wpsc_ce_generate_csv_header( $dataset = '' ) {
 
 		$filename = 'wpsc-export_' . $dataset . '.csv';

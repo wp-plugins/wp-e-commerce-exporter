@@ -3,15 +3,6 @@ if( is_admin() ) {
 
 	/* Start of: WordPress Administration */
 
-	/* WordPress Administration menu */
-	function wpsc_ce_add_modules_admin_pages( $page_hooks, $base_page ) {
-
-		$page_hooks[] = add_submenu_page( $base_page, __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
-		return $page_hooks;
-
-	}
-	add_filter( 'wpsc_additional_pages', 'wpsc_ce_add_modules_admin_pages', 10, 2 );
-
 	function wpsc_ce_admin_page_item( $menu = array() ) {
 
 		global $wpsc_ce;
@@ -310,6 +301,10 @@ if( is_admin() ) {
 					$products[$key]->international_shipping = $product_data['shipping']['international'];
 				$products[$key]->product_status = wpsc_ce_format_product_status( $product->post_status );
 				$products[$key]->comment_status = wpsc_ce_format_comment_status( $product->comment_status );
+
+				/* Allow Plugin/Theme authors to add support for additional Product columns */
+				$products[$key] = apply_filters( 'wpsc_ce_product_data', $products[$key] );
+
 				/* Advanced Google Product Feed */
 				if( function_exists( 'wpec_gpf_install' ) ) {
 					$products[$key]->gpf_data = get_post_meta( $product->ID, '_wpec_gpf_data', true );
@@ -358,16 +353,35 @@ if( is_admin() ) {
 
 	function wpsc_ce_get_product_images( $product_id ) {
 
-		global $wpdb, $wpsc_ce, $export;
+		global $export;
 
-		$images_sql = $wpdb->prepare( "SELECT guid FROM `" . $wpdb->posts . "` WHERE `post_parent` = %d AND `post_type` = 'attachment' AND `post_mime_type` LIKE 'image/%'", $product_id );
-		$images = $wpdb->get_results( $images_sql );
+		$post_type = 'attachment';
+		$args = array(
+			'post_type' => $post_type,
+			'post_parent' => $product_id,
+			'post_status' => 'inherit',
+			'post_mime_type' => 'image',
+			'numberposts' => -1
+		);
+		$images = get_children( $args );
 		if( $images ) {
 			$output = '';
-			foreach( $images as $image )
+			/* Check for Featured Image */
+			$featured_image = get_post_meta( $product_id, '_thumbnail_id', true );
+			if( $featured_image ) {
+				$image = get_post( $featured_image );
 				$output .= $image->guid . $export->category_separator;
+			} else {
+				$featured_image = 0;
+			}
+			foreach( $images as $image ) {
+				if( $featured_image <> $image->ID )
+					$output .= $image->guid . $export->category_separator;
+			}
+			unset( $featured_image );
 			$output = substr( $output, 0, -1 );
 		}
+		unset( $images );
 		return $output;
 
 	}

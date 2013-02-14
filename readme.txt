@@ -5,7 +5,7 @@ Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.5
-Stable tag: 1.4.2
+Stable tag: 1.4.3
 
 == Description ==
 
@@ -46,6 +46,10 @@ If you have any problems, questions or suggestions please join the members discu
 http://www.visser.com.au/wp-ecommerce/forums/
 
 == Changelog ==
+
+= 1.4.3 =
+* Fixed: Image column contents
+* Added: Featured image support for Image column
 
 = 1.4.2 =
 * Changed: Removed HTML filter

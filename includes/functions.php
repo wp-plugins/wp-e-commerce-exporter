@@ -3,6 +3,15 @@ if( is_admin() ) {
 
 	/* Start of: WordPress Administration */
 
+	/* WordPress Administration menu */
+	function wpsc_ce_add_modules_admin_pages( $page_hooks, $base_page ) {
+
+		$page_hooks[] = add_submenu_page( $base_page, __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
+		return $page_hooks;
+
+	}
+	add_filter( 'wpsc_additional_pages', 'wpsc_ce_add_modules_admin_pages', 10, 2 );
+
 	function wpsc_ce_template_header( $title = '', $icon = 'tools' ) {
 
 		global $wpsc_ce;
@@ -48,15 +57,6 @@ if( is_admin() ) {
 
 	}
 
-	/* WordPress Administration menu */
-	function wpsc_ce_add_modules_admin_pages( $page_hooks, $base_page ) {
-
-		$page_hooks[] = add_submenu_page( $base_page, __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
-		return $page_hooks;
-
-	}
-	add_filter( 'wpsc_additional_pages', 'wpsc_ce_add_modules_admin_pages', 10, 2 );
-
 	function wpsc_ce_generate_csv_header( $dataset = '' ) {
 
 		$filename = 'wpsc-export_' . $dataset . '.csv';
@@ -67,24 +67,6 @@ if( is_admin() ) {
 			header( 'Pragma: no-cache' );
 			header( 'Expires: 0' );
 		}
-
-	}
-
-	function wpsc_ce_has_value( $value = '' ) {
-
-		switch( $value ) {
-
-			case '0':
-				$value = null;
-				break;
-
-			default:
-				if( is_string( $value ) )
-					$value = htmlspecialchars_decode( $value );
-				break;
-
-		}
-		return $value;
 
 	}
 
@@ -229,6 +211,11 @@ if( is_admin() ) {
 		);
 		$fields[] = array(
 			'name' => 'length',
+			'label' => __( 'Length', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'length_unit',
 			'label' => __( 'Length Unit', 'wpsc_ce' ),
 			'default' => 1
 		);
@@ -364,27 +351,27 @@ if( is_admin() ) {
 
 		/* All in One SEO Pack */
 		if( function_exists( 'aioseop_activate' ) ) {
-			$fields[] = array( 
+			$fields[] = array(
 				'name' => 'aioseop_keywords',
 				'label' => __( 'All in One SEO - Keywords', 'wpsc_ce' ),
 				'default' => 0
 			);
-			$fields[] = array( 
+			$fields[] = array(
 				'name' => 'aioseop_description',
 				'label' => __( 'All in One SEO - Description', 'wpsc_ce' ),
 				'default' => 0
 			);
-			$fields[] = array( 
+			$fields[] = array(
 				'name' => 'aioseop_title',
 				'label' => __( 'All in One SEO - Title', 'wpsc_ce' ),
 				'default' => 0
 			);
-			$fields[] = array( 
+			$fields[] = array(
 				'name' => 'aioseop_title_attributes',
 				'label' => __( 'All in One SEO - Title Attributes', 'wpsc_ce' ),
 				'default' => 0
 			);
-			$fields[] = array( 
+			$fields[] = array(
 				'name' => 'aioseop_menu_label',
 				'label' => __( 'All in One SEO - Menu Label', 'wpsc_ce' ),
 				'default' => 0
@@ -406,7 +393,7 @@ if( is_admin() ) {
 
 		/* Related Products */
 		if( function_exists( 'wpsc_rp_pd_options_addons' ) ) {
-			$fields[] = array( 
+			$fields[] = array(
 				'name' => 'related_products',
 				'label' => __( 'Related Products', 'wpsc_ce' ),
 				'default' => 0
@@ -436,6 +423,161 @@ if( is_admin() ) {
 		$output = '';
 		if( $name ) {
 			$fields = wpsc_ce_get_product_fields();
+			$size = count( $fields );
+			for( $i = 0; $i < $size; $i++ ) {
+				if( $fields[$i]['name'] == $name ) {
+					switch( $format ) {
+
+						case 'name':
+							$output = $fields[$i]['label'];
+							break;
+
+						case 'full':
+							$output = $fields[$i];
+							break;
+
+					}
+					$i = $size;
+				}
+			}
+		}
+		return $output;
+
+	}
+
+	function wpsc_ce_get_order_fields( $format = 'full' ) {
+
+		$fields = array();
+		$fields[] = array(
+			'name' => 'purchase_id',
+			'label' => __( 'Purchase ID', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'purchase_total',
+			'label' => __( 'Purchase Total', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'payment_gateway',
+			'label' => __( 'Payment Gateway', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_method',
+			'label' => __( 'Shipping Method', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'payment_status',
+			'label' => __( 'Payment Status', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'purchase_date',
+			'label' => __( 'Purchase Date', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'purchase_time',
+			'label' => __( 'Purchase Time', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'tracking_id',
+			'label' => __( 'Tracking ID', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'transaction_id',
+			'label' => __( 'Transaction ID', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'session_id',
+			'label' => __( 'Session ID', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'order_personalisation',
+			'label' => __( 'Order Personalisation', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'user_id',
+			'label' => __( 'User ID', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'username',
+			'label' => __( 'Username', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'notes',
+			'label' => __( 'Notes', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'referral',
+			'label' => __( 'Referral Source', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'product_id',
+			'label' => __( 'Product ID', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'product_name',
+			'label' => __( 'Product Name', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'product_quantity',
+			'label' => __( 'Product Quantity', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'product_personalisation',
+			'label' => __( 'Product Personalisation', 'woo_ce' ),
+			'default' => 0
+		);
+		$fields = array_merge_recursive( $fields, wpsc_ce_get_checkout_fields() );
+/*
+		$fields[] = array(
+			'name' => '',
+			'label' => __( '', 'woo_ce' ),
+			'default' => 1
+		);
+*/
+
+		/* Allow Plugin/Theme authors to add support for additional Sale columns */
+		$fields = apply_filters( 'wpsc_ce_order_fields', $fields );
+
+		switch( $format ) {
+
+			case 'summary':
+				$output = array();
+				$size = count( $fields );
+				for( $i = 0; $i < $size; $i++ )
+					$output[$fields[$i]['name']] = 'on';
+				return $output;
+				break;
+
+			case 'full':
+			default:
+				return $fields;
+
+		}
+
+	}
+
+	function wpsc_ce_get_order_field( $name = null, $format = 'name' ) {
+
+		$output = '';
+		if( $name ) {
+			$fields = wpsc_ce_get_order_fields();
 			$size = count( $fields );
 			for( $i = 0; $i < $size; $i++ ) {
 				if( $fields[$i]['name'] == $name ) {
@@ -552,155 +694,55 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_sale_fields( $format = 'full' ) {
-
-		$fields = array();
-		$fields[] = array( 
-			'name' => 'purchase_id',
-			'label' => __( 'Purchase ID', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'purchase_total',
-			'label' => __( 'Purchase Total', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'payment_gateway',
-			'label' => __( 'Payment Gateway', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'shipping_method',
-			'label' => __( 'Shipping Method', 'wpsc_ce' ),
-			'default' => 0
-		);
-		$fields[] = array( 
-			'name' => 'payment_status',
-			'label' => __( 'Payment Status', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'purchase_date',
-			'label' => __( 'Purchase Date', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'tracking_id',
-			'label' => __( 'Tracking ID', 'wpsc_ce' ),
-			'default' => 0
-		);
-		$fields[] = array( 
-			'name' => 'notes',
-			'label' => __( 'Notes', 'wpsc_ce' ),
-			'default' => 0
-		);
-		$fields = array_merge_recursive( $fields, wpsc_ce_get_checkout_fields() );
-/*
-		$fields[] = array( 
-			'name' => '',
-			'label' => __( '', 'woo_ce' ),
-			'default' => 1
-		);
-*/
-
-		/* Allow Plugin/Theme authors to add support for additional Sale columns */
-		$fields = apply_filters( 'wpsc_ce_sale_fields', $fields );
-
-		switch( $format ) {
-
-			case 'summary':
-				$output = array();
-				$size = count( $fields );
-				for( $i = 0; $i < $size; $i++ )
-					$output[$fields[$i]['name']] = 'on';
-				return $output;
-				break;
-
-			case 'full':
-			default:
-				return $fields;
-
-		}
-
-	}
-
-	function wpsc_ce_get_sale_field( $name = null, $format = 'name' ) {
-
-		$output = '';
-		if( $name ) {
-			$fields = wpsc_ce_get_sale_fields();
-			$size = count( $fields );
-			for( $i = 0; $i < $size; $i++ ) {
-				if( $fields[$i]['name'] == $name ) {
-					switch( $format ) {
-
-						case 'name':
-							$output = $fields[$i]['label'];
-							break;
-
-						case 'full':
-							$output = $fields[$i];
-							break;
-
-					}
-					$i = $size;
-				}
-			}
-		}
-		return $output;
-
-	}
-
 	function wpsc_ce_get_customer_fields( $format = 'full' ) {
 
 		$fields = array();
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'full_name',
 			'label' => __( 'Full Name', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'first_name',
 			'label' => __( 'First Name', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'last_name',
 			'label' => __( 'Last Name', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'street_address',
 			'label' => __( 'Street Address', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'city',
 			'label' => __( 'City', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'state',
 			'label' => __( 'State', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'zip_code',
 			'label' => __( 'ZIP Code', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'country',
 			'label' => __( 'Country', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'phone_number',
 			'label' => __( 'Phone Number', 'wpsc_ce' ),
 			'default' => 1
 		);
-		$fields[] = array( 
+		$fields[] = array(
 			'name' => 'email',
 			'label' => __( 'E-mail Address', 'wpsc_ce' ),
 			'default' => 1
@@ -771,20 +813,19 @@ if( is_admin() ) {
 		switch( $tab ) {
 
 			case 'export':
+				$dataset = 'products';
 				if( isset( $_POST['dataset'] ) )
 					$dataset = $_POST['dataset'];
-				else
-					$dataset = 'products';
 
 				$products = wpsc_ce_return_count( 'products' );
-				$categories = wpsc_ce_return_count( 'orders' );
+				$categories = wpsc_ce_return_count( 'categories' );
 				$tags = wpsc_ce_return_count( 'tags' );
-				$sales = wpsc_ce_return_count( 'orders' );
+				$orders = wpsc_ce_return_count( 'orders' );
 				$coupons = wpsc_ce_return_count( 'coupons' );
 				$customers = wpsc_ce_return_count( 'customers' );
 
 				$product_fields = wpsc_ce_get_product_fields();
-				$sale_fields = wpsc_ce_get_sale_fields();
+				$order_fields = wpsc_ce_get_order_fields();
 				$customer_fields = wpsc_ce_get_customer_fields();
 				$coupon_fields = wpsc_ce_get_coupon_fields();
 				break;

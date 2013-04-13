@@ -4,8 +4,8 @@ Contributors: visser
 Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 3.5
-Stable tag: 1.4.3
+Tested up to: 3.5.1
+Stable tag: 1.4.5
 
 == Description ==
 
@@ -16,7 +16,7 @@ Features include:
 * Export Products (*)
 * Export Categories
 * Export Tags
-* Export Sales (**)
+* Export Orders (**)
 * Export Coupons (**)
 * Export Customers (**)
 
@@ -46,6 +46,15 @@ If you have any problems, questions or suggestions please join the members discu
 http://www.visser.com.au/wp-ecommerce/forums/
 
 == Changelog ==
+
+= 1.4.5 =
+* Fixed: Export buttons not adjusting Export Dataset
+* Added: Support for Length column
+
+= 1.4.4 =
+* Added: Partial export support
+* Added: Select All support to Export screen
+* Changed: References of Sales to Orders
 
 = 1.4.3 =
 * Fixed: Image column contents

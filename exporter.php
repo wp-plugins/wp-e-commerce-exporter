@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.4.3
+Version: 1.4.5
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -57,6 +57,31 @@ if( is_admin() ) {
 	}
 	add_filter( 'plugin_action_links', 'wpsc_ce_add_settings_link', 10, 2 );
 
+	function wpsc_ce_enqueue_scripts( $hook ) {
+
+		/* Export */
+		$page = 'wpsc-product_page_wpsc_ce';
+		if( $page == $hook ) {
+			/* Date Picker */
+			wp_enqueue_script( 'jquery-ui-datepicker', plugins_url( '/js/ui-datepicker.js', __FILE__ ), array( 'jquery', 'jquery-ui-core' ) );
+			wp_enqueue_style( 'jquery-ui-datepicker', plugins_url( '/templates/admin/jquery-ui-datepicker.css', __FILE__ ) );
+
+			/* Common */
+			wp_enqueue_style( 'wpsc_ce_styles', plugins_url( '/templates/admin/wpsc-admin_ce-export.css', __FILE__ ) );
+			wp_enqueue_script( 'wpsc_ce_scripts', plugins_url( '/templates/admin/wpsc-admin_ce-export.js', __FILE__ ), array( 'jquery' ) );
+		}
+
+	}
+	add_action( 'admin_enqueue_scripts', 'wpsc_ce_enqueue_scripts' );
+
+	function wpsc_ce_store_admin_menu() {
+
+		add_submenu_page( 'wpsc_sm', __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
+		remove_filter( 'wpsc_additional_pages', 'wpsc_ce_add_modules_admin_pages', 10 );
+
+	}
+	add_action( 'wpsc_sm_store_admin_subpages', 'wpsc_ce_store_admin_menu' );
+
 	function wpsc_ce_admin_init() {
 
 		global $wpsc_ce, $export;
@@ -70,6 +95,15 @@ if( is_admin() ) {
 				$export = new stdClass();
 				$export->delimiter = $_POST['delimiter'];
 				$export->category_separator = $_POST['category_separator'];
+				$export->limit_volume = -1;
+				if( isset( $_POST['limit_volume'] ) )
+					$export->limit_volume = (int)$_POST['limit_volume'];
+				$export->offset = 0;
+				if( isset( $_POST['offset'] ) )
+					$export->offset = (int)$_POST['offset'];
+				$export->order_dates_from = '';
+				$export->order_dates_to = '';
+
 				$dataset = array();
 				$export->type = $_POST['dataset'];
 				if( $export->type == 'products' ) {
@@ -80,9 +114,11 @@ if( is_admin() ) {
 					$dataset[] = 'categories';
 				if( $export->type == 'tags' )
 					$dataset[] = 'tags';
-				if( $export->type == 'sales' ) {
+				if( $export->type == 'orders' ) {
 					$dataset[] = 'orders';
-					$export->fields = $_POST['sale_fields'];
+					$export->fields = $_POST['order_fields'];
+					$export->order_dates_from = $_POST['order_dates_from'];
+					$export->order_dates_to = $_POST['order_dates_to'];
 				}
 				if( $export->type == 'customers' ) {
 					$dataset[] = 'customers';
@@ -102,11 +138,17 @@ if( is_admin() ) {
 					if( !ini_get( 'safe_mode' ) )
 						set_time_limit( $timeout );
 
+					$args = array(
+						'limit_volume' => $export->limit_volume,
+						'offset' => $export->offset,
+						'order_dates_from' => $export->order_dates_from,
+						'order_dates_to' => $export->order_dates_to
+					);
 					if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
-						wpsc_ce_export_dataset( $dataset );
+						wpsc_ce_export_dataset( $dataset, $args );
 					} else {
 						wpsc_ce_generate_csv_header( $export->type );
-						wpsc_ce_export_dataset( $dataset );
+						wpsc_ce_export_dataset( $dataset, $args );
 
 						exit();
 					}
@@ -117,26 +159,6 @@ if( is_admin() ) {
 
 	}
 	add_action( 'admin_init', 'wpsc_ce_admin_init' );
-
-	function wpsc_ce_enqueue_scripts( $hook ) {
-
-		/* Export */
-		$page = 'wpsc-product_page_wpsc_ce';
-		if( $page == $hook ) {
-			wp_enqueue_style( 'wpsc_ce_styles', plugins_url( '/templates/admin/wpsc-admin_ce-export.css', __FILE__ ) );
-			wp_enqueue_script( 'wpsc_ce_scripts', plugins_url( '/templates/admin/wpsc-admin_ce-export.js', __FILE__ ), array( 'jquery' ) );
-		}
-
-	}
-	add_action( 'admin_enqueue_scripts', 'wpsc_ce_enqueue_scripts' );
-
-	function wpsc_ce_store_admin_menu() {
-
-		add_submenu_page( 'wpsc_sm', __( 'Store Export', 'wpsc_ce' ), __( 'Store Export', 'wpsc_ce' ), 'manage_options', 'wpsc_ce', 'wpsc_ce_html_page' );
-		remove_filter( 'wpsc_additional_pages', 'wpsc_ce_add_modules_admin_pages', 10 );
-
-	}
-	add_action( 'wpsc_sm_store_admin_subpages', 'wpsc_ce_store_admin_menu' );
 
 	function wpsc_ce_html_page() {
 

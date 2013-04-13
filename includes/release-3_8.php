@@ -104,7 +104,7 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_export_dataset( $dataset ) {
+	function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 
 		global $wpdb, $wpsc_ce, $export;
 
@@ -131,7 +131,7 @@ if( is_admin() ) {
 						else
 							$csv .= escape_csv_value( $export->columns[$i] ) . $separator;
 					}
-					$products = wpsc_ce_get_products();
+					$products = wpsc_ce_get_products( $args['limit_volume'], $args['offset'] );
 					if( $products ) {
 						foreach( $products as $product ) {
 							foreach( $export->fields as $key => $field ) {
@@ -209,10 +209,10 @@ if( is_admin() ) {
 					break;
 
 				/* Orders */
-				/* Coupons */
-				/* Customers */
 				case 'orders':
+				/* Coupons */
 				case 'coupons':
+				/* Customers */
 				case 'customers':
 					$csv = apply_filters( 'wpsc_ce_export_dataset', $datatype, $export );
 					break;
@@ -229,12 +229,13 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_products() {
+	function wpsc_ce_get_products( $limit_volume = -1, $offset = 0 ) {
 
 		$post_type = 'wpsc-product';
 		$args = array(
 			'post_type' => $post_type,
-			'numberposts' => -1,
+			'numberposts' => $limit_volume,
+			'offset' => $offset,
 			'post_status' => wpsc_ce_post_statuses()
 		);
 		$products = get_posts( $args );
@@ -289,8 +290,9 @@ if( is_admin() ) {
 				$products[$key]->category = wpsc_ce_get_product_categories( $product->ID );
 				$products[$key]->tag = wpsc_ce_get_product_tags( $product->ID );
 				$products[$key]->image = wpsc_ce_get_product_images( $product->ID );
+				$products[$key]->quantity_limited = $product_data['quantity_limited'];
 				$products[$key]->quantity = get_product_meta( $product->ID, 'stock', true );
-				if( !$products[$key]->quantity )
+				if( $products[$key]->quantity_limited && empty( $products[$key]->quantity ) )
 					$products[$key]->quantity = 0;
 				$products[$key]->external_link = $product_data['external_link'];
 				$products[$key]->external_link_text = $product_data['external_link_text'];

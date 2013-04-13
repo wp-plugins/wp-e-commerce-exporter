@@ -12,7 +12,7 @@
 			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-tags"><?php _e( 'Export Tags', 'wpsc_ce' ); ?></a>
 		</li>
 		<li>
-			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-sales"><?php _e( 'Export Sales', 'wpsc_ce' ); ?></a>
+			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-orders"><?php _e( 'Export Orders', 'wpsc_ce' ); ?></a>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 			<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
 <?php } ?>
@@ -34,6 +34,7 @@
 	<h3><a href="<?php echo add_query_arg( 'tab', 'tools' ); ?>"><?php _e( 'Tools', 'wpsc_ce' ); ?></a></h3>
 	<p><?php _e( 'Export tools for WP e-Commerce.', 'wpsc_ce' ); ?></p>
 </div>
+<!-- .overview-left -->
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 <div class="welcome-panel overview-right">
 	<h3>
@@ -43,8 +44,8 @@
 	<p class="clear"><?php _e( 'Upgrade to Store Exporter Deluxe to unlock business focused e-commerce features within Store Exporter, including:', 'wpsc_ce' ); ?></p>
 	<ul class="ul-disc">
 		<li><?php _e( 'Select export date ranges', 'wpsc_ce' ); ?></li>
-		<li><?php _e( 'Export Sales', 'wpsc_ce' ); ?></li>
-		<li><?php _e( 'Select Sale fields to export', 'wpsc_ce' ); ?></li>
+		<li><?php _e( 'Export Orders', 'wpsc_ce' ); ?></li>
+		<li><?php _e( 'Select Order fields to export', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Export Coupons', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Select Coupon fields to export', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Export Customers', 'wpsc_ce' ); ?></li>
@@ -57,3 +58,4 @@
 	</p>
 </div>
 <?php } ?>
+<!-- .overview-right -->

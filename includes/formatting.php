@@ -2,8 +2,12 @@
 function wpsc_ce_clean_html( $data ) {
 
 /*
-	$output_encoding = 'ISO-8859-1';
-	$data = mb_convert_encoding( trim( $data ), 'UTF-8', $output_encoding );
+	if( function_exists( 'mb_convert_encoding' ) ) {
+		$output_encoding = 'ISO-8859-1';
+		$data = mb_convert_encoding( trim( $data ), 'UTF-8', $output_encoding );
+	} else {
+		$data = trim( $data );
+	}
 	$data = str_replace( ',', '&#44;', $data );
 	$data = str_replace( "\n", '<br />', $data );
 */
@@ -21,22 +25,25 @@ if( !function_exists( 'escape_csv_value' ) ) {
 	}
 }
 
-function wpsc_ce_format_gpf_availability( $availability ) {
+function wpsc_ce_format_gpf_availability( $availability = null ) {
 
-	switch( $availability ) {
+	$output = '';
+	if( $availability ) {
+		switch( $availability ) {
 
-		case 'in stock':
-			$output = __( 'In Stock', 'wpsc_ce' );
-			break;
+			case 'in stock':
+				$output = __( 'In Stock', 'wpsc_ce' );
+				break;
 
-		case 'available for order':
-			$output = __( 'Available For Order', 'wpsc_ce' );
-			break;
+			case 'available for order':
+				$output = __( 'Available For Order', 'wpsc_ce' );
+				break;
 
-		case 'preorder':
-			$output = __( 'Pre-order', 'wpsc_ce' );
-			break;
+			case 'preorder':
+				$output = __( 'Pre-order', 'wpsc_ce' );
+				break;
 
+		}
 	}
 	return $output;
 

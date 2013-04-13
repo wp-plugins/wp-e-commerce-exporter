@@ -54,6 +54,7 @@
 .wpsc-product_page_wpsc_ce .support-donate_rate {
 	display:block;
 	float:right;
+	margin-right:1em;
 }
 .wpsc-product_page_wpsc_ce .support-donate_rate p {
 	margin-top:16px;

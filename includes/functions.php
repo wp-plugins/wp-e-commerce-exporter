@@ -70,7 +70,7 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_post_statuses() {
+	function wpsc_ce_post_statuses( $extra_statuses = array() ) {
 
 		$output = array(
 			'publish',
@@ -80,6 +80,8 @@ if( is_admin() ) {
 			'private',
 			'trash'
 		);
+		if( $extra_statuses )
+			$output = array_merge( $output, $extra_statuses );
 		return $output;
 
 	}
@@ -89,7 +91,7 @@ if( is_admin() ) {
 		global $wpdb;
 
 		$fields = array();
-		$checkout_fields_sql = "SELECT * FROM `wp_wpsc_checkout_forms` WHERE `active` = 1 AND `type` <> 'heading'";
+		$checkout_fields_sql = "SELECT * FROM `" . $wpdb->prefix . "wpsc_checkout_forms` WHERE `active` = 1 AND `type` <> 'heading'";
 		$checkout_fields = $wpdb->get_results( $checkout_fields_sql );
 		if( $checkout_fields ) {
 			foreach( $checkout_fields as $key => $checkout_field ) {
@@ -240,6 +242,16 @@ if( is_admin() ) {
 			'default' => 1
 		);
 		$fields[] = array(
+			'name' => 'notify_oos',
+			'label' => __( 'Notify OOS', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'unpublish_oos',
+			'label' => __( 'Unpublish OOS', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
 			'name' => 'file_download',
 			'label' => __( 'File Download', 'wpsc_ce' ),
 			'default' => 1
@@ -260,13 +272,33 @@ if( is_admin() ) {
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'local_shipping_fee',
+			'name' => 'local_shipping',
 			'label' => __( 'Local Shipping Fee', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'international_shipping_fee',
+			'name' => 'international_shipping',
 			'label' => __( 'International Shipping Fee', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'no_shipping',
+			'label' => __( 'No Shipping', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'taxable_amount',
+			'label' => __( 'Taxable Amount', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'tax_bands',
+			'label' => __( 'Tax Bands', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'not_taxable',
+			'label' => __( 'Not Taxable', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
@@ -279,6 +311,7 @@ if( is_admin() ) {
 			'label' => __( 'Comment Status', 'wpsc_ce' ),
 			'default' => 1
 		);
+
 /*
 		$fields[] = array(
 			'name' => '',
@@ -445,6 +478,27 @@ if( is_admin() ) {
 
 	}
 
+	function wpsc_ce_get_product_tags( $product_id ) {
+
+		global $wpdb, $export;
+
+		$output = '';
+		$term_taxonomy = 'product_tag';
+		$tags = wp_get_object_terms( $product_id, $term_taxonomy );
+		if( $tags ) {
+			$size = count( $tags );
+			for( $i = 0; $i < $size; $i++ ) {
+				$tag = get_term( $tags[$i]->term_id, $term_taxonomy );
+				$output .= $tag->name . $export->category_separator;
+			}
+			$output = substr( $output, 0, -1 );
+		}
+		return $output;
+
+	}
+
+	/* Orders */
+
 	function wpsc_ce_get_order_fields( $format = 'full' ) {
 
 		$fields = array();
@@ -552,7 +606,7 @@ if( is_admin() ) {
 		);
 */
 
-		/* Allow Plugin/Theme authors to add support for additional Sale columns */
+		/* Allow Plugin/Theme authors to add support for additional Order columns */
 		$fields = apply_filters( 'wpsc_ce_order_fields', $fields );
 
 		switch( $format ) {
@@ -600,99 +654,16 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_coupon_fields( $format = 'full' ) {
+	function wpsc_ce_format_order_date( $date ) {
 
-		$fields = array();
-		$fields[] = array(
-			'name' => 'coupon_code',
-			'label' => __( 'Coupon Code', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'coupon_value',
-			'label' => __( 'Coupon Value', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'use_once',
-			'label' => __( 'Use Once', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'active',
-			'label' => __( 'Active', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'every_product',
-			'label' => __( 'Apply to All Products', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'start',
-			'label' => __( 'Valid From', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'expiry',
-			'label' => __( 'Valid To', 'wpsc_ce' ),
-			'default' => 1
-		);
-/*
-		$fields[] = array(
-			'name' => '',
-			'label' => __( '', 'wpsc_ce' ),
-			'default' => 1
-		);
-*/
-
-		/* Allow Plugin/Theme authors to add support for additional Coupon columns */
-		$fields = apply_filters( 'wpsc_ce_coupon_fields', $fields );
-
-		switch( $format ) {
-
-			case 'summary':
-				$output = array();
-				$size = count( $fields );
-				for( $i = 0; $i < $size; $i++ )
-					$output[$fields[$i]['name']] = 'on';
-				return $output;
-				break;
-
-			case 'full':
-			default:
-				return $fields;
-
-		}
-
-	}
-
-	function wpsc_ce_get_coupon_field( $name = null, $format = 'name' ) {
-
-		$output = '';
-		if( $name ) {
-			$fields = wpsc_ce_get_coupon_fields();
-			$size = count( $fields );
-			for( $i = 0; $i < $size; $i++ ) {
-				if( $fields[$i]['name'] == $name ) {
-					switch( $format ) {
-
-						case 'name':
-							$output = $fields[$i]['label'];
-							break;
-
-						case 'full':
-							$output = $fields[$i];
-							break;
-
-					}
-					$i = $size;
-				}
-			}
-		}
+		$output = $date;
+		if( $date )
+			$output = str_replace( '/', '-', $date );
 		return $output;
 
 	}
+
+	/* Customers */
 
 	function wpsc_ce_get_customer_fields( $format = 'full' ) {
 
@@ -777,6 +748,105 @@ if( is_admin() ) {
 		return $output;
 
 	}
+
+	/* Coupons */
+
+	function wpsc_ce_get_coupon_fields( $format = 'full' ) {
+
+		$fields = array();
+		$fields[] = array(
+			'name' => 'coupon_code',
+			'label' => __( 'Coupon Code', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'coupon_value',
+			'label' => __( 'Coupon Value', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'use_once',
+			'label' => __( 'Use Once', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'active',
+			'label' => __( 'Active', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'every_product',
+			'label' => __( 'Apply to All Products', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'start',
+			'label' => __( 'Valid From', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'expiry',
+			'label' => __( 'Valid To', 'wpsc_ce' ),
+			'default' => 1
+		);
+
+/*
+		$fields[] = array(
+			'name' => '',
+			'label' => __( '', 'wpsc_ce' ),
+			'default' => 1
+		);
+*/
+
+		/* Allow Plugin/Theme authors to add support for additional Coupon columns */
+		$fields = apply_filters( 'wpsc_ce_coupon_fields', $fields );
+
+		switch( $format ) {
+
+			case 'summary':
+				$output = array();
+				$size = count( $fields );
+				for( $i = 0; $i < $size; $i++ )
+					$output[$fields[$i]['name']] = 'on';
+				return $output;
+				break;
+
+			case 'full':
+			default:
+				return $fields;
+
+		}
+
+	}
+
+	function wpsc_ce_get_coupon_field( $name = null, $format = 'name' ) {
+
+		$output = '';
+		if( $name ) {
+			$fields = wpsc_ce_get_coupon_fields();
+			$size = count( $fields );
+			for( $i = 0; $i < $size; $i++ ) {
+				if( $fields[$i]['name'] == $name ) {
+					switch( $format ) {
+
+						case 'name':
+							$output = $fields[$i]['label'];
+							break;
+
+						case 'full':
+							$output = $fields[$i];
+							break;
+
+					}
+					$i = $size;
+				}
+			}
+		}
+		return $output;
+
+	}
+
+	/* Export */
 
 	function wpsc_ce_admin_active_tab( $tab_name = null, $tab = null ) {
 

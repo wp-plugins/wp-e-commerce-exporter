@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.4.5
+Version: 1.4.6
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -12,7 +12,7 @@ License: GPL2
 load_plugin_textdomain( 'wpsc_ce', null, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 
 include_once( 'includes/functions.php' );
-
+include_once( 'includes/functions-alternatives.php' );
 include_once( 'includes/common.php' );
 
 switch( wpsc_get_major_version() ) {
@@ -50,6 +50,9 @@ if( is_admin() ) {
 			if( function_exists( 'wpsc_find_purchlog_status_name' ) ) {
 				$settings_link = sprintf( '<a href="%s">' . __( 'Export', 'wpsc_ce' ) . '</a>', add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' ) );
 				array_unshift( $links, $settings_link );
+			} else {
+				$settings_link = sprintf( '<a href="%s">' . __( 'Export', 'wpsc_ce' ) . '</a>', add_query_arg( 'page', 'wpsc_ce', 'admin.php' ) );
+				array_unshift( $links, $settings_link );
 			}
 		}
 		return $links;
@@ -60,8 +63,8 @@ if( is_admin() ) {
 	function wpsc_ce_enqueue_scripts( $hook ) {
 
 		/* Export */
-		$page = 'wpsc-product_page_wpsc_ce';
-		if( $page == $hook ) {
+		$pages = array( 'wpsc-product_page_wpsc_ce', 'store_page_wpsc_ce' );
+		if( in_array( $hook, $pages ) ) {
 			/* Date Picker */
 			wp_enqueue_script( 'jquery-ui-datepicker', plugins_url( '/js/ui-datepicker.js', __FILE__ ), array( 'jquery', 'jquery-ui-core' ) );
 			wp_enqueue_style( 'jquery-ui-datepicker', plugins_url( '/templates/admin/jquery-ui-datepicker.css', __FILE__ ) );
@@ -96,10 +99,10 @@ if( is_admin() ) {
 				$export->delimiter = $_POST['delimiter'];
 				$export->category_separator = $_POST['category_separator'];
 				$export->limit_volume = -1;
-				if( isset( $_POST['limit_volume'] ) )
-					$export->limit_volume = (int)$_POST['limit_volume'];
+				if( !empty( $_POST['limit_volume'] ) )
+					$export->limit_volume = $_POST['limit_volume'];
 				$export->offset = 0;
-				if( isset( $_POST['offset'] ) )
+				if( !empty( $_POST['offset'] ) )
 					$export->offset = (int)$_POST['offset'];
 				$export->order_dates_from = '';
 				$export->order_dates_to = '';
@@ -130,10 +133,9 @@ if( is_admin() ) {
 				}
 				if( $dataset ) {
 
+					$timeout = 600;
 					if( isset( $_POST['timeout'] ) )
 						$timeout = $_POST['timeout'];
-					else
-						$timeout = 600;
 
 					if( !ini_get( 'safe_mode' ) )
 						set_time_limit( $timeout );
@@ -141,8 +143,8 @@ if( is_admin() ) {
 					$args = array(
 						'limit_volume' => $export->limit_volume,
 						'offset' => $export->offset,
-						'order_dates_from' => $export->order_dates_from,
-						'order_dates_to' => $export->order_dates_to
+						'order_dates_from' => wpsc_ce_format_order_date( $export->order_dates_from ),
+						'order_dates_to' => wpsc_ce_format_order_date( $export->order_dates_to )
 					);
 					if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
 						wpsc_ce_export_dataset( $dataset, $args );
@@ -196,6 +198,18 @@ if( is_admin() ) {
 			$tab = $_GET['tab'];
 
 		$url = add_query_arg( 'page', 'wpsc_ce' );
+
+		switch( wpsc_get_major_version() ) {
+
+			case '3.8':
+				$wpsc_ce_url = add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' );
+				break;
+
+			case '3.7':
+				$wpsc_ce_url = add_query_arg( array( 'page' => 'wpsc_ce' ), 'admin.php' );
+				break;
+
+		}
 
 		include_once( 'templates/admin/wpsc-admin_ce-export.php' );
 

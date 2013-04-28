@@ -1,5 +1,5 @@
 <?php
-function wpsc_ce_clean_html( $data ) {
+function wpsc_ce_clean_html( $content ) {
 
 /*
 	if( function_exists( 'mb_convert_encoding' ) ) {
@@ -11,18 +11,17 @@ function wpsc_ce_clean_html( $data ) {
 	$data = str_replace( ',', '&#44;', $data );
 	$data = str_replace( "\n", '<br />', $data );
 */
-	return $data;
+	return $content;
 
 }
 
-if( !function_exists( 'escape_csv_value' ) ) {
-	function escape_csv_value( $value ) {
+function wpsc_ce_format_tax_bands( $tax_band_id ) {
 
-		$value = str_replace( '"', '""', $value ); // First off escape all " and make them ""
-		$value = str_replace( PHP_EOL, ' ', $value );
-		return '"' . $value . '"'; // If I have new lines or commas escape them
-
+	if( !empty( $tax_band_id ) ) {
+		$tax_bands = get_option( 'wpec_taxes_bands', true );
+		print_r( $tax_bands );
 	}
+
 }
 
 function wpsc_ce_format_gpf_availability( $availability = null ) {
@@ -69,7 +68,7 @@ function wpsc_ce_format_gpf_condition( $condition ) {
 	return $output;
 
 }
-function wpsc_ce_format_product_status( $product_status ) {
+function wpsc_ce_format_product_status( $product_status, $product ) {
 
 	$output = $product_status;
 	switch( $product_status ) {
@@ -87,11 +86,13 @@ function wpsc_ce_format_product_status( $product_status ) {
 			break;
 
 	}
+	if( $product->is_variation && $product_status <> 'draft' )
+		$output = '';
 	return $output;
 
 }
 
-function wpsc_ce_format_comment_status( $comment_status ) {
+function wpsc_ce_format_comment_status( $comment_status, $product ) {
 
 	$output = $comment_status;
 	switch( $comment_status ) {
@@ -105,6 +106,8 @@ function wpsc_ce_format_comment_status( $comment_status ) {
 			break;
 
 	}
+	if( $product->is_variation )
+		$output = '';
 	return $output;
 
 }

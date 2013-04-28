@@ -18,13 +18,13 @@
 <?php } ?>
 		</li>
 		<li>
-			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-coupons"><?php _e( 'Export Coupons', 'wpsc_ce' ); ?></a>
+			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-customers"><?php _e( 'Export Customers', 'wpsc_ce' ); ?></a>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 			<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
 <?php } ?>
 		</li>
 		<li>
-			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-customers"><?php _e( 'Export Customers', 'wpsc_ce' ); ?></a>
+			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-coupons"><?php _e( 'Export Coupons', 'wpsc_ce' ); ?></a>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 			<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
 <?php } ?>
@@ -46,10 +46,10 @@
 		<li><?php _e( 'Select export date ranges', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Export Orders', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Select Order fields to export', 'wpsc_ce' ); ?></li>
-		<li><?php _e( 'Export Coupons', 'wpsc_ce' ); ?></li>
-		<li><?php _e( 'Select Coupon fields to export', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Export Customers', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Select Customer fields to export', 'wpsc_ce' ); ?></li>
+		<li><?php _e( 'Export Coupons', 'wpsc_ce' ); ?></li>
+		<li><?php _e( 'Select Coupon fields to export', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Premium Support', 'wpsc_ce' ); ?></li>
 	</ul>
 	<p>

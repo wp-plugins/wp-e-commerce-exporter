@@ -71,20 +71,6 @@
 
 					<tr>
 						<th>
-							<input type="radio" id="coupons" name="dataset" value="coupons"<?php disabled( $coupons, 0 ); ?><?php checked( $dataset, 'coupons' ); ?> />
-							<label for="coupons"><?php _e( 'Coupons', 'wpsc_ce' ); ?></label>
-						</th>
-						<td>
-<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
-							<span class="description">(<?php echo $coupons; ?>)</span>
-<?php } else { ?>
-							<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
-<?php } ?>
-						</td>
-					</tr>
-
-					<tr>
-						<th>
 							<input type="radio" id="customers" name="dataset" value="customers"<?php disabled( $customers, 0 ); ?><?php checked( $dataset, 'customers' ); ?>/>
 							<label for="customers"><?php _e( 'Customers', 'wpsc_ce' ); ?></label>
 						</th>
@@ -97,9 +83,23 @@
 						</td>
 					</tr>
 
+					<tr>
+						<th>
+							<input type="radio" id="coupons" name="dataset" value="coupons"<?php disabled( $coupons, 0 ); ?><?php checked( $dataset, 'coupons' ); ?> />
+							<label for="coupons"><?php _e( 'Coupons', 'wpsc_ce' ); ?></label>
+						</th>
+						<td>
+<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+							<span class="description">(<?php echo $coupons; ?>)</span>
+<?php } else { ?>
+							<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
+<?php } ?>
+						</td>
+					</tr>
+
 				</table>
 				<p class="submit">
-					<input type="submit" value="<?php _e( 'Export', 'wpsc_ce' ); ?> " class="button-primary" />
+					<input type="submit" value="<?php _e( 'Export', 'wpsc_ce' ); ?>" class="button-primary" />
 				</p>
 			</div>
 		</div>
@@ -186,6 +186,47 @@
 	</div>
 
 <?php } ?>
+<?php if( $customer_fields ) { ?>
+	<h3><?php _e( 'Export: Customers', 'wpsc_ce' ); ?></h3>
+	<div id="poststuff">
+
+		<div class="postbox" id="export-customers">
+			<h3 class="hndle"><?php _e( 'Customer Fields', 'wpsc_ce' ); ?></h3>
+			<div class="inside">
+	<?php if( $customers ) { ?>
+				<p class="description"><?php _e( 'Select the Customer fields you would like to export.', 'wpsc_ce' ); ?></p>
+				<p><a href="javascript:void(0)" id="customers-checkall"><?php _e( 'Check All', 'jigo_ce' ); ?></a> | <a href="javascript:void(0)" id="customers-uncheckall"><?php _e( 'Uncheck All', 'jigo_ce' ); ?></a></p>
+				<table>
+
+		<?php foreach( $customer_fields as $customer_field ) { ?>
+					<tr>
+						<td>
+							<label>
+								<input type="checkbox" name="customer_fields[<?php echo $customer_field['name']; ?>]" class="customer_field"<?php checked( $customer_field['default'], 1 ); ?><?php disabled( $wpsc_cd_exists, false ); ?> />
+								<?php echo $customer_field['label']; ?>
+							</label>
+						</td>
+					</tr>
+
+		<?php } ?>
+				</table>
+				<p class="submit">
+		<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+					<input type="submit" id="export_customers" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?> " class="button-primary" />
+		<?php } else { ?>
+					<input type="button" class="button button-disabled" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?>" />
+		<?php } ?>
+				</p>
+	<?php } else { ?>
+				<p><?php _e( 'No Customers have been found.', 'wpsc_ce' ); ?></p>
+	<?php } ?>
+			</div>
+		</div>
+		<!-- .postbox -->
+
+	</div>
+
+<?php } ?>
 
 <?php if( $coupon_fields ) { ?>
 	<h3><?php _e( 'Export: Coupons', 'wpsc_ce' ); ?></h3>
@@ -229,47 +270,6 @@
 
 <?php } ?>
 
-<?php if( $customer_fields ) { ?>
-	<h3><?php _e( 'Export: Customers', 'wpsc_ce' ); ?></h3>
-	<div id="poststuff">
-
-		<div class="postbox" id="export-customers">
-			<h3 class="hndle"><?php _e( 'Customer Fields', 'wpsc_ce' ); ?></h3>
-			<div class="inside">
-	<?php if( $customers ) { ?>
-				<p class="description"><?php _e( 'Select the Customer fields you would like to export.', 'wpsc_ce' ); ?></p>
-				<p><a href="javascript:void(0)" id="customers-checkall"><?php _e( 'Check All', 'jigo_ce' ); ?></a> | <a href="javascript:void(0)" id="customers-uncheckall"><?php _e( 'Uncheck All', 'jigo_ce' ); ?></a></p>
-				<table>
-
-		<?php foreach( $customer_fields as $customer_field ) { ?>
-					<tr>
-						<td>
-							<label>
-								<input type="checkbox" name="customer_fields[<?php echo $customer_field['name']; ?>]" class="customer_field"<?php checked( $customer_field['default'], 1 ); ?><?php disabled( $wpsc_cd_exists, false ); ?> />
-								<?php echo $customer_field['label']; ?>
-							</label>
-						</td>
-					</tr>
-
-		<?php } ?>
-				</table>
-				<p class="submit">
-		<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
-					<input type="submit" id="export_customers" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?> " class="button-primary" />
-		<?php } else { ?>
-					<input type="button" class="button button-disabled" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?>" />
-		<?php } ?>
-				</p>
-	<?php } else { ?>
-				<p><?php _e( 'No Customers have been found.', 'wpsc_ce' ); ?></p>
-	<?php } ?>
-			</div>
-		</div>
-		<!-- .postbox -->
-
-	</div>
-
-<?php } ?>
 	<h3><?php _e( 'Export Options', 'wpsc_ce' ); ?></h3>
 	<div id="poststuff">
 
@@ -285,7 +285,7 @@
 							<label for="delimiter"><?php _e( 'Field delimiter', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
-							<input type="text" size="3" id="delimiter" name="delimiter" value="," class="text" />
+							<input type="text" size="3" id="delimiter" name="delimiter" value="," size="1" maxlength="1" class="text" />
 							<p class="description"><?php _e( 'The field delimiter is the character separating each cell in your CSV. This is typically the \',\' (comma) character.', 'wpsc_ce' ); ?></p>
 						</td>
 					</tr>
@@ -302,7 +302,7 @@
 
 					<tr>
 						<th>
-							<label for="delimiter"><?php _e( 'Limit volume', 'wpsc_ce' ); ?></label>
+							<label for="limit_volume"><?php _e( 'Limit volume', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
 							<input type="text" size="3" id="limit_volume" name="limit_volume" value="" size="5" class="text" />
@@ -312,7 +312,7 @@
 
 					<tr>
 						<th>
-							<label for="delimiter"><?php _e( 'Volume offset', 'wpsc_ce' ); ?></label>
+							<label for="offset"><?php _e( 'Volume offset', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
 							<input type="text" size="3" id="offset" name="offset" value="" size="5" class="text" />

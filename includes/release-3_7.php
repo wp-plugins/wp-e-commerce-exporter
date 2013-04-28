@@ -28,20 +28,23 @@ if( is_admin() ) {
 				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->prefix . "wpsc_product_files`";
 				break;
 
+			case 'categories':
+				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->prefix . "wpsc_product_categories`";
+				break;
+
 			case 'tags':
 				$term_taxonomy = 'product_tag';
 				$count = wp_count_terms( $term_taxonomy );
 				break;
 
-			case 'categories':
-				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->prefix . "wpsc_product_categories`";
-				break;
-
 			case 'orders':
 			case 'coupons':
+			case 'customers':
 				if( function_exists( 'wpsc_cd_return_count' ) )
 					$count = wpsc_cd_return_count( $dataset );
 				break;
+
+			/* 3rd Party */
 
 			case 'wishlist':
 				$count_sql = "SELECT COUNT(`id`) FROM `" . $wpdb->prefix . "wpsc_wishlist`";
@@ -80,22 +83,20 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_export_dataset( $dataset ) {
+	function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 
 		global $wpdb, $wpsc_ce, $export;
 
 		$csv = '';
 		$separator = $export->delimiter;
+		$export->args = $args;
 
 		foreach( $dataset as $datatype ) {
 
-			$csv = null;
-
+			$csv = '';
 			switch( $datatype ) {
 
-				case 'categories':
-					break;
-
+				/* Products */
 				case 'products':
 					$columns = array(
 						__( 'SKU', 'wpsc_ce' ),
@@ -127,9 +128,9 @@ if( is_admin() ) {
 					$size = count( $columns );
 					for( $i = 0; $i < $size; $i++ ) {
 						if( $i == ( $size - 1 ) )
-							$csv .= '"' . $columns[$i] . "\"\n";
+							$csv .= escape_csv_value( $columns[$i] ) . "\n";
 						else
-							$csv .= '"' . $columns[$i] . '"' . $separator;
+							$csv .= escape_csv_value( $columns[$i] ) . $separator;
 					}
 					$products_sql = "SELECT `id` AS ID, `name`, `description`, `additional_description`, `publish` as status, `price`, `weight`, `weight_unit`, `pnp` as local_shipping, `international_pnp` as international_shipping, `quantity`, `special_price` as sale_price FROM `" . $wpdb->prefix . "wpsc_product_list` WHERE `active` = 1";
 					$products = $wpdb->get_results( $products_sql );
@@ -149,9 +150,11 @@ if( is_admin() ) {
 							}
 							$product->external_link = get_product_meta( $product->ID, 'external_link' );
 							$product->merchant_notes = get_product_meta( $product->ID, 'merchant_notes' );
+							$product->category = wpsc_ce_get_product_categories( $product->ID );
+							$product->tags = wpsc_ce_get_product_tags( $product->ID );
 
 							foreach( $product as $key => $value )
-								$product->$key = wpsc_ce_has_value( $value );
+								$product->$key = escape_csv_value( $value );
 
 							$csv .= 
 								$product->sku . $separator . 
@@ -186,16 +189,68 @@ if( is_admin() ) {
 					}
 					break;
 
+				/* Categories */
+				case 'categories':
+					$columns = array(
+						__( 'Category', 'wpsc_ce' )
+					);
+					$size = count( $columns );
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$csv .= escape_csv_value( $columns[$i] ) . "\n";
+						else
+							$csv .= escape_csv_value( $columns[$i] ) . $separator;
+					}
+					$categories = wpsc_ce_get_categories();
+					if( $categories ) {
+						foreach( $categories as $category ) {
+							$csv .= 
+								$category->name
+								 . 
+							"\n";
+						}
+						unset( $categories, $category );
+					}
+					break;
+
+				/* Tags */
+				case 'tags':
+					$term_taxonomy = 'product_tag';
+					$args = array(
+						'hide_empty' => 0
+					);
+					$tags = get_terms( $term_taxonomy, $args );
+					if( $tags ) {
+						$columns = array(
+							__( 'Tags', 'wpsc_ce' )
+						);
+						for( $i = 0; $i < count( $columns ); $i++ ) {
+							if( $i == ( count( $columns ) - 1 ) )
+								$csv .= $columns[$i] . "\n";
+							else
+								$csv .= $columns[$i] . $separator;
+						}
+						foreach( $tags as $tag ) {
+							$csv .= 
+								$tag->name
+								 . 
+							"\n";
+						}
+						unset( $tags, $tag );
+					}
+					break;
+
 				/* Orders */
-				/* Coupons */
-				/* Customers */
 				case 'orders':
-				case 'coupons':
+				/* Customers */
 				case 'customers':
-					$csv = do_action( 'wpsc_ce_export_dataset', $datatype );
+				/* Coupons */
+				case 'coupons':
+					$csv = apply_filters( 'wpsc_ce_export_dataset', $datatype, $export );
 					break;
 
 			}
+			$csv = utf8_decode( $csv );
 
 			if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
 				echo '<code>' . str_replace( "\n", '<br />', $csv ) . '</code>' . '<br />';
@@ -204,6 +259,61 @@ if( is_admin() ) {
 
 		}
 
+	}
+
+	function wpsc_ce_get_product_categories( $product_id = null ) {
+
+		global $export, $wpdb;
+
+		$output = '';
+		if( $product_id ) {
+			$categories_sql = sprintf( "SELECT wpsc_product_categories.`name` FROM `" . $wpdb->prefix . "wpsc_item_category_assoc` as item_category_assoc, `" . $wpdb->prefix . "wpsc_product_categories` as wpsc_product_categories WHERE item_category_assoc.category_id = wpsc_product_categories.id AND item_category_assoc.`product_id` = %d", $product_id );
+			$categories = $wpdb->get_results( $categories_sql );
+			if( $categories ) {
+				foreach( $categories as $category ) {
+					$output .= $category->name . $export->category_separator;
+				}
+				$output = substr( $output, 0, -1 );
+			} else {
+				$output .= __( 'Uncategorized', 'wpsc_ce' );
+			}
+		}
+		return $output;
+
+	}
+
+	/* Categories */
+
+	function wpsc_ce_get_categories() {
+
+		global $wpdb;
+
+		$output = '';
+		$categories_sql = "SELECT `name` FROM `" . $wpdb->prefix . "wpsc_product_categories` WHERE `active` = 1";
+		$categories = $wpdb->get_results( $categories_sql );
+		if( $categories )
+			$output = $categories;
+		return $output;
+
+	}
+
+	/* Orders */
+
+	if( !function_exists( 'wpsc_find_purchlog_status_name' ) ) {
+		function wpsc_find_purchlog_status_name( $status ) {
+
+			global $wpdb;
+
+			$output = $status;
+			if( !empty( $status ) ) {
+				$status_name_sql = sprintf( "SELECT `name` FROM `" . $wpdb->prefix . "wpsc_purchase_statuses` WHERE `id` = %d LIMIT 1", $status );
+				$status_name = $wpdb->get_var( $status_name_sql );
+				if( $status_name )
+					$output = $status_name;
+			}
+			return $output;
+
+		}
 	}
 
 	/* End of: WordPress Administration */

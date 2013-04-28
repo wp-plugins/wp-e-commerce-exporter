@@ -110,6 +110,7 @@ if( is_admin() ) {
 
 		$csv = '';
 		$separator = $export->delimiter;
+		$export->args = $args;
 
 		foreach( $dataset as $datatype ) {
 
@@ -131,7 +132,7 @@ if( is_admin() ) {
 						else
 							$csv .= escape_csv_value( $export->columns[$i] ) . $separator;
 					}
-					$products = wpsc_ce_get_products( $args['limit_volume'], $args['offset'] );
+					$products = wpsc_ce_get_products( $export->args );
 					if( $products ) {
 						foreach( $products as $product ) {
 							foreach( $export->fields as $key => $field ) {
@@ -156,21 +157,18 @@ if( is_admin() ) {
 
 				/* Categories */
 				case 'categories':
-					$term_taxonomy = 'wpsc_product_category';
-					$args = array(
-						'hide_empty' => 0
+					$columns = array(
+						__( 'Category', 'wpsc_ce' )
 					);
-					$categories = get_terms( $term_taxonomy, $args );
+					$size = count( $columns );
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$csv .= escape_csv_value( $columns[$i] ) . "\n";
+						else
+							$csv .= escape_csv_value( $columns[$i] ) . $separator;
+					}
+					$categories = wpsc_ce_get_categories();
 					if( $categories ) {
-						$columns = array(
-							__( 'Category', 'wpsc_ce' )
-						);
-						for( $i = 0; $i < count( $columns ); $i++ ) {
-							if( $i == ( count( $columns ) - 1 ) )
-								$csv .= $columns[$i] . "\n";
-							else
-								$csv .= $columns[$i] . $separator;
-						}
 						foreach( $categories as $category ) {
 							$csv .= 
 								$category->name
@@ -210,10 +208,10 @@ if( is_admin() ) {
 
 				/* Orders */
 				case 'orders':
-				/* Coupons */
-				case 'coupons':
 				/* Customers */
 				case 'customers':
+				/* Coupons */
+				case 'coupons':
 					$csv = apply_filters( 'wpsc_ce_export_dataset', $datatype, $export );
 					break;
 
@@ -229,14 +227,22 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_products( $limit_volume = -1, $offset = 0 ) {
+	/* Products */
 
+	function wpsc_ce_get_products( $args = array() ) {
+
+		$limit_volume = -1;
+		$offset = 0;
+		if( $args ) {
+			$limit_volume = $args['limit_volume'];
+			$offset = $args['offset'];
+		}
 		$post_type = 'wpsc-product';
 		$args = array(
 			'post_type' => $post_type,
 			'numberposts' => $limit_volume,
 			'offset' => $offset,
-			'post_status' => wpsc_ce_post_statuses()
+			'post_status' => wpsc_ce_post_statuses( array( 'inherit' ) )
 		);
 		$products = get_posts( $args );
 		if( $products ) {
@@ -245,16 +251,25 @@ if( is_admin() ) {
 
 				$products[$key]->sku = get_product_meta( $product->ID, 'sku', true );
 				$products[$key]->name = $product->post_title;
+				$products[$key]->is_variation = false;
+					$term_taxonomy = 'wpsc-variation';
+				if( $product->variations = wp_get_object_terms( $product->ID, $term_taxonomy ) ) {
+					$products[$key]->is_variation = true;
+					if( count( $product->variations ) == 1 ) {
+						$product->variations = $product->variations[0];
+						$variation = get_term( $product->variations->term_id, $term_taxonomy );
+						$parent_variation = get_term( $product->variations->parent, $term_taxonomy );
+						$products[$key]->name = str_replace( ' (' . $variation->name . ')', '', $product->post_title ) . '|' . $parent_variation->name . '|' . $variation->name;
+					}
+				}
 				$products[$key]->description = wpsc_ce_clean_html( $product->post_content );
 				$products[$key]->additional_description = wpsc_ce_clean_html( $product->post_excerpt );
+				$products[$key]->price = 0;
 				if( get_product_meta( $product->ID, 'price', true ) )
 					$products[$key]->price = get_product_meta( $product->ID, 'price', true );
-				else
-					$products[$key]->price = 0;
+					$products[$key]->sale_price = 0;
 				if( get_product_meta( $product->ID, 'special_price', true ) )
 					$products[$key]->sale_price = get_product_meta( $product->ID, 'special_price', true );
-				else
-					$products[$key]->sale_price = '0.00';
 				$products[$key]->permalink = $product->post_name;
 				$products[$key]->weight = wpsc_ce_convert_product_raw_weight( $product_data['weight'], $product_data['weight_unit'] );
 				if( !$products[$key]->weight )
@@ -294,6 +309,12 @@ if( is_admin() ) {
 				$products[$key]->quantity = get_product_meta( $product->ID, 'stock', true );
 				if( $products[$key]->quantity_limited && empty( $products[$key]->quantity ) )
 					$products[$key]->quantity = 0;
+				$products[$key]->notify_oos = __( 'No', 'wpsc_ce' );
+				if( $product_data['notify_when_none_left'] )
+					$products[$key]->notify_oos = __( 'Yes', 'wpsc_ce' );
+				$products[$key]->unpublish_oos = __( 'No', 'wpsc_ce' );
+				if( $product_data['unpublish_when_none_left'] )
+					$products[$key]->unpublish_oos = __( 'Yes', 'wpsc_ce' );
 				$products[$key]->external_link = $product_data['external_link'];
 				$products[$key]->external_link_text = $product_data['external_link_text'];
 				$products[$key]->external_link_target = $product_data['external_link_target'];
@@ -301,8 +322,16 @@ if( is_admin() ) {
 					$products[$key]->local_shipping = $product_data['shipping']['local'];
 				if( isset( $product_data['shipping']['international'] ) )
 					$products[$key]->international_shipping = $product_data['shipping']['international'];
-				$products[$key]->product_status = wpsc_ce_format_product_status( $product->post_status );
-				$products[$key]->comment_status = wpsc_ce_format_comment_status( $product->comment_status );
+				$products[$key]->no_shipping = __( 'No', 'wpsc_ce' );
+				if( $product_data['no_shipping'] == 1 )
+					$products[$key]->no_shipping = __( 'Yes', 'wpsc_ce' );
+				$products[$key]->taxable_amount = $product_data['wpec_taxes_taxable_amount'];
+				$products[$key]->tax_bands = wpsc_ce_format_tax_bands( $product_data['wpec_taxes_band'] );
+				$products[$key]->not_taxable = __( 'No', 'wpsc_ce' );
+				if( $products[$key]->taxable_amount )
+					$products[$key]->not_taxable = __( 'Yes', 'wpsc_ce' );
+				$products[$key]->product_status = wpsc_ce_format_product_status( $product->post_status, $product );
+				$products[$key]->comment_status = wpsc_ce_format_comment_status( $product->comment_status, $product );
 
 				/* Allow Plugin/Theme authors to add support for additional Product columns */
 				$products[$key] = apply_filters( 'wpsc_ce_product_data', $products[$key] );
@@ -426,25 +455,6 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_product_tags( $product_id ) {
-
-		global $wpdb, $export;
-
-		$output = '';
-		$term_taxonomy = 'product_tag';
-		$tags = wp_get_object_terms( $product_id, $term_taxonomy );
-		if( $tags ) {
-			$size = count( $tags );
-			for( $i = 0; $i < $size; $i++ ) {
-				$tag = get_term( $tags[$i]->term_id, $term_taxonomy );
-				$output .= $tag->name . $export->category_separator;
-			}
-			$output = substr( $output, 0, -1 );
-		}
-		return $output;
-
-	}
-
 	function wpsc_ce_get_related_products( $product_id ) {
 
 		global $export;
@@ -456,6 +466,22 @@ if( is_admin() ) {
 				$output .= $related_product . $export->category_separator;
 			$output = substr( $output, 0, -1 );
 		}
+		return $output;
+
+	}
+
+	/* Categories */
+
+	function wpsc_ce_get_categories() {
+
+		$output = '';
+		$term_taxonomy = 'wpsc_product_category';
+		$args = array(
+			'hide_empty' => 0
+		);
+		$categories = get_terms( $term_taxonomy, $args );
+		if( $categories )
+			$output = $categories;
 		return $output;
 
 	}

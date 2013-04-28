@@ -3,25 +3,21 @@ var $j = jQuery.noConflict();
 $j(function() {
 
 	// Date Picker
-	$j(".datepicker").datepicker({
+	$j('.datepicker').datepicker({
 		dateFormat: 'dd/mm/yy'
 	});
 
 	// Export button
 	$j('#export_products').click(function(){
-		//$j('#products').val('products');
 		$j('input:radio[name=dataset]:nth(0)').attr('checked',true);
 	});
 	$j('#export_orders').click(function(){
-		//$j('#orders').val('orders');
 		$j('input:radio[name=dataset]:nth(3)').attr('checked',true);
 	});
 	$j('#export_coupons').click(function(){
-		//$j('#coupons').val('coupons');
 		$j('input:radio[name=dataset]:nth(4)').attr('checked',true);
 	});
 	$j('#export_customers').click(function(){
-		//$j('#customers').val('customers');
 		$j('input:radio[name=dataset]:nth(5)').attr('checked',true);
 	});
 

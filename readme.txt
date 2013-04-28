@@ -5,7 +5,7 @@ Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.5.1
-Stable tag: 1.4.5
+Stable tag: 1.4.6
 
 == Description ==
 
@@ -17,8 +17,8 @@ Features include:
 * Export Categories
 * Export Tags
 * Export Orders (**)
-* Export Coupons (**)
 * Export Customers (**)
+* Export Coupons (**)
 
 (*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products and more.
 (**) Requries the Pro upgrade to enable additional store export functionality.
@@ -47,9 +47,20 @@ http://www.visser.com.au/wp-ecommerce/forums/
 
 == Changelog ==
 
+= 1.4.6 =
+* Fixed: Styling in WP e-Commerce 3.7
+* Fixed: Permission issue in WP e-Commerce 3.7
+* Fixed: Export link within Plugins screen
+* Added: Product Tax Bands support
+
 = 1.4.5 =
 * Fixed: Export buttons not adjusting Export Dataset
 * Added: Support for Length column
+* Added: Product Variation support
+* Added: Taxable Amount Product detail
+* Fixed: Local Shipping and International Shipping Product details
+* Added: No Shipping Product detail
+* Added: Notify OOS and Unpublish OOS Product details
 
 = 1.4.4 =
 * Added: Partial export support

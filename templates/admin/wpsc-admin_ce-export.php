@@ -10,9 +10,9 @@
 <div id="content">
 
 	<h2 class="nav-tab-wrapper">
-		<a data-tab-id="overview" class="nav-tab<?php wpsc_ce_admin_active_tab( 'overview' ); ?>" href="<?php echo add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' ); ?>"><?php _e( 'Overview', 'wpsc_ce' ); ?></a>
-		<a data-tab-id="export" class="nav-tab<?php wpsc_ce_admin_active_tab( 'export' ); ?>" href="<?php echo add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce', 'tab' => 'export' ), 'edit.php' ); ?>"><?php _e( 'Export', 'wpsc_ce' ); ?></a>
-		<a data-tab-id="tools" class="nav-tab<?php wpsc_ce_admin_active_tab( 'tools' ); ?>" href="<?php echo add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce', 'tab' => 'tools' ), 'edit.php' ); ?>"><?php _e( 'Tools', 'wpsc_ce' ); ?></a>
+		<a data-tab-id="overview" class="nav-tab<?php wpsc_ce_admin_active_tab( 'overview' ); ?>" href="<?php echo $wpsc_ce_url; ?>"><?php _e( 'Overview', 'wpsc_ce' ); ?></a>
+		<a data-tab-id="export" class="nav-tab<?php wpsc_ce_admin_active_tab( 'export' ); ?>" href="<?php echo add_query_arg( array( 'tab' => 'export' ), $wpsc_ce_url ); ?>"><?php _e( 'Export', 'wpsc_ce' ); ?></a>
+		<a data-tab-id="tools" class="nav-tab<?php wpsc_ce_admin_active_tab( 'tools' ); ?>" href="<?php echo add_query_arg( array( 'tab' => 'tools' ), $wpsc_ce_url ); ?>"><?php _e( 'Tools', 'wpsc_ce' ); ?></a>
 	</h2>
 	<?php wpsc_ce_tab_template( $tab ); ?>
 

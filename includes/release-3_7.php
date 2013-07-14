@@ -153,8 +153,8 @@ if( is_admin() ) {
 							}
 							$product->external_link = get_product_meta( $product->ID, 'external_link' );
 							$product->merchant_notes = get_product_meta( $product->ID, 'merchant_notes' );
-							$product->category = wpsc_ce_get_product_assoc_categories( $product->ID );
-							$product->tags = wpsc_ce_get_product_assoc_tags( $product->ID );
+							$product->category = wpsc_ce_get_product_categories( $product->ID );
+							$product->tags = wpsc_ce_get_product_tags( $product->ID );
 
 							foreach( $product as $key => $value )
 								$product->$key = escape_csv_value( $value );
@@ -204,7 +204,7 @@ if( is_admin() ) {
 						else
 							$csv .= escape_csv_value( $columns[$i] ) . $separator;
 					}
-					$categories = wpsc_ce_get_product_categories();
+					$categories = wpsc_ce_get_categories();
 					if( $categories ) {
 						foreach( $categories as $category ) {
 							$csv .= 
@@ -218,18 +218,21 @@ if( is_admin() ) {
 
 				/* Tags */
 				case 'tags':
-					$columns = array(
-						__( 'Tags', 'wpsc_ce' )
+					$term_taxonomy = 'product_tag';
+					$args = array(
+						'hide_empty' => 0
 					);
-					$size = count( $columns );
-					for( $i = 0; $i < $size; $i++ ) {
-						if( $i == ( $size - 1 ) )
-							$csv .= $columns[$i] . "\n";
-						else
-							$csv .= $columns[$i] . $separator;
-					}
-					$tags = wpsc_ce_get_product_tags();
+					$tags = get_terms( $term_taxonomy, $args );
 					if( $tags ) {
+						$columns = array(
+							__( 'Tags', 'wpsc_ce' )
+						);
+						for( $i = 0; $i < count( $columns ); $i++ ) {
+							if( $i == ( count( $columns ) - 1 ) )
+								$csv .= $columns[$i] . "\n";
+							else
+								$csv .= $columns[$i] . $separator;
+						}
 						foreach( $tags as $tag ) {
 							$csv .= 
 								$tag->name
@@ -253,7 +256,7 @@ if( is_admin() ) {
 			$csv = utf8_decode( $csv );
 
 			if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
-				$wpsc_ce['debug_log'] = $csv;
+				echo '<code>' . str_replace( "\n", '<br />', $csv ) . '</code>' . '<br />';
 			else
 				echo $csv;
 
@@ -261,7 +264,7 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_product_assoc_categories( $product_id = null ) {
+	function wpsc_ce_get_product_categories( $product_id = null ) {
 
 		global $export, $wpdb;
 
@@ -284,7 +287,7 @@ if( is_admin() ) {
 
 	/* Categories */
 
-	function wpsc_ce_get_product_categories() {
+	function wpsc_ce_get_categories() {
 
 		global $wpdb;
 

@@ -93,12 +93,6 @@ if( is_admin() ) {
 		$action = wpsc_get_action();
 		switch( $action ) {
 
-			case 'dismiss_memory_prompt':
-				wpsc_ce_update_option( 'dismiss_memory_prompt', 1 );
-				$url = add_query_arg( 'action', null );
-				wp_redirect( $url );
-				break;
-
 			case 'export':
 				$export = new stdClass();
 				$export->delimiter = $_POST['delimiter'];
@@ -159,7 +153,6 @@ if( is_admin() ) {
 						$export->order_status = wpsc_ce_format_product_filters( $_POST['order_filter_status'] );
 						$export->order_dates_from = $_POST['order_dates_from'];
 						$export->order_dates_to = $_POST['order_dates_to'];
-						$export->order_customer = $_POST['order_customer'];
 						break;
 
 					case 'customers':
@@ -195,46 +188,47 @@ if( is_admin() ) {
 						'product_status' => $export->product_status,
 						'order_status' => $export->order_status,
 						'order_dates_from' => wpsc_ce_format_order_date( $export->order_dates_from ),
-						'order_dates_to' => wpsc_ce_format_order_date( $export->order_dates_to ),
-						'order_customer' => $export->order_customer
+						'order_dates_to' => wpsc_ce_format_order_date( $export->order_dates_to )
 					);
 					wpsc_ce_save_fields( $dataset, $export->fields );
 					if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
 						wpsc_ce_export_dataset( $dataset, $args );
 					} else {
-
-						/* Generate CSV contents */
-
 						$filename = wpsc_ce_generate_csv_filename( $export->type );
 						$bits = wpsc_ce_export_dataset( $dataset, $args );
 						if( $export->delete_temporary_csv ) {
-
-							/* Print to browser */
-
 							wpsc_ce_generate_csv_header( $export->type );
 							echo $bits;
 							exit();
-
 						} else {
-
-							/* Save to file and insert to WordPress Media */
-
 							if( $filename && $bits ) {
-								$post_ID = wpsc_ce_save_csv_file_attachment( $filename );
+								$object = array(
+									'post_title' => $filename,
+									'post_type' => 'wpsc-export',
+									'post_mime_type' => 'text/csv'
+								);
 								$upload = wp_upload_bits( $filename, null, $bits );
-								$attach_data = wp_generate_attachment_metadata( $post_ID, $upload['file'] );
+								$post_ID = wp_insert_attachment( $object, $filename );
+								$filepath = $upload['file'];
+								$attach_data = wp_generate_attachment_metadata( $post_ID, $filepath );
 								wp_update_attachment_metadata( $post_ID, $attach_data );
-								if( $post_ID )
-									wpsc_ce_save_csv_file_guid( $post_ID, $export->type, $upload['url'] );
+								if( $post_ID ) {
+									add_post_meta( $post_ID, '_wpsc_export_type', $export->type );
+									$wp_upload_dir = wp_upload_dir();
+									$object = array(
+										'ID' => $post_ID,
+										'guid' => $upload['url']
+									);
+									wp_update_post( $object );
+								}
 								wpsc_ce_generate_csv_header( $export->type );
 								ob_clean();
 								flush();
-								readfile( $upload['file'] );
+								readfile( $filepath );
 							} else {
 								wp_redirect( add_query_arg( 'failed', true ) );
 							}
 							exit();
-
 						}
 					}
 				}
@@ -260,7 +254,7 @@ if( is_admin() ) {
 				$output = '<div class="updated settings-error"><p><strong>' . $message . '</strong></p></div>';
 				if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
 					$output .= '<h3>' . __( 'Export Log', 'wpsc_ce' ) . '</h3>';
-					$output .= '<textarea id="export_log">' . $wpsc_ce['debug_log'] . '</textarea>';
+					$output .= '<textarea style="font:12px Consolas, Monaco, Courier, monospace; width:100%; height:200px;">' . $wpsc_ce['debug_log'] . '</textarea>';
 				}
 				echo $output;
 
@@ -283,8 +277,9 @@ if( is_admin() ) {
 		$tab = false;
 		if( isset( $_GET['tab'] ) )
 			$tab = $_GET['tab'];
+
 		$url = add_query_arg( 'page', 'wpsc_ce' );
-		wpsc_ce_memory_prompt();
+
 		switch( wpsc_get_major_version() ) {
 
 			case '3.8':
@@ -296,6 +291,7 @@ if( is_admin() ) {
 				break;
 
 		}
+
 		include_once( 'templates/admin/wpsc-admin_ce-export.php' );
 
 	}

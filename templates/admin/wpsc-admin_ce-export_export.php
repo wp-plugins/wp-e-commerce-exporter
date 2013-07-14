@@ -1,7 +1,6 @@
 <ul class="subsubsub">
 	<li><a href="#export-type"><?php _e( 'Export Type', 'wpsc_ce' ); ?></a> |</li>
 	<li><a href="#export-options"><?php _e( 'Export Options', 'wpsc_ce' ); ?></a></li>
-	<?php do_action( 'wpsc_ce_export_quicklinks' ); ?>
 </ul>
 <br class="clear" />
 <form method="post" id="postform">
@@ -224,13 +223,20 @@
 				<h3 class="hndle"><?php _e( 'Order Filters', 'wpsc_ce' ); ?></h3>
 				<div class="inside">
 
-					<?php do_action( 'wpsc_ce_export_order_options_before_table' ); ?>
+					<p><label><input type="checkbox" id="orders-filters-status" /> <?php _e( 'Filter Orders by Order Status', 'wpsc_ce' ); ?></label></p>
+					<div id="export-orders-filters-status">
+						<ul>
+<?php foreach( $order_statuses as $order_status ) { ?>
+							<li><label><input type="checkbox" name="order_filter_status[<?php echo $order_status['order']; ?>]" value="<?php echo $order_status['order']; ?>" /> <?php echo $order_status['label']; ?></label></li>
+<?php } ?>
+						</ul>
+						<p class="description"><?php _e( 'Select the Order Status you want to filter exported Orders by. Default is to include all Order Status options.', 'wpsc_ce' ); ?></p>
+					</div>
+					<!-- #export-orders-filters-status -->
 
-					<table class="form-table">
-						<?php do_action( 'wpsc_ce_export_order_options_table' ); ?>
-					</table>
-
-					<?php do_action( 'wpsc_ce_export_order_options_after_table' ); ?>
+				<table class="form-table">
+					<?php do_action( 'wpsc_ce_order_export_options' ); ?>
+				</table>
 
 				</div>
 				<!-- .inside -->
@@ -247,11 +253,7 @@
 			<div class="inside">
 	<?php if( $customers ) { ?>
 				<p class="description"><?php _e( 'Select the Customer fields you would like to export.', 'wpsc_ce' ); ?></p>
-		<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 				<p><a href="javascript:void(0)" id="customers-checkall"><?php _e( 'Check All', 'jigo_ce' ); ?></a> | <a href="javascript:void(0)" id="customers-uncheckall"><?php _e( 'Uncheck All', 'jigo_ce' ); ?></a></p>
-		<?php } else { ?>
-				<p>Uncheck All | Check All</p>
-		<?php } ?>
 				<table>
 
 		<?php foreach( $customer_fields as $customer_field ) { ?>
@@ -287,7 +289,7 @@
 			<div class="inside">
 	<?php if( $coupons ) { ?>
 				<p class="description"><?php _e( 'Select the Coupon fields you would like to export.', 'wpsc_ce' ); ?></p>
-		<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+		<?php if( function_exists( 'woo_cd_admin_init' ) ) { ?>
 				<p><a href="javascript:void(0)" id="coupons-checkall"><?php _e( 'Check All', 'jigo_ce' ); ?></a> | <a href="javascript:void(0)" id="coupons-uncheckall"><?php _e( 'Uncheck All', 'jigo_ce' ); ?></a></p>
 		<?php } else { ?>
 				<p>Uncheck All | Check All</p>

@@ -606,14 +606,13 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_product_assoc_tags( $product_id = 0 ) {
+	function wpsc_ce_get_product_tags( $product_id ) {
 
 		global $wpdb, $export;
 
 		$output = '';
 		$term_taxonomy = 'product_tag';
-		if( $product_id )
-			$tags = wp_get_object_terms( $product_id, $term_taxonomy );
+		$tags = wp_get_object_terms( $product_id, $term_taxonomy );
 		if( $tags ) {
 			$size = count( $tags );
 			for( $i = 0; $i < $size; $i++ ) {
@@ -813,68 +812,53 @@ if( is_admin() ) {
 
 		$fields = array();
 		$fields[] = array(
-			'name' => 'user_id',
-			'label' => __( 'User ID', 'wpsc_ce' ),
+			'name' => 'full_name',
+			'label' => __( 'Full Name', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'user_name',
-			'label' => __( 'Username', 'wpsc_ce' ),
+			'name' => 'first_name',
+			'label' => __( 'First Name', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'billing_full_name',
-			'label' => __( 'Billing: Full Name', 'wpsc_ce' ),
+			'name' => 'last_name',
+			'label' => __( 'Last Name', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'billing_first_name',
-			'label' => __( 'Billing: First Name', 'wpsc_ce' ),
+			'name' => 'street_address',
+			'label' => __( 'Street Address', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'billing_last_name',
-			'label' => __( 'Billing: Last Name', 'wpsc_ce' ),
+			'name' => 'city',
+			'label' => __( 'City', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'billing_street_address',
-			'label' => __( 'Billing: Street Address', 'wpsc_ce' ),
+			'name' => 'state',
+			'label' => __( 'State', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'billing_city',
-			'label' => __( 'Billing: City', 'wpsc_ce' ),
+			'name' => 'zip_code',
+			'label' => __( 'ZIP Code', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'billing_state',
-			'label' => __( 'Billing: State', 'wpsc_ce' ),
+			'name' => 'country',
+			'label' => __( 'Country', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'billing_zip_code',
-			'label' => __( 'Billing: ZIP Code', 'wpsc_ce' ),
+			'name' => 'phone_number',
+			'label' => __( 'Phone Number', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'billing_country',
-			'label' => __( 'Billing: Country (prefix)', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array( 
-			'name' => 'billing_country_full',
-			'label' => __( 'Billing: Country', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'billing_phone_number',
-			'label' => __( 'Billing: Phone Number', 'wpsc_ce' ),
-			'default' => 1
-		);
-		$fields[] = array(
-			'name' => 'billing_email',
-			'label' => __( 'Billing: E-mail Address', 'wpsc_ce' ),
+			'name' => 'email',
+			'label' => __( 'E-mail Address', 'wpsc_ce' ),
 			'default' => 1
 		);
 
@@ -928,19 +912,6 @@ if( is_admin() ) {
 					$i = $size;
 				}
 			}
-		}
-		return $output;
-
-	}
-
-	function wpsc_ce_expand_country_name( $country_prefix ) {
-
-		global $wpdb;
-
-		$output = $country_prefix;
-		if( $output ) {
-			$country_sql = $wpdb->prepare( "SELECT `country` FROM `" . $wpdb->prefix . "wpsc_currency_list` WHERE `isocode` = %s LIMIT 1", $output );
-			$country = $wpdb->get_var( $country_sql );
 		}
 		return $output;
 
@@ -1107,11 +1078,13 @@ if( is_admin() ) {
 
 				$product_fields = wpsc_ce_get_product_fields();
 				if( $product_fields ) {
-					$product_categories = wpsc_ce_get_product_categories();
+					$product_categories = wpsc_ce_get_categories();
 					$product_statuses = get_post_statuses();
 					$product_statuses['trash'] = __( 'Trash', 'wpsc_ce' );
 				}
 				$order_fields = wpsc_ce_get_order_fields();
+				if( $order_fields )
+					$order_statuses = $wpsc_purchlog_statuses;
 				$customer_fields = wpsc_ce_get_customer_fields();
 				$coupon_fields = wpsc_ce_get_coupon_fields();
 
@@ -1147,110 +1120,48 @@ if( is_admin() ) {
 				break;
 
 			case 'archive':
-				$files = wpsc_ce_get_archive_files();
+				$wp_upload_dir = wp_upload_dir();
+				$args = array(
+					'post_type' => 'attachment',
+					'post_mime_type' => 'text/csv',
+					'meta_key' => '_wpsc_export_type',
+					'meta_value' => null,
+					'posts_per_page' => -1
+				);
+				if( isset( $_GET['filter'] ) ) {
+					$filter = $_GET['filter'];
+					if( !empty( $filter ) )
+						$args['meta_value'] = $filter;
+				}
+				$files = get_posts( $args );
 				if( $files ) {
-					foreach( $files as $key => $file )
-						$files[$key] = wpsc_ce_get_archive_file( $file );
+					foreach( $files as $key => $file ) {
+						$files[$key]->export_type = get_post_meta( $file->ID, '_wpsc_export_type', true );
+						$files[$key]->export_type_label = wpsc_ce_export_type_label( $files[$key]->export_type );
+						if( empty( $files[$key]->export_type ) )
+							$files[$key]->export_type = __( 'Unassigned', 'wpsc_ce' );
+						if( empty( $file->guid ) )
+							$files[$key]->guid = $wp_upload_dir['url'] . '/' . basename( $file->post_title );
+						$files[$key]->post_mime_type = get_post_mime_type( $file->ID );
+						if( !$file->post_mime_type )
+							$files[$key]->post_mime_type = __( 'N/A', 'wpsc_st' );
+						$files[$key]->media_icon = wp_get_attachment_image( $file->ID, array( 80, 60 ), true );
+						$author_name = get_user_by( 'id', $file->post_author );
+						$files[$key]->post_author_name = $author_name->display_name;
+						$t_time = strtotime( $file->post_date, current_time( 'timestamp' ) );
+						$time = get_post_time( 'G', true, $file->ID, false );
+						if( ( abs( $t_diff = time() - $time ) ) < 86400 )
+							$files[$key]->post_date = sprintf( __( '%s ago' ), human_time_diff( $time ) );
+						else
+							$files[$key]->post_date = mysql2date( __( 'Y/m/d' ), $file->post_date );
+						unset( $author_name, $t_time, $time );
+					}
 				}
 				break;
 
 		}
 		if( $tab )
 			include_once( $wpsc_ce['abspath'] . '/templates/admin/wpsc-admin_ce-export_' . $tab . '.php' );
-
-	}
-
-	function wpsc_ce_save_csv_file_attachment( $filename = '' ) {
-
-		$output = 0;
-		if( !empty( $filename ) ) {
-			$object = array(
-				'post_title' => $filename,
-				'post_type' => 'wpsc-export',
-				'post_mime_type' => 'text/csv'
-			);
-			$post_ID = wp_insert_attachment( $object, $filename );
-			if( $post_ID )
-				$output = $post_ID;
-		}
-		return $output;
-
-	}
-
-	function wpsc_ce_save_csv_file_guid( $post_ID, $export_type, $upload_url ) {
-
-		add_post_meta( $post_ID, '_wpsc_export_type', $export_type );
-		$object = array(
-			'ID' => $post_ID,
-			'guid' => $upload_url
-		);
-		wp_update_post( $object );
-
-	}
-
-	function wpsc_ce_memory_prompt() {
-
-		if( !wpsc_ce_get_option( 'dismiss_memory_prompt', 0 ) ) {
-			$memory_limit = (int)( ini_get( 'memory_limit' ) );
-			$minimum_memory_limit = 64;
-			if( $memory_limit < $minimum_memory_limit ) {
-				ob_start();
-				$memory_url = add_query_arg( 'action', 'dismiss_memory_prompt' );
-				$message = sprintf( __( 'We recommend setting memory to at least 64MB, your site has %dMB currently allocated. See: <a href="%s" target="_blank">Increasing memory allocated to PHP</a>', 'wpsc_ce' ), $memory_limit, 'http://codex.wordpress.org/Editing_wp-config.php#Increasing_memory_allocated_to_PHP' ); ?>
-<div class="error settings-error">
-	<p>
-		<strong><?php echo $message; ?></strong>
-		<span style="float:right;"><a href="<?php echo $memory_url; ?>"><?php _e( 'Dismiss', 'wpsc_ce' ); ?></a></span>
-	</p>
-</div>
-<?php
-				ob_end_flush();
-			}
-		}
-
-	}
-
-	function wpsc_ce_get_archive_files() {
-	
-		$args = array(
-			'post_type' => 'attachment',
-			'post_mime_type' => 'text/csv',
-			'meta_key' => '_wpsc_export_type',
-			'meta_value' => null,
-			'posts_per_page' => -1
-		);
-		if( isset( $_GET['filter'] ) ) {
-			$filter = $_GET['filter'];
-			if( !empty( $filter ) )
-				$args['meta_value'] = $filter;
-		}
-		$files = get_posts( $args );
-		return $files;
-
-	}
-
-	function wpsc_ce_get_archive_file( $file = '' ) {
-
-		$wp_upload_dir = wp_upload_dir();
-		$file->export_type = get_post_meta( $file->ID, '_wpsc_export_type', true );
-		$file->export_type_label = wpsc_ce_export_type_label( $file->export_type );
-		if( empty( $file->export_type ) )
-			$file->export_type = __( 'Unassigned', 'wpsc_ce' );
-		if( empty( $file->guid ) )
-			$file->guid = $wp_upload_dir['url'] . '/' . basename( $file->post_title );
-		$file->post_mime_type = get_post_mime_type( $file->ID );
-		if( !$file->post_mime_type )
-			$file->post_mime_type = __( 'N/A', 'wpsc_ce' );
-		$file->media_icon = wp_get_attachment_image( $file->ID, array( 80, 60 ), true );
-		$author_name = get_user_by( 'id', $file->post_author );
-		$file->post_author_name = $author_name->display_name;
-		$t_time = strtotime( $file->post_date, current_time( 'timestamp' ) );
-		$time = get_post_time( 'G', true, $file->ID, false );
-		if( ( abs( $t_diff = time() - $time ) ) < 86400 )
-			$file->post_date = sprintf( __( '%s ago' ), human_time_diff( $time ) );
-		else
-			$file->post_date = mysql2date( __( 'Y/m/d' ), $file->post_date );
-		return $file;
 
 	}
 

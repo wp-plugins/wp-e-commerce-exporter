@@ -27,12 +27,6 @@
 .wpsc-product_page_wpsc_ce .postbox .submit {
 	padding:0.3em 0;
 }
-.store_page_wpsc_ce textarea#export_log,
-.wpsc-product_page_wpsc_ce textarea#export_log {
-	font:12px Consolas, Monaco, Courier, monospace;
-	width:100%;
-	height:200px;
-}
 .store_page_wpsc_ce .overview-left,
 .wpsc-product_page_wpsc_ce .overview-left {
 	float:left;

@@ -4,8 +4,8 @@ Contributors: visser
 Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 3.5.1
-Stable tag: 1.4.6
+Tested up to: 3.5.2
+Stable tag: 1.4.7
 
 == Description ==
 
@@ -46,6 +46,15 @@ If you have any problems, questions or suggestions please join the members discu
 http://www.visser.com.au/wp-ecommerce/forums/
 
 == Changelog ==
+
+= 1.4.7 =
+* Fixed: Customers export dataset
+* Fixed: Custom Fields integration for Products
+* Added: Filter Products by Product Category
+* Added: Trash Product Status to Product Filters
+* Changed: Cleaned up Export options short list
+* Added: Past Exports support
+* Added: Integration to WordPress Media
 
 = 1.4.6 =
 * Fixed: Styling in WP e-Commerce 3.7

@@ -1,4 +1,5 @@
 <div class="overview-left">
+
 	<h3><a href="<?php echo add_query_arg( 'tab', 'export' ); ?>"><?php _e( 'Export', 'wpsc_ce' ); ?></a></h3>
 	<p><?php _e( 'Export store details out of WP e-Commerce into a CSV-formatted file.', 'wpsc_ce' ); ?></p>
 	<ul class="ul-disc">
@@ -30,6 +31,9 @@
 <?php } ?>
 		</li>
 	</ul>
+
+	<h3><a href="<?php echo add_query_arg( 'tab', 'archive' ); ?>"><?php _e( 'Archives', 'wpsc_ce' ); ?></a></h3>
+	<p><?php _e( 'Download copies of prior store exports.', 'wpsc_ce' ); ?></p>
 
 	<h3><a href="<?php echo add_query_arg( 'tab', 'tools' ); ?>"><?php _e( 'Tools', 'wpsc_ce' ); ?></a></h3>
 	<p><?php _e( 'Export tools for WP e-Commerce.', 'wpsc_ce' ); ?></p>

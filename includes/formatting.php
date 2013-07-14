@@ -4,14 +4,82 @@ function wpsc_ce_clean_html( $content ) {
 /*
 	if( function_exists( 'mb_convert_encoding' ) ) {
 		$output_encoding = 'ISO-8859-1';
-		$data = mb_convert_encoding( trim( $data ), 'UTF-8', $output_encoding );
+		$content = mb_convert_encoding( trim( $content ), 'UTF-8', $output_encoding );
 	} else {
-		$data = trim( $data );
+		$content = trim( $content );
 	}
-	$data = str_replace( ',', '&#44;', $data );
-	$data = str_replace( "\n", '<br />', $data );
+	$data = str_replace( ',', '&#44;', $content );
+	$data = str_replace( "\n", '<br />', $content );
 */
 	return $content;
+
+}
+
+function wpsc_ce_escape_csv_value( $value = '', $delimiter = ',', $format = 'all' ) {
+
+	$output = $value;
+	if( !empty( $output ) ) {
+		$output = str_replace( '"', '""', $output );
+		//$output = str_replace( PHP_EOL, ' ', $output );
+		$output = str_replace( PHP_EOL, "\r\n", $output );
+		switch( $format ) {
+	
+			case 'all':
+				$output = '"' . $output . '"';
+				break;
+	
+			case 'excel':
+				if( strstr( $output, $delimiter ) !== false || strstr( $output, "\r\n" ) !== false )
+					$output = '"' . $output . '"';
+				break;
+	
+		}
+	}
+	return $output;
+
+}
+
+function wpsc_ce_format_product_status( $product_status, $product ) {
+
+	$output = $product_status;
+	switch( $product_status ) {
+
+		case 'publish':
+			$output = __( 'Publish', 'wpsc_ce' );
+			break;
+
+		case 'draft':
+			$output = __( 'Draft', 'wpsc_ce' );
+			break;
+
+		case 'trash':
+			$output = __( 'Trash', 'wpsc_ce' );
+			break;
+
+	}
+	if( $product->is_variation && $product_status <> 'draft' )
+		$output = '';
+	return $output;
+
+}
+
+function wpsc_ce_format_comment_status( $comment_status, $product ) {
+
+	$output = $comment_status;
+	switch( $comment_status ) {
+
+		case 'open':
+			$output = __( 'Open', 'wpsc_ce' );
+			break;
+
+		case 'closed':
+			$output = __( 'Closed', 'wpsc_ce' );
+			break;
+
+	}
+	if( $product->is_variation )
+		$output = '';
+	return $output;
 
 }
 
@@ -68,46 +136,15 @@ function wpsc_ce_format_gpf_condition( $condition ) {
 	return $output;
 
 }
-function wpsc_ce_format_product_status( $product_status, $product ) {
 
-	$output = $product_status;
-	switch( $product_status ) {
+function wpsc_ce_format_product_filters( $product_filters = array() ) {
 
-		case 'publish':
-			$output = __( 'Publish', 'wpsc_ce' );
-			break;
-
-		case 'draft':
-			$output = __( 'Draft', 'wpsc_ce' );
-			break;
-
-		case 'trash':
-			$output = __( 'Trash', 'wpsc_ce' );
-			break;
-
+	$output = array();
+	if( !empty( $product_filters ) ) {
+		foreach( $product_filters as $product_filter ) {
+			$output[] = $product_filter;
+		}
 	}
-	if( $product->is_variation && $product_status <> 'draft' )
-		$output = '';
-	return $output;
-
-}
-
-function wpsc_ce_format_comment_status( $comment_status, $product ) {
-
-	$output = $comment_status;
-	switch( $comment_status ) {
-
-		case 'open':
-			$output = __( 'Open', 'wpsc_ce' );
-			break;
-
-		case 'closed':
-			$output = __( 'Closed', 'wpsc_ce' );
-			break;
-
-	}
-	if( $product->is_variation )
-		$output = '';
 	return $output;
 
 }

@@ -88,9 +88,10 @@ if( is_admin() ) {
 		global $wpdb, $wpsc_ce, $export;
 
 		$csv = '';
+		if( $export->bom )
+			$csv .= chr(239) . chr(187) . chr(191) . '';
 		$separator = $export->delimiter;
 		$export->args = $args;
-
 		foreach( $dataset as $datatype ) {
 
 			$csv = '';
@@ -105,6 +106,7 @@ if( is_admin() ) {
 						__( 'Additional Description', 'wpsc_ce' ),
 						__( 'Price', 'wpsc_ce' ),
 						__( 'Sale Price', 'wpsc_ce' ),
+						__( 'Slug', 'wpsc_ce' ),
 						__( 'Permalink', 'wpsc_ce' ),
 						__( 'Weight', 'wpsc_ce' ),
 						__( 'Weight Unit', 'wpsc_ce' ),
@@ -128,9 +130,9 @@ if( is_admin() ) {
 					$size = count( $columns );
 					for( $i = 0; $i < $size; $i++ ) {
 						if( $i == ( $size - 1 ) )
-							$csv .= escape_csv_value( $columns[$i] ) . "\n";
+							$csv .= wpsc_ce_escape_csv_value( $columns[$i] ) . "\n";
 						else
-							$csv .= escape_csv_value( $columns[$i] ) . $separator;
+							$csv .= wpsc_ce_escape_csv_value( $columns[$i] ) . $separator;
 					}
 					$products_sql = "SELECT `id` AS ID, `name`, `description`, `additional_description`, `publish` as status, `price`, `weight`, `weight_unit`, `pnp` as local_shipping, `international_pnp` as international_shipping, `quantity`, `special_price` as sale_price FROM `" . $wpdb->prefix . "wpsc_product_list` WHERE `active` = 1";
 					$products = $wpdb->get_results( $products_sql );
@@ -138,7 +140,8 @@ if( is_admin() ) {
 						foreach( $products as $product ) {
 
 							$product->sku = get_product_meta( $product->ID, 'sku' );
-							$product->permalink = get_product_meta( $product->ID, 'url_name' );
+							$product->slug = get_product_meta( $product->ID, 'url_name' );
+							$product->permalink = wpsc_product_url( $product->ID );
 							$product->dimensions = get_product_meta( $product->ID, 'dimensions' );
 							if( $product->dimensions ) {
 								$product->height = $product->dimensions['height'];
@@ -150,8 +153,8 @@ if( is_admin() ) {
 							}
 							$product->external_link = get_product_meta( $product->ID, 'external_link' );
 							$product->merchant_notes = get_product_meta( $product->ID, 'merchant_notes' );
-							$product->category = wpsc_ce_get_product_categories( $product->ID );
-							$product->tags = wpsc_ce_get_product_tags( $product->ID );
+							$product->category = wpsc_ce_get_product_assoc_categories( $product->ID );
+							$product->tags = wpsc_ce_get_product_assoc_tags( $product->ID );
 
 							foreach( $product as $key => $value )
 								$product->$key = escape_csv_value( $value );
@@ -201,7 +204,7 @@ if( is_admin() ) {
 						else
 							$csv .= escape_csv_value( $columns[$i] ) . $separator;
 					}
-					$categories = wpsc_ce_get_categories();
+					$categories = wpsc_ce_get_product_categories();
 					if( $categories ) {
 						foreach( $categories as $category ) {
 							$csv .= 
@@ -215,21 +218,18 @@ if( is_admin() ) {
 
 				/* Tags */
 				case 'tags':
-					$term_taxonomy = 'product_tag';
-					$args = array(
-						'hide_empty' => 0
+					$columns = array(
+						__( 'Tags', 'wpsc_ce' )
 					);
-					$tags = get_terms( $term_taxonomy, $args );
+					$size = count( $columns );
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$csv .= $columns[$i] . "\n";
+						else
+							$csv .= $columns[$i] . $separator;
+					}
+					$tags = wpsc_ce_get_product_tags();
 					if( $tags ) {
-						$columns = array(
-							__( 'Tags', 'wpsc_ce' )
-						);
-						for( $i = 0; $i < count( $columns ); $i++ ) {
-							if( $i == ( count( $columns ) - 1 ) )
-								$csv .= $columns[$i] . "\n";
-							else
-								$csv .= $columns[$i] . $separator;
-						}
 						foreach( $tags as $tag ) {
 							$csv .= 
 								$tag->name
@@ -253,7 +253,7 @@ if( is_admin() ) {
 			$csv = utf8_decode( $csv );
 
 			if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
-				echo '<code>' . str_replace( "\n", '<br />', $csv ) . '</code>' . '<br />';
+				$wpsc_ce['debug_log'] = $csv;
 			else
 				echo $csv;
 
@@ -261,13 +261,13 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_product_categories( $product_id = null ) {
+	function wpsc_ce_get_product_assoc_categories( $product_id = null ) {
 
 		global $export, $wpdb;
 
 		$output = '';
 		if( $product_id ) {
-			$categories_sql = sprintf( "SELECT wpsc_product_categories.`name` FROM `" . $wpdb->prefix . "wpsc_item_category_assoc` as item_category_assoc, `" . $wpdb->prefix . "wpsc_product_categories` as wpsc_product_categories WHERE item_category_assoc.category_id = wpsc_product_categories.id AND item_category_assoc.`product_id` = %d", $product_id );
+			$categories_sql = $wpdb->prepare( "SELECT wpsc_product_categories.`name` FROM `" . $wpdb->prefix . "wpsc_item_category_assoc` as item_category_assoc, `" . $wpdb->prefix . "wpsc_product_categories` as wpsc_product_categories WHERE item_category_assoc.category_id = wpsc_product_categories.id AND item_category_assoc.`product_id` = %d", $product_id );
 			$categories = $wpdb->get_results( $categories_sql );
 			if( $categories ) {
 				foreach( $categories as $category ) {
@@ -284,7 +284,7 @@ if( is_admin() ) {
 
 	/* Categories */
 
-	function wpsc_ce_get_categories() {
+	function wpsc_ce_get_product_categories() {
 
 		global $wpdb;
 
@@ -306,7 +306,7 @@ if( is_admin() ) {
 
 			$output = $status;
 			if( !empty( $status ) ) {
-				$status_name_sql = sprintf( "SELECT `name` FROM `" . $wpdb->prefix . "wpsc_purchase_statuses` WHERE `id` = %d LIMIT 1", $status );
+				$status_name_sql = $wpdb->prepare( "SELECT `name` FROM `" . $wpdb->prefix . "wpsc_purchase_statuses` WHERE `id` = %d LIMIT 1", $status );
 				$status_name = $wpdb->get_var( $status_name_sql );
 				if( $status_name )
 					$output = $status_name;

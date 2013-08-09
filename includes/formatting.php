@@ -148,4 +148,28 @@ function wpsc_ce_format_product_filters( $product_filters = array() ) {
 	return $output;
 
 }
+
+function wpsc_ce_format_order_date( $date ) {
+
+	$output = $date;
+	if( $date )
+		$output = str_replace( '/', '-', $date );
+	return $output;
+
+}
+
+function wpsc_ce_expand_country_name( $country_prefix = '' ) {
+
+	global $wpdb;
+
+	$output = $country_prefix;
+	if( $country_prefix ) {
+		$country_sql = $wpdb->prepare( "SELECT `country` FROM `" . $wpdb->prefix . "wpsc_currency_list` WHERE `isocode` = '%s' LIMIT 1", $country_prefix );
+		$country = $wpdb->get_var( $country_sql );
+		if( $country )
+			$output = $country;
+	}
+	return $output;
+
+}
 ?>

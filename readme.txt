@@ -4,8 +4,8 @@ Contributors: visser
 Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 3.5.1
-Stable tag: 1.4.7
+Tested up to: 3.7
+Stable tag: 1.4.9
 
 == Description ==
 
@@ -26,7 +26,6 @@ Features include:
 * Toggle export fields
 
 (*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products and more.
-
 (**) Requries the Pro upgrade to enable additional store export functionality.
 
 For more information visit: http://www.visser.com.au/wp-ecommerce/
@@ -51,7 +50,25 @@ If you have any problems, questions or suggestions please join the members discu
 
 http://www.visser.com.au/wp-ecommerce/forums/
 
+== Screenshots ==
+
+1. Select the data type you wish to export, default is Products.
+2. Select the data fields to be included in the export, selections are remembered for next export.
+3. Filter the exported data by date, status, customer and more.
+4. A range of global export options are included.
+
 == Changelog ==
+
+= 1.4.9 =
+* Added: User ID to Customers export
+* Added: Username to Customers export
+* Changed: Backend names for Customer export fields
+* Added: jQuery Chosen support to Orders Customer dropdown
+
+= 1.4.8 =
+* Added: Category structure export
+* Added: Native jQuery UI support
+* Fixed: Various small bugs
 
 = 1.4.7 =
 * Fixed: Customers export dataset

@@ -62,7 +62,7 @@ if( is_admin() ) {
 
 	function wpsc_ce_save_fields( $dataset, $fields = array() ) {
 
-		if( $dataset && $fields ) {
+		if( $dataset && !empty( $fields ) ) {
 			$type = $dataset[0];
 			wpsc_ce_update_option( $type . '_fields', $fields );
 		}
@@ -92,6 +92,75 @@ if( is_admin() ) {
 				$output = $filename;
 		}
 		return $output;
+
+	}
+
+	function wpsc_ce_orders_filter_by_date() {
+
+		$current_month = date( 'F' );
+		$last_month = date( 'F', mktime( 0, 0, 0, date( 'n' )-1, 1, date( 'Y' ) ) );
+		$order_dates_from = '-';
+		$order_dates_to = '-';
+
+		ob_start(); ?>
+<p><label><input type="checkbox" id="orders-filters-date" /> <?php _e( 'Filter Orders by Order Date', 'wpsc_ce' ); ?></label></p>
+<div id="export-orders-filters-date" class="separator">
+	<ul>
+		<li>
+			<label><input type="radio" name="order_dates_filter" value="current_month" disabled="disabled" /> <?php _e( 'Current month', 'wpsc_ce' ); ?> (<?php echo $current_month; ?>)</label>
+		</li>
+		<li>
+			<label><input type="radio" name="order_dates_filter" value="last_month" disabled="disabled" /> <?php _e( 'Last month', 'wpsc_ce' ); ?> (<?php echo $last_month; ?>)</label>
+		</li>
+		<li>
+			<label><input type="radio" name="order_dates_filter" value="manual" disabled="disabled" /> <?php _e( 'Manual', 'wpsc_ce' ); ?></label>
+			<div style="margin-top:0.2em;">
+				<input type="text" size="10" maxlength="10" id="order_dates_from" name="order_dates_from" value="<?php echo $order_dates_from; ?>" class="text" disabled="disabled" /> to <input type="text" size="10" maxlength="10" id="order_dates_to" name="order_dates_to" value="<?php echo $order_dates_to; ?>" class="text" disabled="disabled" />
+				<p class="description"><?php _e( 'Filter the dates of Orders to be included in the export. Default is the date of the first order to today.', 'wpsc_ce' ); ?></p>
+			</div>
+		</li>
+	</ul>
+</div>
+<!-- #export-orders-filters-date -->
+<?php
+		ob_end_flush();
+
+	}
+
+	function wpsc_ce_orders_filter_by_customer() {
+
+		ob_start(); ?>
+<p><label for="order_customer"><?php _e( 'Filter Orders by Customer', 'wpsc_ce' ); ?></label></p>
+<div id="export-orders-filters-date" class="separator">
+	<select id="order_customer" name="order_customer" disabled="disabled">
+		<option value=""><?php _e( 'Show all customers', 'wpsc_ce' ); ?></option>
+	</select>
+	<p class="description"><?php _e( 'Filter Orders by Customer (unique e-mail address) to be included in the export. Default is to include all Orders.', 'wpsc_ce' ); ?></p>
+</div>
+<!-- #export-orders-filters-date -->
+<?php
+		ob_end_flush();
+
+	}
+
+	function wpsc_ce_orders_filter_by_status() {
+
+		global $wpsc_purchlog_statuses;
+
+		$order_statuses = $wpsc_purchlog_statuses;
+		ob_start(); ?>
+<p><label><input type="checkbox" id="orders-filters-status" /> <?php _e( 'Filter Orders by Order Status', 'wpsc_ce' ); ?></label></p>
+<div id="export-orders-filters-status" class="separator">
+	<ul>
+<?php foreach( $order_statuses as $order_status ) { ?>
+		<li><label><input type="checkbox" name="order_filter_status[<?php echo $order_status['order']; ?>]" value="<?php echo $order_status['order']; ?>" /> <?php echo $order_status['label']; ?></label></li>
+<?php } ?>
+	</ul>
+	<p class="description"><?php _e( 'Select the Order Status you want to filter exported Orders by. Default is to include all Order Status options.', 'wpsc_ce' ); ?></p>
+</div>
+<!-- #export-orders-filters-status -->
+<?php
+		ob_end_flush();
 
 	}
 
@@ -606,7 +675,25 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_product_tags( $product_id ) {
+	/* Tags */
+
+	/* Tags */
+
+	function wpsc_ce_get_product_tags() {
+
+		$output = '';
+		$term_taxonomy = 'product_tag';
+		$args = array(
+			'hide_empty' => 0
+		);
+		$tags = get_terms( $term_taxonomy, $args );
+		if( $tags )
+			$output = $tags;
+		return $output;
+
+	}
+
+	function wpsc_ce_get_product_assoc_tags( $product_id ) {
 
 		global $wpdb, $export;
 
@@ -797,68 +884,119 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_format_order_date( $date ) {
-
-		$output = $date;
-		if( $date )
-			$output = str_replace( '/', '-', $date );
-		return $output;
-
-	}
-
 	/* Customers */
 
 	function wpsc_ce_get_customer_fields( $format = 'full' ) {
 
 		$fields = array();
 		$fields[] = array(
-			'name' => 'full_name',
-			'label' => __( 'Full Name', 'wpsc_ce' ),
+			'name' => 'user_id',
+			'label' => __( 'User ID', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'first_name',
-			'label' => __( 'First Name', 'wpsc_ce' ),
+			'name' => 'user_name',
+			'label' => __( 'Username', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'last_name',
-			'label' => __( 'Last Name', 'wpsc_ce' ),
+			'name' => 'billing_full_name',
+			'label' => __( 'Billing: Full Name', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'street_address',
-			'label' => __( 'Street Address', 'wpsc_ce' ),
+			'name' => 'billing_first_name',
+			'label' => __( 'Billing: First Name', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'city',
-			'label' => __( 'City', 'wpsc_ce' ),
+			'name' => 'billing_last_name',
+			'label' => __( 'Billing: Last Name', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'state',
-			'label' => __( 'State', 'wpsc_ce' ),
+			'name' => 'billing_street_address',
+			'label' => __( 'Billing: Street Address', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'zip_code',
-			'label' => __( 'ZIP Code', 'wpsc_ce' ),
+			'name' => 'billing_city',
+			'label' => __( 'Billing: City', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'country',
-			'label' => __( 'Country', 'wpsc_ce' ),
+			'name' => 'billing_state',
+			'label' => __( 'Billing: State (prefix)', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'phone_number',
-			'label' => __( 'Phone Number', 'wpsc_ce' ),
+			'name' => 'billing_zip_code',
+			'label' => __( 'Billing: ZIP Code', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'email',
+			'name' => 'billing_country',
+			'label' => __( 'Billing: Country (prefix)', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'billing_country_full',
+			'label' => __( 'Billing: Country', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'billing_phone_number',
+			'label' => __( 'Billing: Phone Number', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'billing_email',
 			'label' => __( 'E-mail Address', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_full_name',
+			'label' => __( 'Shipping: Full Name', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_first_name',
+			'label' => __( 'Shipping: First Name', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_last_name',
+			'label' => __( 'Shipping: Last Name', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_street_address',
+			'label' => __( 'Shipping: Street Address', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_city',
+			'label' => __( 'Shipping: City', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_state',
+			'label' => __( 'Shipping: State (prefix)', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_zip_code',
+			'label' => __( 'Shipping: ZIP Code', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_country',
+			'label' => __( 'Shipping: Country (prefix)', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'shipping_country_full',
+			'label' => __( 'Shipping: Country', 'wpsc_ce' ),
 			'default' => 1
 		);
 
@@ -1078,7 +1216,8 @@ if( is_admin() ) {
 
 				$product_fields = wpsc_ce_get_product_fields();
 				if( $product_fields ) {
-					$product_categories = wpsc_ce_get_categories();
+					$product_categories = wpsc_ce_get_product_categories();
+					$product_tags = wpsc_ce_get_product_tags();
 					$product_statuses = get_post_statuses();
 					$product_statuses['trash'] = __( 'Trash', 'wpsc_ce' );
 				}
@@ -1095,7 +1234,6 @@ if( is_admin() ) {
 				$limit_volume = wpsc_ce_get_option( 'limit_volume' );
 				$offset = wpsc_ce_get_option( 'offset' );
 				$timeout = wpsc_ce_get_option( 'timeout', 0 );
-
 				$delete_csv = wpsc_ce_get_option( 'delete_csv', 0 );
 				$file_encodings = mb_list_encodings();
 				break;
@@ -1120,48 +1258,130 @@ if( is_admin() ) {
 				break;
 
 			case 'archive':
-				$wp_upload_dir = wp_upload_dir();
-				$args = array(
-					'post_type' => 'attachment',
-					'post_mime_type' => 'text/csv',
-					'meta_key' => '_wpsc_export_type',
-					'meta_value' => null,
-					'posts_per_page' => -1
-				);
-				if( isset( $_GET['filter'] ) ) {
-					$filter = $_GET['filter'];
-					if( !empty( $filter ) )
-						$args['meta_value'] = $filter;
-				}
-				$files = get_posts( $args );
+				$files = wpsc_ce_get_archive_files();
 				if( $files ) {
-					foreach( $files as $key => $file ) {
-						$files[$key]->export_type = get_post_meta( $file->ID, '_wpsc_export_type', true );
-						$files[$key]->export_type_label = wpsc_ce_export_type_label( $files[$key]->export_type );
-						if( empty( $files[$key]->export_type ) )
-							$files[$key]->export_type = __( 'Unassigned', 'wpsc_ce' );
-						if( empty( $file->guid ) )
-							$files[$key]->guid = $wp_upload_dir['url'] . '/' . basename( $file->post_title );
-						$files[$key]->post_mime_type = get_post_mime_type( $file->ID );
-						if( !$file->post_mime_type )
-							$files[$key]->post_mime_type = __( 'N/A', 'wpsc_st' );
-						$files[$key]->media_icon = wp_get_attachment_image( $file->ID, array( 80, 60 ), true );
-						$author_name = get_user_by( 'id', $file->post_author );
-						$files[$key]->post_author_name = $author_name->display_name;
-						$t_time = strtotime( $file->post_date, current_time( 'timestamp' ) );
-						$time = get_post_time( 'G', true, $file->ID, false );
-						if( ( abs( $t_diff = time() - $time ) ) < 86400 )
-							$files[$key]->post_date = sprintf( __( '%s ago' ), human_time_diff( $time ) );
-						else
-							$files[$key]->post_date = mysql2date( __( 'Y/m/d' ), $file->post_date );
-						unset( $author_name, $t_time, $time );
-					}
+					foreach( $files as $key => $file )
+						$files[$key] = wpsc_ce_get_archive_file( $file );
 				}
 				break;
 
 		}
 		if( $tab )
 			include_once( $wpsc_ce['abspath'] . '/templates/admin/wpsc-admin_ce-export_' . $tab . '.php' );
+
+	}
+
+	function wpsc_ce_save_csv_file_attachment( $filename = '' ) {
+
+		$output = 0;
+		if( !empty( $filename ) ) {
+			$object = array(
+				'post_title' => $filename,
+				'post_type' => 'wpsc-export',
+				'post_mime_type' => 'text/csv'
+			);
+			$post_ID = wp_insert_attachment( $object, $filename );
+			if( $post_ID )
+				$output = $post_ID;
+		}
+		return $output;
+
+	}
+
+	function wpsc_ce_save_csv_file_guid( $post_ID, $export_type, $upload_url ) {
+
+		add_post_meta( $post_ID, '_wpsc_export_type', $export_type );
+		$object = array(
+			'ID' => $post_ID,
+			'guid' => $upload_url
+		);
+		wp_update_post( $object );
+
+	}
+
+	function wpsc_ce_memory_prompt() {
+
+		if( !wpsc_ce_get_option( 'dismiss_memory_prompt', 0 ) ) {
+			$memory_limit = (int)( ini_get( 'memory_limit' ) );
+			$minimum_memory_limit = 64;
+			if( $memory_limit < $minimum_memory_limit ) {
+				ob_start();
+				$memory_url = add_query_arg( 'action', 'dismiss_memory_prompt' );
+				$message = sprintf( __( 'We recommend setting memory to at least 64MB, your site has %dMB currently allocated. See: <a href="%s" target="_blank">Increasing memory allocated to PHP</a>', 'wpsc_ce' ), $memory_limit, 'http://codex.wordpress.org/Editing_wp-config.php#Increasing_memory_allocated_to_PHP' ); ?>
+<div class="error settings-error">
+	<p>
+		<strong><?php echo $message; ?></strong>
+		<span style="float:right;"><a href="<?php echo $memory_url; ?>"><?php _e( 'Dismiss', 'wpsc_ce' ); ?></a></span>
+	</p>
+</div>
+<?php
+				ob_end_flush();
+			}
+		}
+
+	}
+
+	function wpsc_ce_fail_notices() {
+
+		$message = false;
+		if( isset( $_GET['failed'] ) )
+			$message = __( 'A WordPress error caused the exporter to fail, please get in touch.', 'wpsc_ce' );
+		if( isset( $_GET['empty'] ) )
+			$message = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
+		if( $message ) {
+			ob_start(); ?>
+<div class="updated settings-error">
+	<p>
+		<strong><?php echo $message; ?></strong>
+	</p>
+</div>
+<?php
+			ob_end_flush();
+		}
+	}
+
+	function wpsc_ce_get_archive_files() {
+
+		$args = array(
+			'post_type' => 'attachment',
+			'post_mime_type' => 'text/csv',
+			'meta_key' => '_wpsc_export_type',
+			'meta_value' => null,
+			'posts_per_page' => -1
+		);
+		if( isset( $_GET['filter'] ) ) {
+			$filter = $_GET['filter'];
+			if( !empty( $filter ) )
+				$args['meta_value'] = $filter;
+		}
+		$files = get_posts( $args );
+		return $files;
+
+	}
+
+	function wpsc_ce_get_archive_file( $file = '' ) {
+
+		$wp_upload_dir = wp_upload_dir();
+		$file->export_type = get_post_meta( $file->ID, '_wpsc_export_type', true );
+		$file->export_type_label = wpsc_ce_export_type_label( $file->export_type );
+		if( empty( $file->export_type ) )
+			$file->export_type = __( 'Unassigned', 'wpsc_ce' );
+		if( empty( $file->guid ) )
+			$file->guid = $wp_upload_dir['url'] . '/' . basename( $file->post_title );
+		$file->post_mime_type = get_post_mime_type( $file->ID );
+		if( !$file->post_mime_type )
+			$file->post_mime_type = __( 'N/A', 'wpsc_ce' );
+		$file->media_icon = wp_get_attachment_image( $file->ID, array( 80, 60 ), true );
+		$author_name = get_user_by( 'id', $file->post_author );
+		$file->post_author_name = $author_name->display_name;
+		$t_time = strtotime( $file->post_date, current_time( 'timestamp' ) );
+		$time = get_post_time( 'G', true, $file->ID, false );
+		if( ( abs( $t_diff = time() - $time ) ) < 86400 )
+			$file->post_date = sprintf( __( '%s ago' ), human_time_diff( $time ) );
+		else
+			$file->post_date = mysql2date( __( 'Y/m/d' ), $file->post_date );
+		unset( $author_name, $t_time, $time );
+		return $file;
 
 	}
 

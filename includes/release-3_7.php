@@ -204,7 +204,7 @@ if( is_admin() ) {
 						else
 							$csv .= escape_csv_value( $columns[$i] ) . $separator;
 					}
-					$categories = wpsc_ce_get_categories();
+					$categories = wpsc_ce_get_product_categories();
 					if( $categories ) {
 						foreach( $categories as $category ) {
 							$csv .= 
@@ -287,7 +287,7 @@ if( is_admin() ) {
 
 	/* Categories */
 
-	function wpsc_ce_get_categories() {
+	function wpsc_ce_get_product_assoc_categories() {
 
 		global $wpdb;
 

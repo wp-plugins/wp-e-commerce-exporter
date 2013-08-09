@@ -20,11 +20,23 @@ $j(function() {
 		dateFormat: 'dd/mm/yy'
 	});
 
+	// Chosen
+	$j(".chzn-select").chosen({
+		search_contains: true
+	});
+
 	$j('#export-products').show();
+	// Categories
 	$j('#export-products-filters-categories').hide();
 	if( $j('#products-filters-categories').attr('checked') ) {
 		$j('#export-products-filters-categories').show();
 	}
+	// Tags
+	$j('#export-products-filters-tags').hide();
+	if( $j('#products-filters-tags').attr('checked') ) {
+		$j('#export-products-filters-tags').show();
+	}
+	// Product Status
 	$j('#export-products-filters-status').hide();
 	if( $j('#products-filters-status').attr('checked') ) {
 		$j('#export-products-filters-status').show();
@@ -36,17 +48,27 @@ $j(function() {
 	if( $j('#orders-filters-status').attr('checked') ) {
 		$j('#export-orders-filters-status').show();
 	}
+	$j('#export-orders-filters-date').hide();
+	if( $j('#orders-filters-date').attr('checked') ) {
+		$j('#export-orders-filters-date').show();
+	}
 	$j('#export-customers').hide();
 	$j('#export-coupons').hide();
 
 	$j('#products-filters-categories').click(function(){
 		$j('#export-products-filters-categories').toggle();
 	});
+	$j('#products-filters-tags').click(function(){
+		$j('#export-products-filters-tags').toggle();
+	});
 	$j('#products-filters-status').click(function(){
 		$j('#export-products-filters-status').toggle();
 	});
 	$j('#orders-filters-status').click(function(){
 		$j('#export-orders-filters-status').toggle();
+	});
+	$j('#orders-filters-date').click(function(){
+		$j('#export-orders-filters-date').toggle();
 	});
 
 	// Export types
@@ -114,32 +136,11 @@ $j(function() {
 	});
 
 	// Select all
-	$j('#products-checkall').click(function () {
-		$j('#export-products').find(':checkbox').attr('checked', true);
+	$j('.checkall').click(function () {
+		$j(this).closest('.postbox').find(':checkbox').attr('checked', true);
 	});
-	$j('#products-uncheckall').click(function () {
-		$j('#export-products').find(':checkbox').attr('checked', false);
-	});
-
-	$j('#orders-checkall').click(function () {
-		$j('#export-orders').find(':checkbox').attr('checked', true);
-	});
-	$j('#orders-uncheckall').click(function () {
-		$j('#export-orders').find(':checkbox').attr('checked', false);
-	});
-
-	$j('#customers-checkall').click(function () {
-		$j('#export-customers').find(':checkbox').attr('checked', true);
-	});
-	$j('#customers-uncheckall').click(function () {
-		$j('#export-customers').find(':checkbox').attr('checked', false);
-	});
-
-	$j('#coupons-checkall').click(function () {
-		$j('#export-coupons').find(':checkbox').attr('checked', true);
-	});
-	$j('#coupons-uncheckall').click(function () {
-		$j('#export-coupons').find(':checkbox').attr('checked', false);
+	$j('.uncheckall').click(function () {
+		$j(this).closest('.postbox').find(':checkbox').attr('checked', false);
 	});
 
 });

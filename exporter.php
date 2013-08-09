@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.4.7
+Version: 1.4.9
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -47,11 +47,10 @@ if( is_admin() ) {
 		static $this_plugin;
 		if( !$this_plugin ) $this_plugin = plugin_basename( __FILE__ );
 		if( $file == $this_plugin ) {
-			if( function_exists( 'wpsc_find_purchlog_status_name' ) ) {
+			if( function_exists( 'wpsc_find_purchlog_status_name' ) )
 				$settings_link = sprintf( '<a href="%s">' . __( 'Export', 'wpsc_ce' ) . '</a>', add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' ) );
-			} else {
+			else
 				$settings_link = sprintf( '<a href="%s">' . __( 'Export', 'wpsc_ce' ) . '</a>', add_query_arg( 'page', 'wpsc_ce', 'admin.php' ) );
-			}
 			array_unshift( $links, $settings_link );
 		}
 		return $links;
@@ -65,8 +64,12 @@ if( is_admin() ) {
 		$pages = array( 'wpsc-product_page_wpsc_ce', 'store_page_wpsc_ce' );
 		if( in_array( $hook, $pages ) ) {
 			/* Date Picker */
-			wp_enqueue_script( 'jquery-ui-datepicker', plugins_url( '/js/ui-datepicker.js', __FILE__ ), array( 'jquery', 'jquery-ui-core' ) );
+			wp_enqueue_script( 'jquery-ui-datepicker' );
 			wp_enqueue_style( 'jquery-ui-datepicker', plugins_url( '/templates/admin/jquery-ui-datepicker.css', __FILE__ ) );
+
+			/* Chosen */
+			wp_enqueue_script( 'jquery-chosen', plugins_url( '/js/chosen.jquery.js', __FILE__ ), array( 'jquery' ) );
+			wp_enqueue_style( 'jquery-chosen', plugins_url( '/templates/admin/chosen.css', __FILE__ ) );
 
 			/* Common */
 			wp_enqueue_style( 'wpsc_ce_styles', plugins_url( '/templates/admin/wpsc-admin_ce-export.css', __FILE__ ) );
@@ -92,6 +95,12 @@ if( is_admin() ) {
 
 		$action = wpsc_get_action();
 		switch( $action ) {
+
+			case 'dismiss_memory_prompt':
+				wpsc_ce_update_option( 'dismiss_memory_prompt', 1 );
+				$url = add_query_arg( 'action', null );
+				wp_redirect( $url );
+				break;
 
 			case 'export':
 				$export = new stdClass();
@@ -119,14 +128,22 @@ if( is_admin() ) {
 					if( $export->offset <> wpsc_ce_get_option( 'offset' ) )
 						wpsc_ce_update_option( 'offset', $export->offset );
 				}
+				$export->delete_temporary_csv = 0;
 				if( !empty( $_POST['delete_temporary_csv'] ) ) {
 					$export->delete_temporary_csv = (int)$_POST['delete_temporary_csv'];
 					if( $export->limit_volume <> wpsc_ce_get_option( 'delete_csv' ) )
 						wpsc_ce_update_option( 'delete_csv', $export->delete_temporary_csv );
 				}
 				$export->encoding = $_POST['encoding'];
+				$export->order_dates_filter = false;
 				$export->order_dates_from = '';
 				$export->order_dates_to = '';
+				$export->order_status = false;
+				$export->fields = false;
+				$export->product_categories = false;
+				$export->product_tags = false;
+				$export->product_status = false;
+				$export->order_customer = false;
 
 				$dataset = array();
 				$export->type = $_POST['dataset'];
@@ -134,9 +151,14 @@ if( is_admin() ) {
 
 					case 'products':
 						$dataset[] = 'products';
-						$export->fields = $_POST['product_fields'];
-						$export->product_categories = wpsc_ce_format_product_filters( $_POST['product_filter_categories'] );
-						$export->product_status = wpsc_ce_format_product_filters( $_POST['product_filter_status'] );
+						if( isset( $_POST['product_fields'] ) )
+							$export->fields = $_POST['product_fields'];
+						if( isset( $_POST['product_filter_categories'] ) )
+							$export->product_categories = wpsc_ce_format_product_filters( $_POST['product_filter_categories'] );
+						if( isset( $_POST['product_filter_tags'] ) )
+							$export->product_tags = wpsc_ce_format_product_filters( $_POST['product_filter_tags'] );
+						if( isset( $_POST['product_filter_status'] ) )
+							$export->product_status = wpsc_ce_format_product_filters( $_POST['product_filter_status'] );
 						break;
 
 					case 'categories':
@@ -150,9 +172,14 @@ if( is_admin() ) {
 					case 'orders':
 						$dataset[] = 'orders';
 						$export->fields = $_POST['order_fields'];
-						$export->order_status = wpsc_ce_format_product_filters( $_POST['order_filter_status'] );
+						if( isset( $_POST['order_filter_status'] ) )
+							$export->order_status = wpsc_ce_format_product_filters( $_POST['order_filter_status'] );
+						if( isset( $_POST['order_dates_filter'] ) )
+							$export->order_dates_filter = $_POST['order_dates_filter'];
 						$export->order_dates_from = $_POST['order_dates_from'];
 						$export->order_dates_to = $_POST['order_dates_to'];
+						if( isset( $_POST['order_customer'] ) )
+							$export->order_customer = $_POST['order_customer'];
 						break;
 
 					case 'customers':
@@ -185,53 +212,62 @@ if( is_admin() ) {
 						'offset' => $export->offset,
 						'encoding' => $export->encoding,
 						'product_categories' => $export->product_categories,
+						'product_tags' => $export->product_tags,
 						'product_status' => $export->product_status,
 						'order_status' => $export->order_status,
+						'order_dates_filter' => $export->order_dates_filter,
 						'order_dates_from' => wpsc_ce_format_order_date( $export->order_dates_from ),
-						'order_dates_to' => wpsc_ce_format_order_date( $export->order_dates_to )
+						'order_dates_to' => wpsc_ce_format_order_date( $export->order_dates_to ),
+						'order_customer' => $export->order_customer
 					);
 					wpsc_ce_save_fields( $dataset, $export->fields );
+					$export->filename = wpsc_ce_generate_csv_filename( $export->type );
 					if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
 						wpsc_ce_export_dataset( $dataset, $args );
 					} else {
-						$filename = wpsc_ce_generate_csv_filename( $export->type );
+
+						/* Generate CSV contents */
+
 						$bits = wpsc_ce_export_dataset( $dataset, $args );
-						if( $export->delete_temporary_csv ) {
+						if( !$bits ) {
+							wp_redirect( add_query_arg( 'empty', true ) );
+							exit();
+						}
+						if( isset( $export->delete_temporary_csv ) && $export->delete_temporary_csv ) {
+
+							/* Print to browser */
+
 							wpsc_ce_generate_csv_header( $export->type );
 							echo $bits;
 							exit();
+
 						} else {
-							if( $filename && $bits ) {
-								$object = array(
-									'post_title' => $filename,
-									'post_type' => 'wpsc-export',
-									'post_mime_type' => 'text/csv'
-								);
-								$upload = wp_upload_bits( $filename, null, $bits );
-								$post_ID = wp_insert_attachment( $object, $filename );
-								$filepath = $upload['file'];
-								$attach_data = wp_generate_attachment_metadata( $post_ID, $filepath );
+
+							/* Save to file and insert to WordPress Media */
+
+							if( $export->filename && $bits ) {
+								$post_ID = wpsc_ce_save_csv_file_attachment( $export->filename );
+								$upload = wp_upload_bits( $export->filename, null, $bits );
+								$attach_data = wp_generate_attachment_metadata( $post_ID, $upload['file'] );
 								wp_update_attachment_metadata( $post_ID, $attach_data );
-								if( $post_ID ) {
-									add_post_meta( $post_ID, '_wpsc_export_type', $export->type );
-									$wp_upload_dir = wp_upload_dir();
-									$object = array(
-										'ID' => $post_ID,
-										'guid' => $upload['url']
-									);
-									wp_update_post( $object );
-								}
+								if( $post_ID )
+									wpsc_ce_save_csv_file_guid( $post_ID, $export->type, $upload['url'] );
 								wpsc_ce_generate_csv_header( $export->type );
-								ob_clean();
-								flush();
-								readfile( $filepath );
+								readfile( $upload['file'] );
 							} else {
 								wp_redirect( add_query_arg( 'failed', true ) );
 							}
 							exit();
+
 						}
 					}
 				}
+				break;
+
+			default:
+				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_date' );
+				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_status' );
+				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_customer' );
 				break;
 
 		}
@@ -253,8 +289,10 @@ if( is_admin() ) {
 				$message = __( 'Chosen WP e-Commerce details have been exported from your store.', 'wpsc_ce' );
 				$output = '<div class="updated settings-error"><p><strong>' . $message . '</strong></p></div>';
 				if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
-					$output .= '<h3>' . __( 'Export Log', 'wpsc_ce' ) . '</h3>';
-					$output .= '<textarea style="font:12px Consolas, Monaco, Courier, monospace; width:100%; height:200px;">' . $wpsc_ce['debug_log'] . '</textarea>';
+					if( !isset( $wpsc_ce['debug_log'] ) )
+						$wpsc_ce['debug_log'] = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
+					$output .= '<h3>' . sprintf( __( 'Export Log: %s', 'wpsc_ce' ), $export->filename ) . '</h3>';
+					$output .= '<textarea id="export_log">' . $wpsc_ce['debug_log'] . '</textarea>';
 				}
 				echo $output;
 
@@ -277,9 +315,9 @@ if( is_admin() ) {
 		$tab = false;
 		if( isset( $_GET['tab'] ) )
 			$tab = $_GET['tab'];
-
 		$url = add_query_arg( 'page', 'wpsc_ce' );
-
+		wpsc_ce_memory_prompt();
+		wpsc_ce_fail_notices();
 		switch( wpsc_get_major_version() ) {
 
 			case '3.8':

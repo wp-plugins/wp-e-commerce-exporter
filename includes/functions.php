@@ -182,6 +182,7 @@ if( is_admin() ) {
 
 		$filename = $post->post_name;
 		$filepath = get_attached_file( $post->ID );
+		$contents = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
 		if( file_exists( $filepath ) ) {
 			$handle = fopen( $filepath, "r" );
 			$contents = stream_get_contents( $handle );
@@ -1382,6 +1383,38 @@ if( is_admin() ) {
 			$file->post_date = mysql2date( __( 'Y/m/d' ), $file->post_date );
 		unset( $author_name, $t_time, $time );
 		return $file;
+
+	}
+
+	function wpsc_ce_archives_quicklink_current( $current = '' ) {
+
+		$output = '';
+		if( isset( $_GET['filter'] ) ) {
+			$filter = $_GET['filter'];
+			if( $filter == $current )
+				$output = ' class="current"';
+		} else if( $current == 'all' ) {
+			$output = ' class="current"';
+		}
+		echo $output;
+
+	}
+
+	function wpsc_ce_archives_quicklink_count( $type = '' ) {
+
+		$output = '0';
+		$args = array(
+			'post_type' => 'attachment',
+			'meta_key' => '_wpsc_export_type',
+			'meta_value' => null,
+			'numberposts' => -1
+		);
+		if( $type )
+			$args['meta_value'] = $type;
+		$posts = get_posts( $args );
+		if( $posts )
+			$output = count( $posts );
+		echo $output;
 
 	}
 

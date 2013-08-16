@@ -151,14 +151,10 @@ if( is_admin() ) {
 
 					case 'products':
 						$dataset[] = 'products';
-						if( isset( $_POST['product_fields'] ) )
-							$export->fields = $_POST['product_fields'];
-						if( isset( $_POST['product_filter_categories'] ) )
-							$export->product_categories = wpsc_ce_format_product_filters( $_POST['product_filter_categories'] );
-						if( isset( $_POST['product_filter_tags'] ) )
-							$export->product_tags = wpsc_ce_format_product_filters( $_POST['product_filter_tags'] );
-						if( isset( $_POST['product_filter_status'] ) )
-							$export->product_status = wpsc_ce_format_product_filters( $_POST['product_filter_status'] );
+						$export->fields = ( isset( $_POST['product_fields'] ) ) ? $_POST['product_fields'] : false;
+						$export->product_categories = ( isset( $_POST['product_filter_categories'] ) ) ? wpsc_ce_format_product_filters( $_POST['product_filter_categories'] ) : false;
+						$export->product_tags = ( isset( $_POST['product_filter_tags'] ) ) ? wpsc_ce_format_product_filters( $_POST['product_filter_tags'] ) : false;
+						$export->product_status = ( isset( $_POST['product_filter_status'] ) ) ? wpsc_ce_format_product_filters( $_POST['product_filter_status'] ) : false;
 						break;
 
 					case 'categories':
@@ -171,15 +167,12 @@ if( is_admin() ) {
 
 					case 'orders':
 						$dataset[] = 'orders';
-						$export->fields = $_POST['order_fields'];
-						if( isset( $_POST['order_filter_status'] ) )
-							$export->order_status = wpsc_ce_format_product_filters( $_POST['order_filter_status'] );
-						if( isset( $_POST['order_dates_filter'] ) )
-							$export->order_dates_filter = $_POST['order_dates_filter'];
+						$export->fields = ( isset( $_POST['order_fields'] ) ) ? $_POST['order_fields'] : false;
+						$export->order_status = ( isset( $_POST['order_filter_status'] ) ) ? wpsc_ce_format_product_filters( $_POST['order_filter_status'] ) : false;
+						$export->order_dates_filter = ( isset( $_POST['order_dates_filter'] ) ) ? $_POST['order_dates_filter'] : false;
 						$export->order_dates_from = $_POST['order_dates_from'];
 						$export->order_dates_to = $_POST['order_dates_to'];
-						if( isset( $_POST['order_customer'] ) )
-							$export->order_customer = $_POST['order_customer'];
+						$export->order_customer = ( isset( $_POST['order_customer'] ) ) ? $_POST['order_customer'] : false;
 						break;
 
 					case 'customers':
@@ -277,7 +270,7 @@ if( is_admin() ) {
 
 	function wpsc_ce_html_page() {
 
-		global $wpdb, $wpsc_ce;
+		global $wpdb, $wpsc_ce, $export;
 
 		$title = apply_filters( 'wpsc_ce_template_header', '' );
 		wpsc_ce_template_header( $title );

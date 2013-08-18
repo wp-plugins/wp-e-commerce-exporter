@@ -49,23 +49,25 @@ function wpsc_ce_escape_csv_value( $value = '', $delimiter = ',', $format = 'all
 
 }
 
-function wpsc_ce_format_product_status( $product_status, $product ) {
+function wpsc_ce_format_product_status( $product_status = '', $product ) {
 
 	$output = $product_status;
-	switch( $product_status ) {
+	if( $product_status ) {
+		switch( $product_status ) {
 
-		case 'publish':
-			$output = __( 'Publish', 'wpsc_ce' );
-			break;
+			case 'publish':
+				$output = __( 'Publish', 'wpsc_ce' );
+				break;
 
-		case 'draft':
-			$output = __( 'Draft', 'wpsc_ce' );
-			break;
+			case 'draft':
+				$output = __( 'Draft', 'wpsc_ce' );
+				break;
 
-		case 'trash':
-			$output = __( 'Trash', 'wpsc_ce' );
-			break;
+			case 'trash':
+				$output = __( 'Trash', 'wpsc_ce' );
+				break;
 
+		}
 	}
 	if( $product->is_variation && $product_status <> 'draft' )
 		$output = '';
@@ -155,6 +157,15 @@ function wpsc_ce_format_product_filters( $product_filters = array() ) {
 			$output[] = $product_filter;
 		}
 	}
+	return $output;
+
+}
+
+function wpsc_ce_convert_product_raw_weight( $weight = null, $weight_unit = null ) {
+
+	$output = '';
+	if( $weight && $weight_unit )
+		$output = wpsc_convert_weight( $weight, 'pound', $weight_unit, false );
 	return $output;
 
 }

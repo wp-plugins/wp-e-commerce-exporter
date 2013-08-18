@@ -5,7 +5,7 @@ Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.7
-Stable tag: 1.4.9
+Stable tag: 1.5
 
 == Description ==
 
@@ -26,7 +26,7 @@ Features include:
 * Export Coupons (**)
 * Toggle and save export fields
 
-(*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products and more.
+(*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products, Simple Product Options and more.
 (**) Requries the Pro upgrade to enable additional store export functionality.
 
 For more information visit: http://www.visser.com.au/wp-ecommerce/
@@ -59,6 +59,15 @@ http://www.visser.com.au/wp-ecommerce/forums/
 4. A range of global export options are included.
 
 == Changelog ==
+
+= 1.5 =
+* Added: Simple Product Options integration
+* Changed: Order Items field names
+* Changed: Checkout field names
+* Added: Order Items: Product SKU
+* Added: Product ID to Products export
+* Added: Parent ID to Products export
+* Added: Parent SKU to Products export
 
 = 1.4.9 =
 * Added: User ID to Customers export

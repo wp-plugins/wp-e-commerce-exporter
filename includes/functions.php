@@ -74,7 +74,7 @@ if( is_admin() ) {
 		$filename = wpsc_ce_generate_csv_filename( $dataset );
 		if( $filename ) {
 			header( 'Content-Encoding: UTF-8' );
-			header( 'Content-type: application/csv; charset=UTF-8' );
+			header( 'Content-Type: text/csv; charset=UTF-8' );
 			header( 'Content-Disposition: attachment; filename=' . $filename );
 			header( 'Pragma: no-cache' );
 			header( 'Expires: 0' );
@@ -278,7 +278,7 @@ if( is_admin() ) {
 			foreach( $checkout_fields as $key => $checkout_field ) {
 				$fields[] = array(
 					'name' => sprintf( 'checkout_%d', $checkout_field->id ),
-					'label' => $checkout_field->name,
+					'label' => sprintf( 'Checkout: %s', $checkout_field->name ),
 					'default' => 1
 				);
 			}
@@ -328,8 +328,23 @@ if( is_admin() ) {
 
 		$fields = array();
 		$fields[] = array(
+			'name' => 'parent_id',
+			'label' => __( 'Parent ID', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'parent_sku',
+			'label' => __( 'Parent SKU', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
+			'name' => 'product_id',
+			'label' => __( 'Product ID', 'wpsc_ce' ),
+			'default' => 1
+		);
+		$fields[] = array(
 			'name' => 'sku',
-			'label' => __( 'SKU', 'wpsc_ce' ),
+			'label' => __( 'Product SKU', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
@@ -621,6 +636,24 @@ if( is_admin() ) {
 			);
 		}
 
+		/* Simple Product Options */
+		if( class_exists( 'wpec_simple_product_options_admin' ) ) {
+			$args = array(
+				'hide_empty' => false,
+				'parent' => 0
+			);
+			$product_options = get_terms( 'wpec_product_option', $args );
+			if( $product_options ) {
+				foreach( $product_options as $product_option ) {
+					$fields[] = array(
+						'name' => sprintf( 'simple_product_option_%s', $product_option->slug ),
+						'label' => sprintf( __( 'Simple Product Option: %s', 'wpsc_ce' ), $product_option->name ),
+						'default' => 1
+					);
+				}
+			}
+		}
+
 		$remember = wpsc_ce_get_option( 'products_fields' );
 		if( $remember ) {
 			$remember = maybe_unserialize( $remember );
@@ -799,23 +832,28 @@ if( is_admin() ) {
 			'default' => 0
 		);
 		$fields[] = array(
-			'name' => 'product_id',
-			'label' => __( 'Product ID', 'wpsc_ce' ),
+			'name' => 'order_items_product_id',
+			'label' => __( 'Order Items: Product ID', 'wpsc_ce' ),
 			'default' => 0
 		);
 		$fields[] = array(
-			'name' => 'product_name',
-			'label' => __( 'Product Name', 'wpsc_ce' ),
+			'name' => 'order_items_sku',
+			'label' => __( 'Order Items: SKU', 'wpsc_ce' ),
+			'default' => 0
+		);
+		$fields[] = array(
+			'name' => 'order_items_product_name',
+			'label' => __( 'Order Items: Product Name', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'product_quantity',
-			'label' => __( 'Product Quantity', 'wpsc_ce' ),
+			'name' => 'order_items_product_quantity',
+			'label' => __( 'Order Items: Product Quantity', 'wpsc_ce' ),
 			'default' => 1
 		);
 		$fields[] = array(
-			'name' => 'product_personalisation',
-			'label' => __( 'Product Personalisation', 'wpsc_ce' ),
+			'name' => 'order_items_product_personalisation',
+			'label' => __( 'Order Items: Product Personalisation', 'wpsc_ce' ),
 			'default' => 0
 		);
 		$fields = array_merge_recursive( $fields, wpsc_ce_get_checkout_fields() );

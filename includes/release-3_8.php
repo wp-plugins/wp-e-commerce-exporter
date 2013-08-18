@@ -130,10 +130,14 @@ if( is_admin() ) {
 					if( $export->fields ) {
 						if( function_exists( 'wpsc_cf_install' ) )
 							$export->args['custom_fields'] = array();
+						if( class_exists( 'wpec_simple_product_options_admin' ) )
+							$export->args['simple_product_options'] = array();
 						foreach( $export->fields as $key => $field ) {
 							$export->columns[] = wpsc_ce_get_product_field( $key );
 							if( strpos( $key, 'attribute_' ) !== false )
 								$export->args['custom_fields'][] = str_replace( 'attribute_', '', $key );
+							if( strpos( $key, 'simple_product_option_' ) !== false )
+								$export->args['simple_product_options'][] = str_replace( 'simple_product_option_', '', $key );
 						}
 					}
 					$products = wpsc_ce_get_products( $export->args );
@@ -249,8 +253,10 @@ if( is_admin() ) {
 		if( $args ) {
 			$limit_volume = $args['limit_volume'];
 			$offset = $args['offset'];
-			if ( isset( $args['custom_fields'] ) && ! empty( $args['custom_fields'] ) )
+			if ( isset( $args['custom_fields'] ) && !empty( $args['custom_fields'] ) )
 				$custom_fields = $args['custom_fields'];
+			if ( isset( $args['simple_product_options'] ) && !empty( $args['simple_product_options'] ) )
+				$simple_product_options = $args['simple_product_options'];
 			if( !empty( $args['product_categories'] ) )
 				$product_categories = $args['product_categories'];
 			if( !empty( $args['product_tags'] ) )
@@ -290,6 +296,13 @@ if( is_admin() ) {
 			foreach( $products as $key => $product ) {
 				$product_data = wpsc_ce_get_product_meta( $product->ID );
 
+				$products[$key]->parent_id = '';
+				$products[$key]->parent_sku = '';
+				if( $product->post_parent ) {
+					$products[$key]->parent_id = $product->post_parent;
+					$products[$key]->parent_sku = get_product_meta( $product->post_parent, 'sku', true );
+				}
+				$products[$key]->product_id = $product->ID;
 				$products[$key]->sku = get_product_meta( $product->ID, 'sku', true );
 				$products[$key]->name = get_the_title( $product->ID );
 				$products[$key]->is_variation = false;
@@ -414,7 +427,13 @@ if( is_admin() ) {
 
 				/* Related Products */
 				if( isset( $product_data['wpsc_rp_manual'] ) )
-					$products[$key]->related_products = wpsc_ce_get_related_products( $product->ID );
+					$products[$key]->related_products = wpsc_ce_get_product_assoc_related_products( $product->ID );
+
+				/* Simple Product Options */
+				if( isset( $simple_product_options ) ) {
+					foreach( $simple_product_options as $simple_product_option )
+						$product->{'simple_product_option_' . $simple_product_option} = wpsc_ce_get_product_assoc_simple_product_options( $product->ID, $simple_product_option );
+				}
 
 			}
 		}
@@ -442,15 +461,6 @@ if( is_admin() ) {
 			$product_data = wp_parse_args( $product_data, $defaults );
 		}
 		return $product_data;
-
-	}
-
-	function wpsc_ce_convert_product_raw_weight( $weight = null, $weight_unit = null ) {
-
-		$output = '';
-		if( $weight && $weight_unit )
-			$output = wpsc_convert_weight( $weight, 'pound', $weight_unit, false );
-		return $output;
 
 	}
 
@@ -527,7 +537,7 @@ if( is_admin() ) {
 
 	}
 
-	function wpsc_ce_get_related_products( $product_id ) {
+	function wpsc_ce_get_product_assoc_related_products( $product_id ) {
 
 		global $export;
 
@@ -583,6 +593,28 @@ if( is_admin() ) {
 		} else {
 			if( $categories )
 				$output = $categories;
+		}
+		return $output;
+
+	}
+
+	function wpsc_ce_get_product_assoc_simple_product_options( $product_id = 0, $product_option = '' ) {
+
+		global $export;
+
+		$output = '';
+		if( $product_id ) {
+			$term_taxonomy = 'wpec_product_option';
+			$term = get_term_by( 'slug', $product_option, $term_taxonomy );
+			$simple_product_options = wp_get_object_terms( $product_id, $term_taxonomy );
+			if( $simple_product_options ) {
+				$size = count( $simple_product_options );
+				for( $i = 0; $i < $size; $i++ ) {
+					if( $simple_product_options[$i]->parent == $term->term_id )
+						$output .= $simple_product_options[$i]->name . $export->category_separator;
+				}
+				$output = substr( $output, 0, -1 );
+			}
 		}
 		return $output;
 

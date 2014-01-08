@@ -1,14 +1,16 @@
 <?php
-/*
-
-Filename: common.php
-Description: common.php loads commonly accessed functions across the Visser Labs suite.
-
-- wpsc_is_admin_icon_valid
-
-- wpsc_get_action
-- wpsc_get_major_version
-
+/**
+*
+* Filename: common.php
+* Description: common.php loads commonly accessed functions across the Visser Labs suite.
+*
+* - wpsc_is_admin_icon_valid
+* - wpsc_get_action
+* - wpsc_get_major_version
+* - wpsc_is_wpsc_activated
+* - wpsc_is_woo_activated
+* - wpsc_is_jigo_activated
+*
 */
 
 if( is_admin() ) {
@@ -48,7 +50,6 @@ if( is_admin() ) {
 }
 
 if( !function_exists( 'wpsc_get_action' ) ) {
-
 	function wpsc_get_action( $switch = false ) {
 
 		if( $switch ) {
@@ -73,11 +74,9 @@ if( !function_exists( 'wpsc_get_action' ) ) {
 		return $action;
 
 	}
-
 }
 
 if( !function_exists( 'wpsc_get_major_version' ) ) {
-
 	function wpsc_get_major_version() {
 
 		$output = '';
@@ -90,6 +89,32 @@ if( !function_exists( 'wpsc_get_major_version' ) ) {
 		return $output;
 
 	}
+}
 
+if( !function_exists( 'wpsc_is_wpsc_activated' ) ) {
+	function wpsc_is_wpsc_activated() {
+
+		if( class_exists( 'WP_eCommerce' ) )
+			return true;
+
+	}
+}
+
+if( !function_exists( 'wpsc_is_woo_activated' ) ) {
+	function wpsc_is_woo_activated() {
+
+		if( class_exists( 'Woocommerce' ) )
+			return true;
+
+	}
+}
+
+if( !function_exists( 'wpsc_is_jigo_activated' ) ) {
+	function wpsc_is_jigo_activated() {
+
+		if( function_exists( 'jigoshop_init' ) )
+			return true;
+
+	}
 }
 ?>

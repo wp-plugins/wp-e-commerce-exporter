@@ -44,7 +44,7 @@
 					<strong><a href="<?php echo $file->guid; ?>" class="row-title"><?php echo $file->post_title; ?></a></strong>
 					<div class="row-actions">
 						<span class="view"><a href="<?php echo get_edit_post_link( $file->ID ); ?>" title="<?php _e( 'Edit', 'wpsc_ce' ); ?>"><?php _e( 'Edit', 'wpsc_ce' ); ?></a></span> | 
-						<span class="trash"><a href="<?php echo get_delete_post_link( $file->ID, '', true ); ?>" title="<?php _e( 'Delete Permanently', 'wpsc_ce' ); ?>"><?php _e( 'Delete', 'wpsc_ce' ); ?></a></span>
+						<span class="delete"><a href="<?php echo get_delete_post_link( $file->ID, '', true ); ?>" title="<?php _e( 'Delete Permanently', 'wpsc_ce' ); ?>" class="delete-tag"><?php _e( 'Delete', 'wpsc_ce' ); ?></a></span>
 					</div>
 				</td>
 				<td class="title">

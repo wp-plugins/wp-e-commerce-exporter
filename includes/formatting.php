@@ -1,16 +1,24 @@
 <?php
-function wpsc_ce_clean_html( $content ) {
+function wpsc_ce_file_encoding( $content = '' ) {
 
-/*
+	global $export;
+
 	if( function_exists( 'mb_convert_encoding' ) ) {
-		$output_encoding = 'ISO-8859-1';
-		$content = mb_convert_encoding( trim( $content ), 'UTF-8', $output_encoding );
-	} else {
-		$content = trim( $content );
+		$to_encoding = $export->encoding;
+		// $from_encoding = 'auto';
+		$from_encoding = 'ISO-8859-1';
+		if( !empty( $to_encoding ) )
+			$content = mb_convert_encoding( trim( $content ), $to_encoding, $from_encoding );
 	}
-	$data = str_replace( ',', '&#44;', $content );
-	$data = str_replace( "\n", '<br />', $content );
-*/
+	return $content;
+
+}
+
+function wpsc_ce_clean_html( $content = '' ) {
+
+	$content = trim( $content );
+	// $content = str_replace( ',', '&#44;', $content );
+	// $content = str_replace( "\n", '<br />', $content );
 	return $content;
 
 }
@@ -25,19 +33,52 @@ if( !function_exists( 'escape_csv_value' ) ) {
 	}
 }
 
+function wpsc_ce_display_memory( $memory = 0 ) {
+
+	$output = '-';
+	if( !empty( $output ) )
+		$output = sprintf( __( '%s MB', 'wpsc_ce' ), $memory );
+	echo $output;
+
+}
+
+function wpsc_ce_display_time_elapsed( $from, $to ) {
+
+	$output = __( '1 second', 'wpsc_ce' );
+	$time = $to - $from;
+	$tokens = array (
+		31536000 => __( 'year', 'wpsc_ce' ),
+		2592000 => __( 'month', 'wpsc_ce' ),
+		604800 => __( 'week', 'wpsc_ce' ),
+		86400 => __( 'day', 'wpsc_ce' ),
+		3600 => __( 'hour', 'wpsc_ce' ),
+		60 => __( 'minute', 'wpsc_ce' ),
+		1 => __( 'second', 'wpsc_ce' )
+	);
+	foreach ($tokens as $unit => $text) {
+		if ($time < $unit) continue;
+		$numberOfUnits = floor($time / $unit);
+		$output = $numberOfUnits.' '.$text.(($numberOfUnits>1)?'s':'');
+	}
+	return $output;
+
+}
+
+// This function escapes all cells in 'Excel' CSV escape formatting of a CSV file, also converts HTML entities to plain-text
 function wpsc_ce_escape_csv_value( $value = '', $delimiter = ',', $format = 'all' ) {
 
 	$output = $value;
 	if( !empty( $output ) ) {
 		$output = str_replace( '"', '""', $output );
-		//$output = str_replace( PHP_EOL, ' ', $output );
+		// $output = str_replace( PHP_EOL, ' ', $output );
+		$output = wp_specialchars_decode( $output );
 		$output = str_replace( PHP_EOL, "\r\n", $output );
 		switch( $format ) {
 	
 			case 'all':
 				$output = '"' . $output . '"';
 				break;
-	
+
 			case 'excel':
 				if( strstr( $output, $delimiter ) !== false || strstr( $output, "\r\n" ) !== false )
 					$output = '"' . $output . '"';
@@ -46,6 +87,28 @@ function wpsc_ce_escape_csv_value( $value = '', $delimiter = ',', $format = 'all
 		}
 	}
 	return $output;
+
+}
+
+function wpsc_ce_count_object( $object = 0, $exclude_post_types = array() ) {
+
+	$count = 0;
+	if( is_object( $object ) ) {
+		if( $exclude_post_types ) {
+			$size = count( $exclude_post_types );
+			for( $i = 0; $i < $size; $i++ ) {
+				if( isset( $object->$exclude_post_types[$i] ) )
+					unset( $object->$exclude_post_types[$i] );
+			}
+		}
+		if( !empty( $object ) ) {
+			foreach( $object as $key => $item )
+				$count = $item + $count;
+		}
+	} else {
+		$count = $object;
+	}
+	return $count;
 
 }
 

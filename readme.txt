@@ -5,7 +5,7 @@ Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.7
-Stable tag: 1.5
+Stable tag: 1.5.1
 
 == Description ==
 
@@ -34,6 +34,7 @@ For more information visit: http://www.visser.com.au/wp-ecommerce/
 == Installation ==
 
 1. Upload the folder 'wp-e-commerce-exporter' to the '/wp-content/plugins/' directory
+
 2. Activate 'WP e-Commerce - Exporter' through the 'Plugins' menu in WordPress
 
 That's it!
@@ -41,7 +42,12 @@ That's it!
 == Usage ==
 
 1. Open Products > Store Export from the WordPress Administration
-2. Select which WP e-Commerce details you would like to export and click Export
+
+2. Select the Export tab on the Store Exporter screen
+
+3. Select which data type and WP e-Commerce details you would like to export and click Export
+
+4. Download archived copies of previous exports from the Archives tab
 
 Done!
 
@@ -60,6 +66,13 @@ http://www.visser.com.au/wp-ecommerce/forums/
 
 == Changelog ==
 
+= 1.5.1 =
+* Added: Detection of non-WP e-Commerce installs with notices
+* Fixed: Language support for translations
+* Changed: Moved wpsc_ce_count_object() to formatting.php
+* Fixed: File encoding for all export fields
+* Added: Separate files for each dataset
+
 = 1.5 =
 * Added: Simple Product Options integration
 * Changed: Order Items field names
@@ -68,6 +81,7 @@ http://www.visser.com.au/wp-ecommerce/forums/
 * Added: Product ID to Products export
 * Added: Parent ID to Products export
 * Added: Parent SKU to Products export
+* Added: Parent Term ID to Categories export
 
 = 1.4.9 =
 * Added: User ID to Customers export

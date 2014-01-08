@@ -3,6 +3,7 @@ if( is_admin() ) {
 
 	/* Start of: WordPress Administration */
 
+	// Returns number of an Export type prior to export, used on Store Exporter screen
 	function wpsc_ce_return_count( $dataset ) {
 
 		global $wpdb;
@@ -83,6 +84,7 @@ if( is_admin() ) {
 
 	}
 
+	// Export process for CSV file
 	function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 
 		global $wpdb, $wpsc_ce, $export;
@@ -97,7 +99,7 @@ if( is_admin() ) {
 			$csv = '';
 			switch( $datatype ) {
 
-				/* Products */
+				// Products
 				case 'products':
 					$columns = array(
 						__( 'SKU', 'wpsc_ce' ),
@@ -253,17 +255,22 @@ if( is_admin() ) {
 					break;
 
 			}
-			$csv = utf8_decode( $csv );
-
-			if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
-				echo '<code>' . str_replace( "\n", '<br />', $csv ) . '</code>' . '<br />';
-			else
-				echo $csv;
+			if( $csv ) {
+				$csv = wpsc_ce_file_encoding( $csv );
+				$csv = utf8_decode( $csv );
+				if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
+					$wpsc_ce['debug_log'] = $csv;
+				else
+					return $csv;
+			} else {
+				return false;
+			}
 
 		}
 
 	}
 
+	// Returns Product Categories associated to a specific Product
 	function wpsc_ce_get_product_categories( $product_id = null ) {
 
 		global $export, $wpdb;
@@ -285,8 +292,7 @@ if( is_admin() ) {
 
 	}
 
-	/* Categories */
-
+	// Returns a list of WP e-Commerce Product Categories to export process
 	function wpsc_ce_get_product_assoc_categories() {
 
 		global $wpdb;
@@ -299,8 +305,6 @@ if( is_admin() ) {
 		return $output;
 
 	}
-
-	/* Orders */
 
 	if( !function_exists( 'wpsc_find_purchlog_status_name' ) ) {
 		function wpsc_find_purchlog_status_name( $status ) {

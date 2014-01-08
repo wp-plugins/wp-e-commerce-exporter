@@ -100,7 +100,7 @@
 				<h3 class="hndle"><?php _e( 'Product Fields', 'wpsc_ce' ); ?></h3>
 				<div class="inside">
 	<?php if( $products ) { ?>
-					<p class="description"><?php _e( 'Select the Product fields you would like to export.', 'wpsc_ce' ); ?></p>
+					<p class="description"><?php _e( 'Select the Product fields you would like to export, your field selection is saved for future exports.', 'wpsc_ce' ); ?></p>
 					<p><a href="javascript:void(0)" id="products-checkall" class="checkall"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="javascript:void(0)" id="products-uncheckall" class="uncheckall"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p>
 					<table>
 
@@ -108,7 +108,7 @@
 						<tr>
 							<td>
 								<label>
-									<input type="checkbox" name="product_fields[<?php echo $product_field['name']; ?>]" class="product_field"<?php checked( $product_field['default'], 1 ); ?> />
+									<input type="checkbox" name="product_fields[<?php echo $product_field['name']; ?>]" class="product_field"<?php checked( $product_field['default'], 1 ); ?><?php disabled( $product_field['disabled'], 1 ); ?> />
 									<?php echo $product_field['label']; ?>
 								</label>
 							</td>
@@ -119,6 +119,7 @@
 					<p class="submit">
 						<input type="submit" id="export_products" value="<?php _e( 'Export Products', 'wpsc_ce' ); ?> " class="button-primary" />
 					</p>
+					<p class="description"><?php _e( 'Can\'t find a particular Product field in the above export list?', 'wpsc_ce' ); ?> <a href="<?php echo $troubleshooting_url; ?>" target="_blank"><?php _e( 'Get in touch', 'wpsc_ce' ); ?></a>.</p>
 	<?php } else { ?>
 					<p><?php _e( 'No Products have been found.', 'wpsc_ce' ); ?></p>
 	<?php } ?>
@@ -132,23 +133,31 @@
 
 					<p><label><input type="checkbox" id="products-filters-categories" /> <?php _e( 'Filter Products by Product Categories', 'wpsc_ce' ); ?></label></p>
 					<div id="export-products-filters-categories" class="separator">
+<?php if( $product_categories ) { ?>
 						<ul>
-<?php foreach( $product_categories as $product_category ) { ?>
+	<?php foreach( $product_categories as $product_category ) { ?>
 							<li><label><input type="checkbox" name="product_filter_categories[<?php echo $product_category->term_id; ?>]" value="<?php echo $product_category->term_id; ?>" /> <?php echo $product_category->name; ?> (#<?php echo $product_category->term_id; ?>)</label></li>
-<?php } ?>
+	<?php } ?>
 						</ul>
 						<p class="description"><?php _e( 'Select the Product Categories you want to filter exported Products by. Default is to include all Product Categories.', 'wpsc_ce' ); ?></p>
+<?php } else { ?>
+						<p><?php _e( 'No Product Categories have been found.', 'wpsc_ce' ); ?></p>
+<?php } ?>
 					</div>
 					<!-- #export-products-filters-categories -->
 
 					<p><label><input type="checkbox" id="products-filters-tags" /> <?php _e( 'Filter Products by Product Tags', 'wpsc_ce' ); ?></label></p>
 					<div id="export-products-filters-tags" class="separator">
+<?php if( $product_tags ) { ?>
 						<ul>
-<?php foreach( $product_tags as $product_tag ) { ?>
+	<?php foreach( $product_tags as $product_tag ) { ?>
 							<li><label><input type="checkbox" name="product_filter_tags[<?php echo $product_tag->term_id; ?>]" value="<?php echo $product_tag->term_id; ?>" /> <?php echo $product_tag->name; ?> (#<?php echo $product_tag->term_id; ?>)</label></li>
-<?php } ?>
+	<?php } ?>
 						</ul>
 						<p class="description"><?php _e( 'Select the Product Tags you want to filter exported Products by. Default is to include all Product Tags.', 'wpsc_ce' ); ?></p>
+<?php } else { ?>
+						<p><?php _e( 'No Product Tags have been found.', 'wpsc_ce' ); ?></p>
+<?php } ?>
 					</div>
 					<!-- #export-products-filters-tags -->
 
@@ -163,6 +172,23 @@
 					</div>
 					<!-- #export-products-filters-status -->
 
+					<p><label><?php _e( 'Product Sorting', 'wpsc_ce' ); ?></label></p>
+					<div>
+						<select name="product_orderby">
+							<option value="ID"<?php selected( 'ID', $product_orderby ); ?>><?php _e( 'Product ID', 'wpsc_ce' ); ?></option>
+							<option value="title"<?php selected( 'title', $product_orderby ); ?>><?php _e( 'Product Name', 'wpsc_ce' ); ?></option>
+							<option value="date"<?php selected( 'date', $product_orderby ); ?>><?php _e( 'Date Created', 'wpsc_ce' ); ?></option>
+							<option value="modified"<?php selected( 'modified', $product_orderby ); ?>><?php _e( 'Date Modified', 'wpsc_ce' ); ?></option>
+							<option value="rand"<?php selected( 'rand', $product_orderby ); ?>><?php _e( 'Random', 'wpsc_ce' ); ?></option>
+							<option value="menu_order"<?php selected( 'menu_order', $product_orderby ); ?>><?php _e( 'Menu Order', 'wpsc_ce' ); ?></option>
+						</select>
+						<select name="product_order">
+							<option value="ASC"<?php selected( 'ASC', $product_order ); ?>><?php _e( 'Ascending', 'wpsc_ce' ); ?></option>
+							<option value="DESC"<?php selected( 'DESC', $product_order ); ?>><?php _e( 'Descending', 'wpsc_ce' ); ?></option>
+						</select>
+						<p class="description"><?php _e( 'Select the sorting of Products within the exported file. By default this is set to export Products by Product ID in Desending order.', 'wpsc_ce' ); ?></p>
+					</div>
+
 				</div>
 				<!-- .inside -->
 			</div>
@@ -172,27 +198,115 @@
 		<!-- #export-products -->
 
 <?php } ?>
-		<div class="postbox" id="export-categories">
-			<h3 class="hndle"><?php _e( 'Category Fields', 'wpsc_ce' ); ?></h3>
-			<div class="inside">
-				<p><?php _e( 'This export type has no options.', 'wpsc_ce' ); ?></p>
-				<p class="submit">
-					<input type="submit" id="export_categories" value="<?php _e( 'Export Categories', 'wpsc_ce' ); ?> " class="button-primary" />
-				</p>
-			</div>
-		</div>
-		<!-- .postbox -->
+		<div id="export-categories">
 
-		<div class="postbox" id="export-tags">
-			<h3 class="hndle"><?php _e( 'Tag Fields', 'wpsc_ce' ); ?></h3>
-			<div class="inside">
-				<p><?php _e( 'This export type has no options.', 'wpsc_ce' ); ?></p>
-				<p class="submit">
-					<input type="submit" id="export_tags" value="<?php _e( 'Export Tags', 'wpsc_ce' ); ?> " class="button-primary" />
-				</p>
+			<div class="postbox">
+				<h3 class="hndle"><?php _e( 'Category Fields', 'wpsc_ce' ); ?></h3>
+				<div class="inside">
+					<p class="description"><?php _e( 'Select the Category fields you would like to export.', 'wpsc_ce' ); ?></p>
+					<p><a href="javascript:void(0)" id="categories-checkall" class="checkall"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="javascript:void(0)" id="categories-uncheckall" class="uncheckall"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p>
+					<table>
+
+<?php foreach( $category_fields as $category_field ) { ?>
+						<tr>
+							<td>
+								<label>
+									<input type="checkbox" name="category_fields[<?php echo $category_field['name']; ?>]" class="category_field"<?php checked( $category_field['default'], 1 ); ?><?php disabled( $category_field['disabled'], 1 ); ?> />
+									<?php echo $category_field['label']; ?>
+								</label>
+							</td>
+						</tr>
+
+<?php } ?>
+					</table>
+					<p class="submit">
+						<input type="submit" id="export_categories" value="<?php _e( 'Export Categories', 'wpsc_ce' ); ?> " class="button-primary" />
+					</p>
+					<p class="description"><?php _e( 'Can\'t find a particular Category field in the above export list?', 'wpsc_ce' ); ?> <a href="<?php echo $troubleshooting_url; ?>" target="_blank"><?php _e( 'Get in touch', 'wpsc_ce' ); ?></a>.</p>
+				</div>
+				<!-- .inside -->
 			</div>
+			<!-- .postbox -->
+
+			<div id="export-categories-filters" class="postbox">
+				<h3 class="hndle"><?php _e( 'Category Filters', 'wpsc_ce' ); ?></h3>
+				<div class="inside">
+
+					<p><label><?php _e( 'Category Sorting', 'wpsc_ce' ); ?></label></p>
+					<div>
+						<select name="category_orderby">
+							<option value="id"<?php selected( 'id', $category_orderby ); ?>><?php _e( 'Term ID', 'wpsc_ce' ); ?></option>
+							<option value="name"<?php selected( 'name', $category_orderby ); ?>><?php _e( 'Category Name', 'wpsc_ce' ); ?></option>
+						</select>
+						<select name="category_order">
+							<option value="ASC"<?php selected( 'ASC', $category_order ); ?>><?php _e( 'Ascending', 'wpsc_ce' ); ?></option>
+							<option value="DESC"<?php selected( 'DESC', $category_order ); ?>><?php _e( 'Descending', 'wpsc_ce' ); ?></option>
+						</select>
+						<p class="description"><?php _e( 'Select the sorting of Categories within the exported file. By default this is set to export Categories by Term ID in Desending order.', 'wpsc_ce' ); ?></p>
+					</div>
+
+				</div>
+				<!-- .inside -->
+			</div>
+			<!-- #export-categories-filters -->
+
 		</div>
-		<!-- .postbox -->
+		<!-- #export-categories -->
+
+		<div id="export-tags">
+
+			<div class="postbox">
+				<h3 class="hndle"><?php _e( 'Tag Fields', 'wpsc_ce' ); ?></h3>
+				<div class="inside">
+					<p class="description"><?php _e( 'Select the Tag fields you would like to export.', 'wpsc_ce' ); ?></p>
+					<p><a href="javascript:void(0)" id="tags-checkall" class="checkall"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="javascript:void(0)" id="tags-uncheckall" class="uncheckall"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p>
+					<table>
+
+<?php foreach( $tag_fields as $tag_field ) { ?>
+						<tr>
+							<td>
+								<label>
+									<input type="checkbox" name="tag_fields[<?php echo $tag_field['name']; ?>]" class="tag_field"<?php checked( $tag_field['default'], 1 ); ?><?php disabled( $tag_field['disabled'], 1 ); ?> />
+									<?php echo $tag_field['label']; ?>
+								</label>
+							</td>
+						</tr>
+
+<?php } ?>
+					</table>
+					<p class="submit">
+						<input type="submit" id="export_tags" value="<?php _e( 'Export Tags', 'wpsc_ce' ); ?> " class="button-primary" />
+					</p>
+					<p class="description"><?php _e( 'Can\'t find a particular Tag field in the above export list?', 'wpsc_ce' ); ?> <a href="<?php echo $troubleshooting_url; ?>" target="_blank"><?php _e( 'Get in touch', 'wpsc_ce' ); ?></a>.</p>
+				</div>
+				<!-- .inside -->
+			</div>
+			<!-- .postbox -->
+
+			<div id="export-tags-filters" class="postbox">
+				<h3 class="hndle"><?php _e( 'Tag Filters', 'wpsc_ce' ); ?></h3>
+				<div class="inside">
+
+					<p><label><?php _e( 'Tag Sorting', 'wpsc_ce' ); ?></label></p>
+					<div>
+						<select name="tag_orderby">
+							<option value="id"<?php selected( 'id', $tag_orderby ); ?>><?php _e( 'Term ID', 'wpsc_ce' ); ?></option>
+							<option value="name"<?php selected( 'name', $tag_orderby ); ?>><?php _e( 'Tag Name', 'wpsc_ce' ); ?></option>
+						</select>
+						<select name="tag_order">
+							<option value="ASC"<?php selected( 'ASC', $tag_order ); ?>><?php _e( 'Ascending', 'wpsc_ce' ); ?></option>
+							<option value="DESC"<?php selected( 'DESC', $tag_order ); ?>><?php _e( 'Descending', 'wpsc_ce' ); ?></option>
+						</select>
+						<p class="description"><?php _e( 'Select the sorting of Tags within the exported file. By default this is set to export Tags by Term ID in Desending order.', 'wpsc_ce' ); ?></p>
+					</div>
+
+				</div>
+				<!-- .inside -->
+			</div>
+			<!-- #export-tags-filters -->
+
+		</div>
+		<!-- #export-tags -->
 
 <?php if( $order_fields ) { ?>
 		<div id="export-orders">
@@ -225,6 +339,7 @@
 						<input type="button" class="button button-disabled" value="<?php _e( 'Export Orders', 'wpsc_ce' ); ?>" />
 		<?php } ?>
 					</p>
+					<p class="description"><?php _e( 'Can\'t find a particular Order field in the above export list?', 'wpsc_ce' ); ?> <a href="<?php echo $troubleshooting_url; ?>" target="_blank"><?php _e( 'Get in touch', 'wpsc_ce' ); ?></a>.</p>
 	<?php } else { ?>
 					<p><?php _e( 'No Orders have been found.', 'wpsc_ce' ); ?></p>
 	<?php } ?>
@@ -282,6 +397,7 @@
 					<input type="button" class="button button-disabled" value="<?php _e( 'Export Customers', 'wpsc_ce' ); ?>" />
 		<?php } ?>
 				</p>
+					<p class="description"><?php _e( 'Can\'t find a particular Customer field in the above export list?', 'wpsc_ce' ); ?> <a href="<?php echo $troubleshooting_url; ?>" target="_blank"><?php _e( 'Get in touch', 'wpsc_ce' ); ?></a>.</p>
 	<?php } else { ?>
 				<p><?php _e( 'No Customers have been found.', 'wpsc_ce' ); ?></p>
 	<?php } ?>
@@ -296,11 +412,7 @@
 			<div class="inside">
 	<?php if( $coupons ) { ?>
 				<p class="description"><?php _e( 'Select the Coupon fields you would like to export.', 'wpsc_ce' ); ?></p>
-		<?php if( function_exists( 'wpsc_cd_admin_init' ) ) { ?>
 				<p><a href="javascript:void(0)" id="coupons-checkall" class="checkall"><?php _e( 'Check All', 'wpsc_ce' ); ?></a> | <a href="javascript:void(0)" id="coupons-uncheckall" class="uncheckall"><?php _e( 'Uncheck All', 'wpsc_ce' ); ?></a></p>
-		<?php } else { ?>
-				<p>Uncheck All | Check All</p>
-		<?php } ?>
 				<table>
 
 		<?php foreach( $coupon_fields as $coupon_field ) { ?>
@@ -322,6 +434,7 @@
 					<input type="button" class="button button-disabled" value="<?php _e( 'Export Coupons', 'wpsc_ce' ); ?>" />
 		<?php } ?>
 				</p>
+				<p class="description"><?php _e( 'Can\'t find a particular Coupon field in the above export list?', 'wpsc_ce' ); ?> <a href="<?php echo $troubleshooting_url; ?>" target="_blank"><?php _e( 'Get in touch', 'wpsc_ce' ); ?></a>.</p>
 	<?php } else { ?>
 				<p><?php _e( 'No Coupons have been found.', 'wpsc_ce' ); ?></p>
 	<?php } ?>
@@ -359,19 +472,6 @@
 
 					<tr>
 						<th>
-							<label for="bom"><?php _e( 'Add BOM character', 'wpsc_ce' ); ?>: </label>
-						</th>
-						<td>
-							<select id="bom" name="bom">
-								<option value="1"<?php selected( $bom, 1 ); ?>><?php _e( 'Yes', 'wpsc_ce' ); ?></option>
-								<option value="0"<?php selected( $bom, 0 ); ?>><?php _e( 'No', 'wpsc_ce' ); ?></option>
-							</select>
-							<p class="description"><?php _e( 'Mark the CSV file as UTF8 by adding a byte order mark (BOM) to the export, useful for non-English character sets.', 'wpsc_ce' ); ?></p>
-						</td>
-					</tr>
-
-					<tr>
-						<th>
 							<label for="escape_formatting"><?php _e( 'Field escape formatting', 'wpsc_ce' ); ?>: </label>
 						</th>
 						<td>
@@ -403,15 +503,32 @@
 
 					<tr>
 						<th>
+							<label for="bom"><?php _e( 'Add BOM character', 'wpsc_ce' ); ?>: </label>
+						</th>
+						<td>
+							<select id="bom" name="bom">
+								<option value="1"<?php selected( $bom, 1 ); ?>><?php _e( 'Yes', 'wpsc_ce' ); ?></option>
+								<option value="0"<?php selected( $bom, 0 ); ?>><?php _e( 'No', 'wpsc_ce' ); ?></option>
+							</select>
+							<p class="description"><?php _e( 'Mark the CSV file as UTF8 by adding a byte order mark (BOM) to the export, useful for non-English character sets.', 'wpsc_ce' ); ?></p>
+						</td>
+					</tr>
+
+					<tr>
+						<th>
 							<label for="encoding"><?php _e( 'Character encoding', 'wpsc_ce' ); ?>: </label>
 						</th>
 						<td>
+<?php if( $file_encodings ) { ?>
 							<select id="encoding" name="encoding">
-								<option><?php _e( 'System default', 'wpsc_ce' ); ?></option>
-<?php foreach( $file_encodings as $key => $chr ) { ?>
-								<option value="<?php echo $chr; ?>"><?php echo $chr; ?></option>
-<?php } ?>
+								<option value=""><?php _e( 'System default', 'wpsc_ce' ); ?></option>
+	<?php foreach( $file_encodings as $key => $chr ) { ?>
+								<option value="<?php echo $chr; ?>"<?php selected( $chr, $encoding ); ?>><?php echo $chr; ?></option>
+	<?php } ?>
 							</select>
+<?php } else { ?>
+							<p class="description"><?php _e( 'Character encoding options are unavailable in PHP 4, contact your hosting provider to update your site install to use PHP 5 or higher.', 'wpsc_ce' ); ?></p>
+<?php } ?>
 						</td>
 					</tr>
 

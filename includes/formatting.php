@@ -242,6 +242,15 @@ function wpsc_ce_format_order_date( $date ) {
 
 }
 
+function wpsc_ce_format_date( $date = '' ) {
+
+	$output = '';
+	if( $date )
+		$output = mysql2date( wpsc_ce_get_option( 'date_format', 'd/m/Y' ), $date );
+	return $output;
+
+}
+
 function wpsc_ce_expand_country_name( $country_prefix = '' ) {
 
 	global $wpdb;

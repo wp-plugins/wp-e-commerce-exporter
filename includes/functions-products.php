@@ -68,6 +68,16 @@ function wpsc_ce_get_product_fields( $format = 'full' ) {
 		'default' => 1
 	);
 	$fields[] = array(
+		'name' => 'post_date',
+		'label' => __( 'Product Published', 'wpsc_ce' ),
+		'default' => 1
+	);
+	$fields[] = array(
+		'name' => 'post_modified',
+		'label' => __( 'Product Modified', 'wpsc_ce' ),
+		'default' => 1
+	);
+	$fields[] = array(
 		'name' => 'price',
 		'label' => __( 'Price', 'wpsc_ce' ),
 		'default' => 1

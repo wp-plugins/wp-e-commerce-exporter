@@ -454,10 +454,11 @@ if( is_admin() ) {
 				if( function_exists( 'mb_list_encodings' ) )
 					$file_encodings = mb_list_encodings();
 				$encoding = wpsc_ce_get_option( 'encoding', 'UTF-8' );
+				$date_format = wpsc_ce_get_option( 'date_format', 'm/d/Y' );
 				break;
 
 			case 'tools':
-				/* Product Importer Deluxe */
+				// Product Importer Deluxe
 				if( function_exists( 'wpsc_pd_init' ) ) {
 					$wpsc_pd_url = add_query_arg( 'page', 'wpsc_pd' );
 					$wpsc_pd_target = false;
@@ -465,7 +466,7 @@ if( is_admin() ) {
 					$wpsc_pd_url = 'http://www.visser.com.au/wp-ecommerce/plugins/product-importer-deluxe/';
 					$wpsc_pd_target = ' target="_blank"';
 				}
-				/* Coupon Importer Deluxe */
+				// Coupon Importer Deluxe
 				if( function_exists( 'wpsc_ci_init' ) ) {
 					$wpsc_ci_url = add_query_arg( 'page', 'wpsc_ci' );
 					$wpsc_ci_target = false;

@@ -224,6 +224,32 @@ function wpsc_ce_format_product_filters( $product_filters = array() ) {
 
 }
 
+function wpsc_ce_format_user_role_filters( $user_role_filters = array() ) {
+
+	$output = array();
+	if( !empty( $user_role_filters ) ) {
+		foreach( $user_role_filters as $user_role_filter ) {
+			$output[] = $user_role_filter;
+		}
+	}
+	return $output;
+
+}
+
+function wpsc_ce_format_user_role_label( $user_role = '' ) {
+
+	global $wp_roles;
+
+	$output = $user_role;
+	if( $user_role ) {
+		$user_roles = wpsc_ce_get_user_roles();
+		if( isset( $user_roles[$user_role] ) )
+			$output = ucfirst( $user_roles[$user_role]['name'] );
+	}
+	return $output;
+
+}
+
 function wpsc_ce_convert_product_raw_weight( $weight = null, $weight_unit = null ) {
 
 	$output = '';

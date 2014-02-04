@@ -47,7 +47,7 @@ function wpsc_ce_get_coupon_fields( $format = 'full' ) {
 	);
 */
 
-	/* Allow Plugin/Theme authors to add support for additional Coupon columns */
+	// Allow Plugin/Theme authors to add support for additional Coupon columns
 	$fields = apply_filters( 'wpsc_ce_coupon_fields', $fields );
 
 	$remember = wpsc_ce_get_option( 'coupons_fields' );

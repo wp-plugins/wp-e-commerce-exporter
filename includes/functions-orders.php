@@ -74,6 +74,11 @@ function wpsc_ce_get_order_fields( $format = 'full' ) {
 		'default' => 0
 	);
 	$fields[] = array(
+		'name' => 'user_role',
+		'label' => __( 'User Role', 'wpsc_ce' ),
+		'default' => 1
+	);
+	$fields[] = array(
 		'name' => 'notes',
 		'label' => __( 'Notes', 'wpsc_ce' ),
 		'default' => 0
@@ -117,7 +122,7 @@ function wpsc_ce_get_order_fields( $format = 'full' ) {
 	);
 */
 
-	/* Allow Plugin/Theme authors to add support for additional Order columns */
+	// Allow Plugin/Theme authors to add support for additional Order columns
 	$fields = apply_filters( 'wpsc_ce_order_fields', $fields );
 
 	$remember = wpsc_ce_get_option( 'orders_fields' );
@@ -213,39 +218,39 @@ function wpsc_ce_orders_filter_by_date() {
 // HTML template for disabled Filter Orders by Customer widget on Store Exporter screen
 function wpsc_ce_orders_filter_by_customer() {
 
-ob_start(); ?>
+	ob_start(); ?>
 <p><label for="order_customer"><?php _e( 'Filter Orders by Customer', 'wpsc_ce' ); ?></label></p>
 <div id="export-orders-filters-date" class="separator">
-<select id="order_customer" name="order_customer" disabled="disabled">
-	<option value=""><?php _e( 'Show all customers', 'wpsc_ce' ); ?></option>
-</select>
-<p class="description"><?php _e( 'Filter Orders by Customer (unique e-mail address) to be included in the export. Default is to include all Orders.', 'wpsc_ce' ); ?></p>
+	<select id="order_customer" name="order_customer" disabled="disabled">
+		<option value=""><?php _e( 'Show all customers', 'wpsc_ce' ); ?></option>
+	</select>
+	<p class="description"><?php _e( 'Filter Orders by Customer (unique e-mail address) to be included in the export. Default is to include all Orders.', 'wpsc_ce' ); ?></p>
 </div>
 <!-- #export-orders-filters-date -->
 <?php
-ob_end_flush();
+	ob_end_flush();
 
 }
 
 // HTML template for disabled Filter Orders by Order Status widget on Store Exporter screen
 function wpsc_ce_orders_filter_by_status() {
 
-global $wpsc_purchlog_statuses;
+	global $wpsc_purchlog_statuses;
 
-$order_statuses = $wpsc_purchlog_statuses;
-ob_start(); ?>
+	$order_statuses = $wpsc_purchlog_statuses;
+	ob_start(); ?>
 <p><label><input type="checkbox" id="orders-filters-status" /> <?php _e( 'Filter Orders by Order Status', 'wpsc_ce' ); ?></label></p>
 <div id="export-orders-filters-status" class="separator">
-<ul>
+	<ul>
 <?php foreach( $order_statuses as $order_status ) { ?>
-	<li><label><input type="checkbox" name="order_filter_status[<?php echo $order_status['order']; ?>]" value="<?php echo $order_status['order']; ?>" /> <?php echo $order_status['label']; ?></label></li>
+		<li><label><input type="checkbox" name="order_filter_status[<?php echo $order_status['order']; ?>]" value="<?php echo $order_status['order']; ?>" /> <?php echo $order_status['label']; ?></label></li>
 <?php } ?>
-</ul>
-<p class="description"><?php _e( 'Select the Order Status you want to filter exported Orders by. Default is to include all Order Status options.', 'wpsc_ce' ); ?></p>
+	</ul>
+	<p class="description"><?php _e( 'Select the Order Status you want to filter exported Orders by. Default is to include all Order Status options.', 'wpsc_ce' ); ?></p>
 </div>
 <!-- #export-orders-filters-status -->
 <?php
-ob_end_flush();
+	ob_end_flush();
 
 }
 
@@ -267,5 +272,29 @@ function wpsc_ce_orders_filter_by_user_role() {
 <?php
 	ob_end_flush();
 
+}
+
+// HTML template for disabled Order Sorting widget on Store Exporter screen
+function wpsc_ce_orders_order_sorting() {
+
+	ob_start(); ?>
+<p><label><?php _e( 'Order Sorting', 'wpsc_ce' ); ?></label></p>
+<div>
+	<select name="order_orderby" disabled="disabled">
+		<option value="ID"><?php _e( 'Order ID', 'wpsc_ce' ); ?></option>
+		<option value="date"><?php _e( 'Date Created', 'wpsc_ce' ); ?></option>
+		<option value="payment_method"><?php _e( 'Payment Method', 'wpsc_ce' ); ?></option>
+		<option value="shipping_method"><?php _e( 'Shipping Method', 'wpsc_ce' ); ?></option>
+		<option value="rand"><?php _e( 'Random', 'wpsc_ce' ); ?></option>
+	</select>
+	<select name="order_order" disabled="disabled">
+		<option value="ASC"><?php _e( 'Ascending', 'wpsc_ce' ); ?></option>
+		<option value="DESC"><?php _e( 'Descending', 'wpsc_ce' ); ?></option>
+	</select>
+	<p class="description"><?php _e( 'Select the sorting of Orders within the exported file. By default this is set to export Orders by Order ID in Desending order.', 'wpsc_ce' ); ?></p>
+</div>
+<?php
+	ob_end_flush();
+	
 }
 ?>

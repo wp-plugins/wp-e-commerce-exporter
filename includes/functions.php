@@ -1,10 +1,10 @@
 <?php
-include_once( $wpsc_ce['abspath'] . '/includes/functions-products.php' );
-include_once( $wpsc_ce['abspath'] . '/includes/functions-categories.php' );
-include_once( $wpsc_ce['abspath'] . '/includes/functions-tags.php' );
-include_once( $wpsc_ce['abspath'] . '/includes/functions-orders.php' );
-include_once( $wpsc_ce['abspath'] . '/includes/functions-coupons.php' );
-include_once( $wpsc_ce['abspath'] . '/includes/functions-customers.php' );
+include_once( WPSC_CE_PATH . 'includes/functions-products.php' );
+include_once( WPSC_CE_PATH . 'includes/functions-categories.php' );
+include_once( WPSC_CE_PATH . 'includes/functions-tags.php' );
+include_once( WPSC_CE_PATH . 'includes/functions-orders.php' );
+include_once( WPSC_CE_PATH . 'includes/functions-coupons.php' );
+include_once( WPSC_CE_PATH . 'includes/functions-customers.php' );
 
 if( is_admin() ) {
 
@@ -27,7 +27,6 @@ if( is_admin() ) {
 
 		if( $pagenow == 'plugins.php' ) {
 			if( wpsc_is_woo_activated() || wpsc_is_jigo_activated() ) {
-				add_action( 'admin_notices', 'wpsc_ce_detect_non_wpsc_install' );
 				$r_plugins = array(
 					'wp-e-commerce-exporter/exporter.php'
 				);
@@ -181,13 +180,6 @@ if( is_admin() ) {
 				$output = $filename;
 		}
 		return $output;
-
-	}
-
-	function wpsc_ce_unload_export_global() {
-
-		global $export;
-		unset( $export );
 
 	}
 
@@ -479,8 +471,7 @@ if( is_admin() ) {
 			case 'archive':
 				if( isset( $_GET['deleted'] ) ) {
 					$message = __( 'Archived export has been deleted.', 'wpsc_ce' );
-					$output = '<div class="updated settings-error"><p><strong>' . $message . '</strong></p></div>';
-					echo $output;
+					wpsc_ce_admin_notice( $message );
 				}
 				$files = wpsc_ce_get_archive_files();
 				if( $files ) {
@@ -501,12 +492,12 @@ if( is_admin() ) {
 		$output = 0;
 		if( !empty( $filename ) ) {
 			$post_type = 'wpsc-export';
-			$object = array(
+			$args = array(
 				'post_title' => $filename,
 				'post_type' => $post_type,
 				'post_mime_type' => 'text/csv'
 			);
-			$post_ID = wp_insert_attachment( $object, $filename );
+			$post_ID = wp_insert_attachment( $args, $filename );
 			if( $post_ID )
 				$output = $post_ID;
 		}
@@ -519,11 +510,11 @@ if( is_admin() ) {
 
 		add_post_meta( $post_ID, '_wpsc_export_type', $export_type );
 		if( !empty( $upload_url ) ) {
-			$object = array(
+			$args = array(
 				'ID' => $post_ID,
 				'guid' => $upload_url
 			);
-			wp_update_post( $object );
+			wp_update_post( $args );
 		}
 
 	}
@@ -566,17 +557,10 @@ if( is_admin() ) {
 			$memory_limit = (int)( ini_get( 'memory_limit' ) );
 			$minimum_memory_limit = 64;
 			if( $memory_limit < $minimum_memory_limit ) {
-				ob_start();
 				$memory_url = add_query_arg( 'action', 'dismiss_memory_prompt' );
-				$message = sprintf( __( 'We recommend setting memory to at least %dMB, your site has %dMB currently allocated. See: <a href="%s" target="_blank">Increasing memory allocated to PHP</a>', 'wpsc_ce' ), $minimum_memory_limit, $memory_limit, 'http://codex.wordpress.org/Editing_wp-config.php#Increasing_memory_allocated_to_PHP' ); ?>
-<div class="error settings-error">
-	<p>
-		<strong><?php echo $message; ?></strong>
-		<span style="float:right;"><a href="<?php echo $memory_url; ?>"><?php _e( 'Dismiss', 'wpsc_ce' ); ?></a></span>
-	</p>
-</div>
-<?php
-				ob_end_flush();
+				$troubleshooting_url = 'http://www.visser.com.au/documentation/store-exporter-deluxe/usage/';
+				$message = sprintf( __( 'We recommend setting memory to at least %dMB, your site has only %dMB allocated to it. See: <a href="%s" target="_blank">Increasing memory allocated to PHP</a>', 'wpsc_ce' ), $minimum_memory_limit, $memory_limit, $troubleshooting_url ) . '<span style="float:right;"><a href="' . $memory_url . '">' . __( 'Dismiss', 'wpsc_ce' ) . '</a></span>';
+				wpsc_ce_admin_notice( $message, 'error' );
 			}
 		}
 
@@ -585,20 +569,21 @@ if( is_admin() ) {
 	// Displays a HTML notice when a WordPress or Store Exporter error is encountered
 	function wpsc_ce_fail_notices() {
 
-		$message = false;
-		if( isset( $_GET['failed'] ) )
-			$message = __( 'A WordPress error caused the exporter to fail, please get in touch.', 'wpsc_ce' );
-		if( isset( $_GET['empty'] ) )
+		wpsc_ce_memory_prompt();
+		if( isset( $_GET['failed'] ) ) {
+			$message = '';
+			if( isset( $_GET['message'] ) )
+				$message = urldecode( $_GET['message'] );
+			$troubleshooting_url = 'http://www.visser.com.au/documentation/store-exporter-deluxe/usage/';
+			if( $message )
+				$message = __( 'A WordPress or server error caused the exporter to fail, the exporter was provided with a reason: ', 'wpsc_ce' ) . '<em>' . $message . '</em>' . ' (<a href="' . $troubleshooting_url . '" target="_blank">' . __( 'Need help?', 'wpsc_ce' ) . '</a>)';
+			else
+				$message = __( 'A WordPress or server error caused the exporter to fail, no reason was provided, please get in touch so we can reproduce and resolve this.', 'wpsc_ce' ) . ' (<a href="' . $troubleshooting_url . '" target="_blank">' . __( 'Need help?', 'wpsc_ce' ) . '</a>)';
+			wpsc_ce_admin_notice( $message, 'error' );
+		}
+		if( isset( $_GET['empty'] ) ) {
 			$message = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
-		if( $message ) {
-			ob_start(); ?>
-<div class="updated settings-error">
-	<p>
-		<strong><?php echo $message; ?></strong>
-	</p>
-</div>
-<?php
-			ob_end_flush();
+			wpsc_ce_admin_notice( $message, 'error' );
 		}
 	}
 
@@ -610,7 +595,9 @@ if( is_admin() ) {
 			'post_mime_type' => 'text/csv',
 			'meta_key' => '_wpsc_export_type',
 			'meta_value' => null,
-			'posts_per_page' => -1
+			'posts_per_page' => -1,
+			'cache_results' => false,
+			'no_found_rows' => false
 		);
 		if( isset( $_GET['filter'] ) ) {
 			$filter = $_GET['filter'];
@@ -668,11 +655,14 @@ if( is_admin() ) {
 	function wpsc_ce_archives_quicklink_count( $type = '' ) {
 
 		$output = '0';
+		$post_type = 'attachment';
 		$args = array(
-			'post_type' => 'attachment',
+			'post_type' => $post_type,
 			'meta_key' => '_wpsc_export_type',
 			'meta_value' => null,
-			'numberposts' => -1
+			'numberposts' => -1,
+			'cache_results' => false,
+			'no_found_rows' => false
 		);
 		if( $type )
 			$args['meta_value'] = $type;
@@ -688,6 +678,16 @@ if( is_admin() ) {
 }
 
 /* Start of: Common */
+
+function wpsc_ce_add_missing_mime_type( $mime_types = array(), $user ) {
+
+	// Add CSV mime type if it has been removed
+	if( !isset( $mime_types['csv'] ) )
+		$mime_types['csv'] = 'text/csv';
+	return $mime_types;
+
+}
+add_filter( 'upload_mimes', 'wpsc_ce_add_missing_mime_type', 10, 2 );
 
 function wpsc_ce_get_option( $option = null, $default = false ) {
 

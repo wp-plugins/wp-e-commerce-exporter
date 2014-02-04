@@ -15,23 +15,24 @@ $wpsc_ce = array(
 	'abspath' => dirname( __FILE__ ),
 	'relpath' => basename( dirname( __FILE__ ) ) . '/' . basename( __FILE__ )
 );
+define( 'WPSC_CE_PATH', plugin_dir_path( __FILE__ ) );
 
 $wpsc_ce['prefix'] = 'wpsc_ce';
 $wpsc_ce['menu'] = __( 'Store Export', 'wpsc_ce' );
 $wpsc_ce['debug'] = false;
 
-include_once( $wpsc_ce['abspath'] . '/includes/functions.php' );
-include_once( $wpsc_ce['abspath'] . '/includes/functions-alternatives.php' );
-include_once( $wpsc_ce['abspath'] . '/includes/common.php' );
+include_once( WPSC_CE_PATH . 'includes/functions.php' );
+include_once( WPSC_CE_PATH . 'includes/functions-alternatives.php' );
+include_once( WPSC_CE_PATH . 'includes/common.php' );
 
 switch( wpsc_get_major_version() ) {
 
 	case '3.7':
-		include_once( $wpsc_ce['abspath'] . '/includes/release-3_7.php' );
+		include_once( WPSC_CE_PATH . 'includes/release-3_7.php' );
 		break;
 
 	case '3.8':
-		include_once( $wpsc_ce['abspath'] . '/includes/release-3_8.php' );
+		include_once( WPSC_CE_PATH . 'includes/release-3_8.php' );
 		break;
 
 }
@@ -111,6 +112,7 @@ if( is_admin() ) {
 				wpsc_ce_update_option( 'dismiss_memory_prompt', 1 );
 				$url = add_query_arg( 'action', null );
 				wp_redirect( $url );
+				exit();
 				break;
 
 			case 'export':
@@ -158,15 +160,16 @@ if( is_admin() ) {
 					if( $export->date_format <> wpsc_ce_get_option( 'date_format' ) )
 						wpsc_ce_update_option( 'date_format', $export->date_format );
 				}
-				$export->order_dates_filter = false;
-				$export->order_dates_from = '';
-				$export->order_dates_to = '';
-				$export->order_status = false;
 				$export->fields = false;
 				$export->product_categories = false;
 				$export->product_tags = false;
 				$export->product_status = false;
+				$export->order_dates_filter = false;
+				$export->order_dates_from = '';
+				$export->order_dates_to = '';
+				$export->order_status = false;
 				$export->order_customer = false;
+				$export->order_user_roles = false;
 				$export->order_orderby = false;
 				$export->order_order = false;
 
@@ -213,11 +216,12 @@ if( is_admin() ) {
 					case 'orders':
 						$dataset[] = 'orders';
 						$export->fields = ( isset( $_POST['order_fields'] ) ) ? $_POST['order_fields'] : false;
-						$export->order_status = ( isset( $_POST['order_filter_status'] ) ) ? wpsc_ce_format_product_filters( $_POST['order_filter_status'] ) : false;
 						$export->order_dates_filter = ( isset( $_POST['order_dates_filter'] ) ) ? $_POST['order_dates_filter'] : false;
 						$export->order_dates_from = $_POST['order_dates_from'];
 						$export->order_dates_to = $_POST['order_dates_to'];
+						$export->order_status = ( isset( $_POST['order_filter_status'] ) ) ? wpsc_ce_format_product_filters( $_POST['order_filter_status'] ) : false;
 						$export->order_customer = ( isset( $_POST['order_customer'] ) ) ? $_POST['order_customer'] : false;
+						$export->order_user_roles = ( isset( $_POST['order_filter_user_role'] ) ) ? wpsc_ce_format_user_role_filters( $_POST['order_filter_user_role'] ) : false;
 						$export->order_orderby = ( isset( $_POST['order_orderby'] ) ) ? $_POST['order_orderby'] : false;
 						if( $export->order_orderby <> wpsc_ce_get_option( 'order_orderby' ) )
 							wpsc_ce_update_option( 'order_orderby', $export->order_orderby );
@@ -271,6 +275,7 @@ if( is_admin() ) {
 						'order_dates_from' => wpsc_ce_format_order_date( $export->order_dates_from ),
 						'order_dates_to' => wpsc_ce_format_order_date( $export->order_dates_to ),
 						'order_customer' => $export->order_customer,
+						'order_user_roles' => $export->order_user_roles,
 						'order_orderby' => $export->order_orderby,
 						'order_order' => $export->order_order
 					);
@@ -304,6 +309,11 @@ if( is_admin() ) {
 							if( $export->filename && $bits ) {
 								$post_ID = wpsc_ce_save_csv_file_attachment( $export->filename );
 								$upload = wp_upload_bits( $export->filename, null, $bits );
+								if( $upload['error'] ) {
+									wp_delete_attachment( $post_ID, true );
+									wp_redirect( add_query_arg( array( 'failed' => true, 'message' => urlencode( $upload['error'] ) ) ) );
+									return;
+								}
 								$attach_data = wp_generate_attachment_metadata( $post_ID, $upload['file'] );
 								wp_update_attachment_metadata( $post_ID, $attach_data );
 								if( $post_ID ) {
@@ -311,18 +321,22 @@ if( is_admin() ) {
 									wpsc_ce_save_csv_file_details( $post_ID );
 								}
 								$export_type = $export->type;
-								wpsc_ce_unload_export_global();
+								unset( $export );
 
 								// The end memory usage and time is collected at the very last opportunity prior to the CSV header being rendered to the screen
 								wpsc_ce_update_csv_file_detail( $post_ID, '_wpsc_idle_memory_end', wpsc_ce_current_memory_usage() );
 								wpsc_ce_update_csv_file_detail( $post_ID, '_wpsc_end_time', time() );
 
 								// Generate CSV header
-								wpsc_ce_generate_csv_header( $export->type );
+								wpsc_ce_generate_csv_header( $export_type );
 								unset( $export_type );
 
 								// Print file contents to screen
-								readfile( $upload['file'] );
+								if( $upload['file'] ) {
+									readfile( $upload['file'] );
+								} else {
+									wp_redirect( add_query_arg( 'failed', true ) );
+								}
 								unset( $upload );
 							} else {
 								wp_redirect( add_query_arg( 'failed', true ) );
@@ -360,7 +374,8 @@ if( is_admin() ) {
 
 			case 'export':
 				$message = __( 'Chosen WP e-Commerce details have been exported from your store.', 'wpsc_ce' );
-				$output = '<div class="updated settings-error"><p><strong>' . $message . '</strong></p></div>';
+				wpsc_ce_admin_notice( $message );
+				$output = '';
 				if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
 					if( !isset( $wpsc_ce['debug_log'] ) )
 						$wpsc_ce['debug_log'] = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
@@ -392,7 +407,6 @@ if( is_admin() ) {
 		if( isset( $_GET['tab'] ) )
 			$tab = $_GET['tab'];
 		$url = add_query_arg( 'page', 'wpsc_ce' );
-		wpsc_ce_memory_prompt();
 		wpsc_ce_fail_notices();
 		switch( wpsc_get_major_version() ) {
 
@@ -405,8 +419,7 @@ if( is_admin() ) {
 				break;
 
 		}
-
-		include_once( 'templates/admin/wpsc-admin_ce-export.php' );
+		include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-export.php' );
 
 	}
 

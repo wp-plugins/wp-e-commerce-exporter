@@ -4,7 +4,7 @@ Contributors: visser
 Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 3.8
+Tested up to: 3.8.1
 Stable tag: 1.5.3
 
 == Description ==
@@ -25,6 +25,7 @@ Features include:
 * Export Customers (**)
 * Export Coupons (**)
 * Toggle and save export fields
+* Works with WordPress Multisite
 
 (*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products, Simple Product Options and more.
 (**) Requries the Pro upgrade to enable additional store export functionality.
@@ -53,7 +54,7 @@ Done!
 
 == Support ==
 
-If you have any problems, questions or suggestions please join the members discussion on my WP e-Commerce dedicated forum.
+If you have any problems, questions or suggestions please join the members discussion on our WP e-Commerce dedicated forum.
 
 http://www.visser.com.au/wp-ecommerce/forums/
 
@@ -67,6 +68,8 @@ http://www.visser.com.au/wp-ecommerce/forums/
 == Changelog ==
 
 = 1.5.3 =
+* Fixed: Multi-site support resolved
+* Changed: Permanently delete failed exports
 * Added: Post Published and Post Modified
 
 = 1.5.2 =

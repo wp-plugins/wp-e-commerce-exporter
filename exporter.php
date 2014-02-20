@@ -3,23 +3,19 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.5.3
+Version: 1.5.4
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
 */
 
-$wpsc_ce = array(
-	'filename' => basename( __FILE__ ),
-	'dirname' => basename( dirname( __FILE__ ) ),
-	'abspath' => dirname( __FILE__ ),
-	'relpath' => basename( dirname( __FILE__ ) ) . '/' . basename( __FILE__ )
-);
+define( 'WPSC_CE_DIRNAME', basename( dirname( __FILE__ ) ) );
+define( 'WPSC_CE_RELPATH', basename( dirname( __FILE__ ) ) . '/' . basename( __FILE__ ) );
 define( 'WPSC_CE_PATH', plugin_dir_path( __FILE__ ) );
+define( 'WPSC_CE_PREFIX', 'wpsc_ce' );
 
-$wpsc_ce['prefix'] = 'wpsc_ce';
-$wpsc_ce['menu'] = __( 'Store Export', 'wpsc_ce' );
-$wpsc_ce['debug'] = false;
+// Turn this on to enable additional debugging options at export time
+define( 'WPSC_CE_DEBUG', false );
 
 include_once( WPSC_CE_PATH . 'includes/functions.php' );
 include_once( WPSC_CE_PATH . 'includes/functions-alternatives.php' );
@@ -101,7 +97,7 @@ if( is_admin() ) {
 	// Initial scripts and export process
 	function wpsc_ce_admin_init() {
 
-		global $wpsc_ce, $export, $wp_roles;
+		global $export, $wp_roles;
 
 		include_once( 'includes/formatting.php' );
 
@@ -281,7 +277,7 @@ if( is_admin() ) {
 					);
 					wpsc_ce_save_fields( $dataset, $export->fields );
 					$export->filename = wpsc_ce_generate_csv_filename( $export->type );
-					if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
+					if( WPSC_CE_DEBUG ) {
 
 						wpsc_ce_export_dataset( $dataset, $args );
 						$export->idle_memory_end = wpsc_ce_current_memory_usage();
@@ -364,7 +360,7 @@ if( is_admin() ) {
 	// HTML templates and form processor for Store Exporter screen
 	function wpsc_ce_html_page() {
 
-		global $wpdb, $wpsc_ce, $export;
+		global $wpdb, $export;
 
 		$title = apply_filters( 'wpsc_ce_template_header', '' );
 		wpsc_ce_template_header( $title );
@@ -376,13 +372,17 @@ if( is_admin() ) {
 				$message = __( 'Chosen WP e-Commerce details have been exported from your store.', 'wpsc_ce' );
 				wpsc_ce_admin_notice( $message );
 				$output = '';
-				if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] ) {
-					if( !isset( $wpsc_ce['debug_log'] ) )
-						$wpsc_ce['debug_log'] = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
+				if( WPSC_CE_DEBUG ) {
+					if( false === ( $export_log = get_transient( WPSC_CE_PREFIX . '_debug_log' ) ) ) {
+						$export_log = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
+					} else {
+						delete_transient( WPSC_CE_PREFIX . '_debug_log' );
+						$export_log = base64_decode( $export_log );
+					}
 					$output .= '<h3>' . __( 'Export Details' ) . '</h3>';
 					$output .= '<textarea id="export_log">' . print_r( $export, true ) . '</textarea><hr />';
 					$output .= '<h3>' . sprintf( __( 'Export Log: %s', 'wpsc_ce' ), $export->filename ) . '</h3>';
-					$output .= '<textarea id="export_log">' . $wpsc_ce['debug_log'] . '</textarea>';
+					$output .= '<textarea id="export_log">' . $export_log . '</textarea>';
 				}
 				echo $output;
 
@@ -400,8 +400,6 @@ if( is_admin() ) {
 
 	// HTML template for Export screen
 	function wpsc_ce_manage_form() {
-
-		global $wpsc_ce;
 
 		$tab = false;
 		if( isset( $_GET['tab'] ) )

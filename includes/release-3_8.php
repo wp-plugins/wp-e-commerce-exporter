@@ -6,9 +6,7 @@ if( is_admin() ) {
 	// Add Store Export to WordPress Administration menu
 	function wpsc_ce_admin_page_item( $menu = array() ) {
 
-		global $wpsc_ce;
-
-		$title = $wpsc_ce['menu'];
+		$title = __( 'Store Export', 'wpsc_ce' );
 		$link = add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' );
 		$description = __( 'Export store details out of WP e-Commerce into a CSV-formatted file.', 'wpsc_ce' );
 
@@ -115,7 +113,7 @@ if( is_admin() ) {
 	// Export process for CSV file
 	function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 
-		global $wpdb, $wpsc_ce, $export;
+		global $wpdb, $export;
 
 		$csv = '';
 		if( $export->bom )
@@ -253,8 +251,8 @@ if( is_admin() ) {
 			if( $csv ) {
 				$csv = wpsc_ce_file_encoding( $csv );
 				$csv = utf8_decode( $csv );
-				if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
-					$wpsc_ce['debug_log'] = $csv;
+				if( WPSC_CE_DEBUG )
+					set_transient( WPSC_CE_PREFIX . '_debug_log', base64_encode( $csv ), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 				else
 					return $csv;
 			} else {
@@ -428,7 +426,7 @@ function wpsc_ce_get_products( $args = array() ) {
 			$products[$key]->comment_status = wpsc_ce_format_comment_status( $product->comment_status, $product );
 
 			/* Allow Plugin/Theme authors to add support for additional Product columns */
-			$products[$key] = apply_filters( 'wpsc_ce_product_data', $products[$key] );
+			$products[$key] = apply_filters( 'wpsc_ce_product_item', $products[$key], $product->ID );
 
 			// Advanced Google Product Feed
 			if( function_exists( 'wpec_gpf_install' ) ) {

@@ -94,12 +94,10 @@ if( is_admin() ) {
 	// HTML template header on Store Exporter screen
 	function wpsc_ce_template_header( $title = '', $icon = 'tools' ) {
 
-		global $wpsc_ce;
-
 		if( $title )
 			$output = $title;
 		else
-			$output = $wpsc_ce['menu'];
+			$output = __( 'Store Export', 'wpsc_ce' );
 		$icon = wpsc_is_admin_icon_valid( $icon ); ?>
 <div class="wrap">
 	<div id="icon-<?php echo $icon; ?>" class="icon32"><br /></div>
@@ -119,19 +117,17 @@ if( is_admin() ) {
 	// HTML template for header prompt on Store Exporter screen
 	function wpsc_ce_support_donate() {
 
-		global $wpsc_ce;
-
 		$output = '';
 		$show = true;
 		if( function_exists( 'wpsc_vl_we_love_your_plugins' ) ) {
-			if( in_array( $wpsc_ce['dirname'], wpsc_vl_we_love_your_plugins() ) )
+			if( in_array( WPSC_CE_DIRNAME, wpsc_vl_we_love_your_plugins() ) )
 				$show = false;
 		}
 		if( function_exists( 'wpsc_cd_admin_init' ) )
 			$show = false;
 		if( $show ) {
 			$donate_url = 'http://www.visser.com.au/#donations';
-			$rate_url = 'http://wordpress.org/support/view/plugin-reviews/' . $wpsc_ce['dirname'];
+			$rate_url = 'http://wordpress.org/support/view/plugin-reviews/' . WPSC_CE_DIRNAME;
 			$output = '
 	<div id="support-donate_rate" class="support-donate_rate">
 		<p>' . sprintf( __( '<strong>Like this Plugin?</strong> %s and %s.', 'wpsc_ce' ), '<a href="' . $donate_url . '" target="_blank">' . __( 'Donate to support this Plugin', 'wpsc_ce' ) . '</a>', '<a href="' . add_query_arg( array( 'rate' => '5' ), $rate_url ) . '#postform" target="_blank">rate / review us on WordPress.org</a>' ) . '</p>
@@ -195,8 +191,6 @@ if( is_admin() ) {
 	// In-line display of CSV file and export details when viewed via WordPress Media screen
 	function wpsc_ce_read_csv_file( $post = null ) {
 
-		global $wpsc_ce;
-
 		if( !$post ) {
 			if( isset( $_GET['post'] ) )
 				$post = get_post( $_GET['post'] );
@@ -217,7 +211,7 @@ if( is_admin() ) {
 			fclose( $handle );
 		}
 		if( $contents )
-			include_once( $wpsc_ce['abspath'] . '/templates/admin/wpsc-admin_ce-media_csv_file.php' );
+			include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-media_csv_file.php' );
 
 		$dataset = get_post_meta( $post->ID, '_wpsc_export_type', true );
 		$columns = get_post_meta( $post->ID, '_wpsc_columns', true );
@@ -228,7 +222,7 @@ if( is_admin() ) {
 		$data_memory_start = get_post_meta( $post->ID, '_wpsc_data_memory_start', true );
 		$data_memory_end = get_post_meta( $post->ID, '_wpsc_data_memory_end', true );
 		$idle_memory_end = get_post_meta( $post->ID, '_wpsc_idle_memory_end', true );
-		include_once( $wpsc_ce['abspath'] . '/templates/admin/wpsc-admin_ce-media_export_details.php' );
+		include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-media_export_details.php' );
 
 	}
 	add_action( 'edit_form_after_editor', 'wpsc_ce_read_csv_file' );
@@ -373,8 +367,6 @@ if( is_admin() ) {
 	// HTML template for each tab on the Store Exporter screen
 	function wpsc_ce_tab_template( $tab = '' ) {
 
-		global $wpsc_ce;
-
 		if( !$tab )
 			$tab = 'overview';
 
@@ -482,7 +474,7 @@ if( is_admin() ) {
 
 		}
 		if( $tab )
-			include_once( $wpsc_ce['abspath'] . '/templates/admin/wpsc-admin_ce-export_' . $tab . '.php' );
+			include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-export_' . $tab . '.php' );
 
 	}
 
@@ -691,12 +683,10 @@ add_filter( 'upload_mimes', 'wpsc_ce_add_missing_mime_type', 10, 2 );
 
 function wpsc_ce_get_option( $option = null, $default = false ) {
 
-	global $wpsc_ce;
-
 	$output = '';
 	if( isset( $option ) ) {
 		$separator = '_';
-		$output = get_option( $wpsc_ce['prefix'] . $separator . $option, $default );
+		$output = get_option( WPSC_CE_PREFIX . $separator . $option, $default );
 	}
 	return $output;
 
@@ -704,12 +694,10 @@ function wpsc_ce_get_option( $option = null, $default = false ) {
 
 function wpsc_ce_update_option( $option = null, $value = null ) {
 
-	global $wpsc_ce;
-
 	$output = false;
 	if( isset( $option ) && isset( $value ) ) {
 		$separator = '_';
-		$output = update_option( $wpsc_ce['prefix'] . $separator . $option, $value );
+		$output = update_option( WPSC_CE_PREFIX . $separator . $option, $value );
 	}
 	return $output;
 

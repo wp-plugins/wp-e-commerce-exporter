@@ -22,7 +22,7 @@
 
 <div id="progress" style="display:none;">
 	<p><?php _e( 'Chosen WP e-Commerce details are being exported, this process can take awhile. Time for a beer?', 'wpsc_ce' ); ?></p>
-	<img src="<?php echo plugins_url( '/templates/admin/images/progress.gif', $wpsc_ce['relpath'] ); ?>" alt="" />
+	<img src="<?php echo plugins_url( '/templates/admin/images/progress.gif', WPSC_CE_RELPATH ); ?>" alt="" />
 	<p><?php _e( 'When the download is complete, return to <a href="' . $url . '">WP e-Commerce Exporter</a>.', 'wpsc_ce' ); ?>
 </div>
 <!-- #progress -->

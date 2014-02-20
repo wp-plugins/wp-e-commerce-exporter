@@ -87,7 +87,7 @@ if( is_admin() ) {
 	// Export process for CSV file
 	function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 
-		global $wpdb, $wpsc_ce, $export;
+		global $wpdb, $export;
 
 		$csv = '';
 		if( $export->bom )
@@ -258,8 +258,8 @@ if( is_admin() ) {
 			if( $csv ) {
 				$csv = wpsc_ce_file_encoding( $csv );
 				$csv = utf8_decode( $csv );
-				if( isset( $wpsc_ce['debug'] ) && $wpsc_ce['debug'] )
-					$wpsc_ce['debug_log'] = $csv;
+				if( WPSC_CE_DEBUG )
+					set_transient( WPSC_CE_PREFIX . '_debug_log', base64_encode( $csv ), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 				else
 					return $csv;
 			} else {

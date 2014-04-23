@@ -4,8 +4,8 @@ Contributors: visser
 Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 3.8.1
-Stable tag: 1.5.4
+Tested up to: 3.9
+Stable tag: 1.5.5
 
 == Description ==
 
@@ -66,6 +66,9 @@ http://www.visser.com.au/wp-ecommerce/forums/
 4. A range of global export options are included.
 
 == Changelog ==
+
+= 1.5.5 =
+* Changed: Improved support for legacy WP e-Commerce 3.7
 
 = 1.5.4 =
 * Changed: Dropped $wpsc_ce global

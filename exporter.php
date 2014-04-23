@@ -347,6 +347,7 @@ if( is_admin() ) {
 			default:
 				// Detect other platform versions
 				wpsc_ce_detect_non_wpsc_install();
+
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_date' );
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_status' );
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_customer' );

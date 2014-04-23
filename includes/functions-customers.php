@@ -130,8 +130,7 @@ function wpsc_ce_get_customer_fields( $format = 'full' ) {
 	// Allow Plugin/Theme authors to add support for additional Customer columns
 	$fields = apply_filters( 'wpsc_ce_customer_fields', $fields );
 
-	$remember = wpsc_ce_get_option( 'customers_fields' );
-	if( $remember ) {
+	if( $remember = wpsc_ce_get_option( 'customers_fields' ) ) {
 		$remember = maybe_unserialize( $remember );
 		$size = count( $fields );
 		for( $i = 0; $i < $size; $i++ ) {

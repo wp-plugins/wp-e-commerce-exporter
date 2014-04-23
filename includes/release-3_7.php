@@ -206,7 +206,7 @@ if( is_admin() ) {
 						else
 							$csv .= escape_csv_value( $columns[$i] ) . $separator;
 					}
-					$categories = wpsc_ce_get_product_categories();
+					$categories = wpsc_ce_get_product_assoc_categories();
 					if( $categories ) {
 						foreach( $categories as $category ) {
 							$csv .= 
@@ -289,6 +289,33 @@ if( is_admin() ) {
 			}
 		}
 		return $output;
+
+	}
+
+	// Returns a list of Category export columns
+	function wpsc_ce_get_category_fields( $format = 'full' ) {
+	
+		$fields = array();
+		$fields[] = array(
+			'name' => 'name',
+			'label' => __( 'Category', 'wpsc_ce' ),
+			'default' => 1
+		);
+		switch( $format ) {
+
+			case 'summary':
+				$output = array();
+				$size = count( $fields );
+				for( $i = 0; $i < $size; $i++ )
+					$output[$fields[$i]['name']] = 'on';
+				return $output;
+				break;
+	
+			case 'full':
+			default:
+				return $fields;
+
+		}
 
 	}
 

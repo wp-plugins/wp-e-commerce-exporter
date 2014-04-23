@@ -153,8 +153,7 @@ if( is_admin() ) {
 
 		global $export;
 
-		$filename = wpsc_ce_generate_csv_filename( $dataset );
-		if( $filename ) {
+		if( $filename = wpsc_ce_generate_csv_filename( $dataset ) ) {
 			header( sprintf( 'Content-Encoding: %s', $export->encoding ) );
 			header( sprintf( 'Content-Type: text/csv; charset=%s', $export->encoding ) );
 			header( 'Content-Transfer-Encoding: binary' );
@@ -397,8 +396,7 @@ if( is_admin() ) {
 				$coupons = wpsc_ce_return_count( 'coupons' );
 				$customers = wpsc_ce_return_count( 'customers' );
 
-				$product_fields = wpsc_ce_get_product_fields();
-				if( $product_fields ) {
+				if( $product_fields = wpsc_ce_get_product_fields() ) {
 					foreach( $product_fields as $key => $product_field ) {
 						if( !isset( $product_fields[$key]['disabled'] ) )
 							$product_fields[$key]['disabled'] = 0;
@@ -410,18 +408,15 @@ if( is_admin() ) {
 					$product_orderby = wpsc_ce_get_option( 'product_orderby', 'ID' );
 					$product_order = wpsc_ce_get_option( 'product_order', 'DESC' );
 				}
-				$category_fields = wpsc_ce_get_category_fields();
-				if( $category_fields ) {
+				if( $category_fields = wpsc_ce_get_category_fields() ) {
 					$category_orderby = wpsc_ce_get_option( 'category_orderby', 'ID' );
 					$category_order = wpsc_ce_get_option( 'category_order', 'DESC' );
 				}
-				$tag_fields = wpsc_ce_get_tag_fields();
-				if( $tag_fields ) {
+				if( $tag_fields = wpsc_ce_get_tag_fields() ) {
 					$tag_orderby = wpsc_ce_get_option( 'tag_orderby', 'ID' );
 					$tag_order = wpsc_ce_get_option( 'tag_order', 'DESC' );
 				}
-				$order_fields = wpsc_ce_get_order_fields();
-				if( $order_fields )
+				if( $order_fields = wpsc_ce_get_order_fields() )
 					$order_statuses = $wpsc_purchlog_statuses;
 				$customer_fields = wpsc_ce_get_customer_fields();
 				$coupon_fields = wpsc_ce_get_coupon_fields();
@@ -465,8 +460,7 @@ if( is_admin() ) {
 					$message = __( 'Archived export has been deleted.', 'wpsc_ce' );
 					wpsc_ce_admin_notice( $message );
 				}
-				$files = wpsc_ce_get_archive_files();
-				if( $files ) {
+				if( $files = wpsc_ce_get_archive_files() ) {
 					foreach( $files as $key => $file )
 						$files[$key] = wpsc_ce_get_archive_file( $file );
 				}
@@ -489,8 +483,7 @@ if( is_admin() ) {
 				'post_type' => $post_type,
 				'post_mime_type' => 'text/csv'
 			);
-			$post_ID = wp_insert_attachment( $args, $filename );
-			if( $post_ID )
+			if( $post_ID = wp_insert_attachment( $args, $filename ) )
 				$output = $post_ID;
 		}
 		return $output;
@@ -658,8 +651,7 @@ if( is_admin() ) {
 		);
 		if( $type )
 			$args['meta_value'] = $type;
-		$posts = get_posts( $args );
-		if( $posts )
+		if( $posts = get_posts( $args ) )
 			$output = count( $posts );
 		echo $output;
 

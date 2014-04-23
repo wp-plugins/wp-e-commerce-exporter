@@ -2,7 +2,6 @@
 // Returns a list of WP e-Commerce Product Tags to export process
 function wpsc_ce_get_product_tags( $args = array() ) {
 
-	$output = '';
 	if( $args ) {
 		$orderby = $args['tag_orderby'];
 		$order = $args['tag_order'];
@@ -13,10 +12,15 @@ function wpsc_ce_get_product_tags( $args = array() ) {
 		'order' => $order,
 		'hide_empty' => 0
 	);
-	$tags = get_terms( $term_taxonomy, $args );
-	if( $tags )
-		$output = $tags;
-	return $output;
+	if( $tags = get_terms( $term_taxonomy, $args ) ) {
+		$size = count( $tags );
+		for( $i = 0; $i < $size; $i++ ) {
+			$tags[$i]->disabled = 0;
+			if( $tags[$i]->count == 0 )
+				$tags[$i]->disabled = 1;
+		}
+		return $tags;
+	}
 
 }
 
@@ -51,11 +55,11 @@ function wpsc_ce_get_tag_fields( $format = 'full' ) {
 	// Allow Plugin/Theme authors to add support for additional Product Tag columns
 	$fields = apply_filters( 'wpsc_ce_tag_fields', $fields );
 
-	$remember = wpsc_ce_get_option( 'tags_fields' );
-	if( $remember ) {
+	if( $remember = wpsc_ce_get_option( 'tags_fields', array() ) ) {
 		$remember = maybe_unserialize( $remember );
 		$size = count( $fields );
 		for( $i = 0; $i < $size; $i++ ) {
+			$fields[$i]['disabled'] = 0;
 			if( !array_key_exists( $fields[$i]['name'], $remember ) )
 				$fields[$i]['default'] = 0;
 		}
@@ -74,6 +78,7 @@ function wpsc_ce_get_tag_fields( $format = 'full' ) {
 		case 'full':
 		default:
 			return $fields;
+			break;
 
 	}
 

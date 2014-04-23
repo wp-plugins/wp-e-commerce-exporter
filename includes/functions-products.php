@@ -6,8 +6,7 @@ function wpsc_ce_get_product_assoc_tags( $product_id = 0 ) {
 
 	$output = '';
 	$term_taxonomy = 'product_tag';
-	$tags = wp_get_object_terms( $product_id, $term_taxonomy );
-	if( $tags ) {
+	if( $tags = wp_get_object_terms( $product_id, $term_taxonomy ) ) {
 		$size = count( $tags );
 		for( $i = 0; $i < $size; $i++ ) {
 			$tag = get_term( $tags[$i]->term_id, $term_taxonomy );
@@ -359,8 +358,7 @@ function wpsc_ce_get_product_fields( $format = 'full' ) {
 		}
 	}
 
-	$remember = wpsc_ce_get_option( 'products_fields' );
-	if( $remember ) {
+	if( $remember = wpsc_ce_get_option( 'products_fields' ) ) {
 		$remember = maybe_unserialize( $remember );
 		$size = count( $fields );
 		for( $i = 0; $i < $size; $i++ ) {

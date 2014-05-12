@@ -56,6 +56,7 @@ function wpsc_ce_display_time_elapsed( $from, $to ) {
 
 }
 
+// @mod - Compare to WooCommerce and Jigoshop for field escaping, remove if not required
 // This function escapes all cells in 'Excel' CSV escape formatting of a CSV file, also converts HTML entities to plain-text
 function wpsc_ce_escape_csv_value( $value = '', $delimiter = ',', $format = 'all' ) {
 

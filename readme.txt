@@ -5,7 +5,7 @@ Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.9.1
-Stable tag: 1.5.6
+Stable tag: 1.5.7
 
 == Description ==
 
@@ -66,11 +66,14 @@ http://www.visser.com.au/wp-ecommerce/forums/
 2. Select the data fields to be included in the export, selections are remembered for next export.
 3. Each dataset (e.g. Products, Orders, etc.) include filter options to filter by date, status, type, customer and more.
 4. A range of export options can be adjusted to suit different languages and file formatting requirements.
-5. Export a list of WooCommerce Product Categories into a CSV file.
-6. Export a list of WooCommerce Product Tags into a CSV file.
-7. Download achived copies of previous exports
+5. Export a list of WP e-Commerce Product Categories into a CSV file.
+6. Export a list of WP e-Commerce Product Tags into a CSV file.
+7. Download achived copies of previous exports.
 
 == Changelog ==
+
+= 1.5.7 =
+* Fixed: Export error prompt displaying due to WordPress transient
 
 = 1.5.6 =
 * Changed: Using WP_Query instead of get_posts for bulk export

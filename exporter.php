@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.5.6
+Version: 1.5.7
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -148,6 +148,7 @@ if( is_admin() ) {
 						wpsc_ce_admin_notice( $message );
 					}
 					wpsc_ce_update_option( 'enable_auto', (int)$_POST['enable_auto'] );
+					wpsc_ce_update_option( 'auto_type', (string)$_POST['auto_type'] );
 					wpsc_ce_update_option( 'auto_interval', (int)$_POST['auto_interval'] );
 					wpsc_ce_update_option( 'auto_method', (string)$_POST['auto_method'] );
 					// Display additional notice if Enabled CRON is enabled/disabled

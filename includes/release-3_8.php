@@ -257,6 +257,8 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 			break;
 
 	}
+	// Export completed successfully
+	delete_transient( WPSC_CE_PREFIX . '_running' );
 	if( $csv ) {
 		$csv = wpsc_ce_file_encoding( $csv );
 		if( WPSC_CE_DEBUG )
@@ -264,8 +266,6 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 		else
 			return $csv;
 	}
-	// Export completed successfully
-	delete_transient( WPSC_CE_PREFIX . '_running' );
 
 }
 

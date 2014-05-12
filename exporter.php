@@ -3,11 +3,13 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.5.4
+Version: 1.5.6
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
 */
+
+if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 define( 'WPSC_CE_DIRNAME', basename( dirname( __FILE__ ) ) );
 define( 'WPSC_CE_RELPATH', basename( dirname( __FILE__ ) ) . '/' . basename( __FILE__ ) );
@@ -17,9 +19,9 @@ define( 'WPSC_CE_PREFIX', 'wpsc_ce' );
 // Turn this on to enable additional debugging options at export time
 define( 'WPSC_CE_DEBUG', false );
 
+include_once( WPSC_CE_PATH . 'includes/common.php' );
 include_once( WPSC_CE_PATH . 'includes/functions.php' );
 include_once( WPSC_CE_PATH . 'includes/functions-alternatives.php' );
-include_once( WPSC_CE_PATH . 'includes/common.php' );
 
 switch( wpsc_get_major_version() ) {
 
@@ -48,6 +50,7 @@ if( is_admin() ) {
 	function wpsc_ce_add_settings_link( $links, $file ) {
 
 		static $this_plugin;
+
 		if( !$this_plugin ) $this_plugin = plugin_basename( __FILE__ );
 		if( $file == $this_plugin ) {
 			$docs_url = 'http://www.visser.com.au/docs/';
@@ -99,11 +102,12 @@ if( is_admin() ) {
 
 		global $export, $wp_roles;
 
-		include_once( 'includes/formatting.php' );
+		include_once( WPSC_CE_PATH . 'includes/formatting.php' );
 
 		$action = wpsc_get_action();
 		switch( $action ) {
 
+			// Prompt on Export screen when insufficient memory (less than 64M is allocated)
 			case 'dismiss_memory_prompt':
 				wpsc_ce_update_option( 'dismiss_memory_prompt', 1 );
 				$url = add_query_arg( 'action', null );
@@ -111,22 +115,72 @@ if( is_admin() ) {
 				exit();
 				break;
 
+			// Save skip overview preference
+			case 'skip_overview':
+				$skip_overview = false;
+				if( isset( $_POST['skip_overview'] ) )
+					$skip_overview = 1;
+				wpsc_ce_update_option( 'skip_overview', $skip_overview );
+
+				if( $skip_overview == 1 ) {
+					$url = add_query_arg( 'tab', 'export' );
+					wp_redirect( $url );
+					exit();
+				}
+				break;
+
+			// Save changes on Settings screen
+			case 'save':
+				wpsc_ce_update_option( 'export_filename', (string)$_POST['export_filename'] );
+				wpsc_ce_update_option( 'delete_csv', (int)$_POST['delete_temporary_csv'] );
+				wpsc_ce_update_option( 'delimiter', (string)$_POST['delimiter'] );
+				wpsc_ce_update_option( 'category_separator', (string)$_POST['category_separator'] );
+				wpsc_ce_update_option( 'bom', (string)$_POST['bom'] );
+				wpsc_ce_update_option( 'encoding', (string)$_POST['encoding'] );
+				wpsc_ce_update_option( 'escape_formatting', (string)$_POST['escape_formatting'] );
+				wpsc_ce_update_option( 'date_format', (string)$_POST['date_format'] );
+
+				// Save Store Exporter Deluxe options if present
+				if( function_exists( 'wpsc_cd_admin_init' ) ) {
+					// Display additional notice if Enabled Scheduled Exports is enabled/disabled
+					if( wpsc_ce_get_option( 'enable_auto', 0 ) <> (int)$_POST['enable_auto'] ) {
+						$message = sprintf( __( 'Scheduled exports has been %s.', 'wpsc_ce' ), ( ( (int)$_POST['enable_auto'] == 1 ) ? sprintf( __( 'activated, next scheduled export will run in %d minutes', 'wpsc_ce' ), (int)$_POST['auto_interval'] ) : __( 'de-activated, no further automated exports will occur', 'wpsc_ce' ) ) );
+						wpsc_ce_admin_notice( $message );
+					}
+					wpsc_ce_update_option( 'enable_auto', (int)$_POST['enable_auto'] );
+					wpsc_ce_update_option( 'auto_interval', (int)$_POST['auto_interval'] );
+					wpsc_ce_update_option( 'auto_method', (string)$_POST['auto_method'] );
+					// Display additional notice if Enabled CRON is enabled/disabled
+					if( wpsc_ce_get_option( 'enable_cron', 0 ) <> (int)$_POST['enable_cron'] ) {
+						$message = sprintf( __( 'CRON support has been %s.', 'wpsc_ce' ), ( ( (int)$_POST['enable_cron'] == 1 ) ? __( 'enabled', 'wpsc_ce' ) : __( 'disabled', 'wpsc_ce' ) ) );
+						wpsc_ce_admin_notice( $message );
+					}
+					wpsc_ce_update_option( 'enable_cron', (int)$_POST['enable_cron'] );
+					wpsc_ce_update_option( 'secret_key', (string)$_POST['secret_key'] );
+					wpsc_ce_update_option( 'email_to', (string)$_POST['email_to'] );
+					wpsc_ce_update_option( 'post_to', (string)$_POST['post_to'] );
+				}
+
+				$message = __( 'Changes have been saved.', 'wpsc_ce' );
+				wpsc_ce_admin_notice( $message );
+				break;
+
+			// This is where the magic happens
 			case 'export':
+
+				// Set up the basic export options
 				$export = new stdClass();
 				$export->start_time = time();
 				$export->idle_memory_start = wpsc_ce_current_memory_usage();
-				$export->delimiter = $_POST['delimiter'];
-				if( $export->delimiter <> wpsc_ce_get_option( 'delimiter' ) )
-					wpsc_ce_update_option( 'delimiter', $export->delimiter );
-				$export->category_separator = $_POST['category_separator'];
-				if( $export->category_separator <> wpsc_ce_get_option( 'category_separator' ) )
-					wpsc_ce_update_option( 'category_separator', $export->category_separator );
-				$export->bom = $_POST['bom'];
-				if( $export->bom <> wpsc_ce_get_option( 'bom' ) )
-					wpsc_ce_update_option( 'bom', $export->bom );
-				$export->escape_formatting = $_POST['escape_formatting'];
-				if( $export->escape_formatting <> wpsc_ce_get_option( 'escape_formatting' ) )
-					wpsc_ce_update_option( 'escape_formatting', $export->escape_formatting );
+				$export->delete_temporary_csv = wpsc_ce_get_option( 'delete_csv', 0 );
+				$export->delimiter = wpsc_ce_get_option( 'delimiter', ',' );
+				$export->category_separator = wpsc_ce_get_option( 'category_separator', '|' );
+				$export->bom = wpsc_ce_get_option( 'bom', 1 );
+				$export->encoding = wpsc_ce_get_option( 'encoding', get_option( 'blog_charset' ) );
+				$export->escape_formatting = wpsc_ce_get_option( 'escape_formatting', 'all' );
+				$export->date_format = wpsc_ce_get_option( 'date_format', 'd/m/Y' );
+
+				// Save export option changes made on the Export screen
 				$export->limit_volume = -1;
 				if( !empty( $_POST['limit_volume'] ) ) {
 					$export->limit_volume = $_POST['limit_volume'];
@@ -139,27 +193,26 @@ if( is_admin() ) {
 					if( $export->offset <> wpsc_ce_get_option( 'offset' ) )
 						wpsc_ce_update_option( 'offset', $export->offset );
 				}
-				$export->delete_temporary_csv = 0;
-				if( !empty( $_POST['delete_temporary_csv'] ) ) {
-					$export->delete_temporary_csv = (int)$_POST['delete_temporary_csv'];
-					if( $export->limit_volume <> wpsc_ce_get_option( 'delete_csv' ) )
-						wpsc_ce_update_option( 'delete_csv', $export->delete_temporary_csv );
-				}
-				$export->encoding = 'UTF-8';
-				if( !empty( $_POST['encoding'] ) ) {
-					$export->encoding = (string)$_POST['encoding'];
-					if( $export->encoding <> wpsc_ce_get_option( 'encoding' ) )
-						wpsc_ce_update_option( 'encoding', $export->encoding );
-				}
-				if( !empty( $_POST['date_format'] ) ) {
-					$export->date_format = (string)$_POST['date_format'];
-					if( $export->date_format <> wpsc_ce_get_option( 'date_format' ) )
-						wpsc_ce_update_option( 'date_format', $export->date_format );
-				}
+
+				// Set default values for all export options to be later passed onto the export process
 				$export->fields = false;
+
+				// Product sorting
 				$export->product_categories = false;
 				$export->product_tags = false;
 				$export->product_status = false;
+				$export->product_orderby = false;
+				$export->product_order = false;
+
+				// Category sorting
+				$export->category_orderby = false;
+				$export->category_order = false;
+
+				// Tag sorting
+				$export->tag_orderby = false;
+				$export->tag_order = false;
+
+				// Order sorting
 				$export->order_dates_filter = false;
 				$export->order_dates_from = '';
 				$export->order_dates_to = '';
@@ -169,75 +222,83 @@ if( is_admin() ) {
 				$export->order_orderby = false;
 				$export->order_order = false;
 
-				$dataset = array();
-				$export->type = $_POST['dataset'];
+				$export->type = ( isset( $_POST['dataset'] ) ? $_POST['dataset'] : false );
 				switch( $export->type ) {
 
 					case 'products':
-						$dataset[] = 'products';
-						$export->fields = ( isset( $_POST['product_fields'] ) ) ? $_POST['product_fields'] : false;
-						$export->product_categories = ( isset( $_POST['product_filter_categories'] ) ) ? wpsc_ce_format_product_filters( $_POST['product_filter_categories'] ) : false;
-						$export->product_tags = ( isset( $_POST['product_filter_tags'] ) ) ? wpsc_ce_format_product_filters( $_POST['product_filter_tags'] ) : false;
-						$export->product_status = ( isset( $_POST['product_filter_status'] ) ) ? wpsc_ce_format_product_filters( $_POST['product_filter_status'] ) : false;
-						$export->product_orderby = ( isset( $_POST['product_orderby'] ) ) ? $_POST['product_orderby'] : false;
+						// Set up dataset specific options
+						$export->fields = ( isset( $_POST['product_fields'] ) ? $_POST['product_fields'] : false );
+						$export->product_categories = ( isset( $_POST['product_filter_categories'] ) ? wpsc_ce_format_product_filters( $_POST['product_filter_categories'] ) : false );
+						$export->product_tags = ( isset( $_POST['product_filter_tags'] ) ? wpsc_ce_format_product_filters( $_POST['product_filter_tags'] ) : false );
+						$export->product_status = ( isset( $_POST['product_filter_status'] ) ? wpsc_ce_format_product_filters( $_POST['product_filter_status'] ) : false );
+						$export->product_orderby = ( isset( $_POST['product_orderby'] ) ? $_POST['product_orderby'] : false );
+						$export->product_order = ( isset( $_POST['product_order'] ) ? $_POST['product_order'] : false );
+
+						// Save dataset export specific options
+						// @mod - Add support for saving Product Categories, Prduct Tags, Product Status, Product Type
 						if( $export->product_orderby <> wpsc_ce_get_option( 'product_orderby' ) )
 							wpsc_ce_update_option( 'product_orderby', $export->product_orderby );
-						$export->product_order = ( isset( $_POST['product_order'] ) ) ? $_POST['product_order'] : false;
 						if( $export->product_order <> wpsc_ce_get_option( 'product_order' ) )
 							wpsc_ce_update_option( 'product_order', $export->product_order );
 						break;
 
 					case 'categories':
-						$dataset[] = 'categories';
-						$export->fields = ( isset( $_POST['category_fields'] ) ) ? $_POST['category_fields'] : false;
-						$export->category_orderby = ( isset( $_POST['category_orderby'] ) ) ? $_POST['category_orderby'] : false;
+						// Set up dataset specific options
+						$export->fields = ( isset( $_POST['category_fields'] ) ? $_POST['category_fields'] : false );
+						$export->category_orderby = ( isset( $_POST['category_orderby'] ) ? $_POST['category_orderby'] : false );
+						$export->category_order = ( isset( $_POST['category_order'] ) ? $_POST['category_order'] : false );
+
+						// Save dataset export specific options
 						if( $export->category_orderby <> wpsc_ce_get_option( 'category_orderby' ) )
 							wpsc_ce_update_option( 'category_orderby', $export->category_orderby );
-						$export->category_order = ( isset( $_POST['category_order'] ) ) ? $_POST['category_order'] : false;
 						if( $export->category_order <> wpsc_ce_get_option( 'category_order' ) )
 							wpsc_ce_update_option( 'category_order', $export->category_order );
 						break;
 
 					case 'tags':
-						$dataset[] = 'tags';
-						$export->fields = ( isset( $_POST['tag_fields'] ) ) ? $_POST['tag_fields'] : false;
-						$export->tag_orderby = ( isset( $_POST['tag_orderby'] ) ) ? $_POST['tag_orderby'] : false;
+						// Set up dataset specific options
+						$export->fields = ( isset( $_POST['tag_fields'] ) ? $_POST['tag_fields'] : false );
+						$export->tag_orderby = ( isset( $_POST['tag_orderby'] ) ? $_POST['tag_orderby'] : false );
+						$export->tag_order = ( isset( $_POST['tag_order'] ) ? $_POST['tag_order'] : false );
+
+						// Save dataset export specific options
 						if( $export->tag_orderby <> wpsc_ce_get_option( 'tag_orderby' ) )
 							wpsc_ce_update_option( 'tag_orderby', $export->tag_orderby );
-						$export->tag_order = ( isset( $_POST['tag_order'] ) ) ? $_POST['tag_order'] : false;
 						if( $export->tag_order <> wpsc_ce_get_option( 'tag_order' ) )
 							wpsc_ce_update_option( 'tag_order', $export->tag_order );
 						break;
 
 					case 'orders':
-						$dataset[] = 'orders';
-						$export->fields = ( isset( $_POST['order_fields'] ) ) ? $_POST['order_fields'] : false;
-						$export->order_dates_filter = ( isset( $_POST['order_dates_filter'] ) ) ? $_POST['order_dates_filter'] : false;
+						// Set up dataset specific options
+						$export->fields = ( isset( $_POST['order_fields'] ) ? $_POST['order_fields'] : false );
+						$export->order_dates_filter = ( isset( $_POST['order_dates_filter'] ) ? $_POST['order_dates_filter'] : false );
 						$export->order_dates_from = $_POST['order_dates_from'];
 						$export->order_dates_to = $_POST['order_dates_to'];
-						$export->order_status = ( isset( $_POST['order_filter_status'] ) ) ? wpsc_ce_format_product_filters( $_POST['order_filter_status'] ) : false;
-						$export->order_customer = ( isset( $_POST['order_customer'] ) ) ? $_POST['order_customer'] : false;
-						$export->order_user_roles = ( isset( $_POST['order_filter_user_role'] ) ) ? wpsc_ce_format_user_role_filters( $_POST['order_filter_user_role'] ) : false;
-						$export->order_orderby = ( isset( $_POST['order_orderby'] ) ) ? $_POST['order_orderby'] : false;
+						$export->order_status = ( isset( $_POST['order_filter_status'] ) ? wpsc_ce_format_product_filters( $_POST['order_filter_status'] ) : false );
+						$export->order_customer = ( isset( $_POST['order_customer'] ) ? $_POST['order_customer'] : false );
+						$export->order_user_roles = ( isset( $_POST['order_filter_user_role'] ) ? wpsc_ce_format_user_role_filters( $_POST['order_filter_user_role'] ) : false );
+						$export->order_orderby = ( isset( $_POST['order_orderby'] ) ? $_POST['order_orderby'] : false );
+						$export->order_order = ( isset( $_POST['order_order'] ) ? $_POST['order_order'] : false );
+
+						// Save dataset export specific options
 						if( $export->order_orderby <> wpsc_ce_get_option( 'order_orderby' ) )
 							wpsc_ce_update_option( 'order_orderby', $export->order_orderby );
-						$export->order_order = ( isset( $_POST['order_order'] ) ) ? $_POST['order_order'] : false;
 						if( $export->order_order <> wpsc_ce_get_option( 'order_order' ) )
 							wpsc_ce_update_option( 'order_order', $export->order_order );
 						break;
 
 					case 'customers':
-						$dataset[] = 'customers';
+						// Set up dataset specific options
 						$export->fields = $_POST['customer_fields'];
 						break;
 
 					case 'coupons':
-						$dataset[] = 'coupons';
+						// Set up dataset specific options
 						$export->fields = $_POST['coupon_fields'];
 						break;
 
 				}
-				if( $dataset ) {
+				if( $export->type ) {
 
 					$timeout = 600;
 					if( isset( $_POST['timeout'] ) ) {
@@ -245,7 +306,6 @@ if( is_admin() ) {
 						if( $timeout <> wpsc_ce_get_option( 'timeout' ) )
 							wpsc_ce_update_option( 'timeout', $timeout );
 					}
-
 					if( !ini_get( 'safe_mode' ) )
 						@set_time_limit( $timeout );
 
@@ -275,24 +335,24 @@ if( is_admin() ) {
 						'order_orderby' => $export->order_orderby,
 						'order_order' => $export->order_order
 					);
-					wpsc_ce_save_fields( $dataset, $export->fields );
+					wpsc_ce_save_fields( $export->type, $export->fields );
 					$export->filename = wpsc_ce_generate_csv_filename( $export->type );
 					if( WPSC_CE_DEBUG ) {
 
-						wpsc_ce_export_dataset( $dataset, $args );
+						wpsc_ce_export_dataset( $export->type, $args );
 						$export->idle_memory_end = wpsc_ce_current_memory_usage();
 						$export->end_time = time();
 
 					} else {
 
 						// Generate CSV contents
-						$bits = wpsc_ce_export_dataset( $dataset, $args );
+						$bits = wpsc_ce_export_dataset( $export->type, $args );
 						unset( $export->fields );
 						if( !$bits ) {
 							wp_redirect( add_query_arg( 'empty', true ) );
 							exit();
 						}
-						if( isset( $export->delete_temporary_csv ) && $export->delete_temporary_csv ) {
+						if( $export->delete_temporary_csv ) {
 
 							// Print to browser
 							wpsc_ce_generate_csv_header( $export->type );
@@ -312,6 +372,7 @@ if( is_admin() ) {
 								}
 								$attach_data = wp_generate_attachment_metadata( $post_ID, $upload['file'] );
 								wp_update_attachment_metadata( $post_ID, $attach_data );
+								update_attached_file( $post_ID, $upload['file'] );
 								if( $post_ID ) {
 									wpsc_ce_save_csv_file_guid( $post_ID, $export->type, $upload['url'] );
 									wpsc_ce_save_csv_file_details( $post_ID );
@@ -351,6 +412,7 @@ if( is_admin() ) {
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_date' );
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_status' );
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_customer' );
+				add_action( 'wpsc_ce_export_order_options_after_table', 'wpsc_ce_orders_order_sorting' );
 				break;
 
 		}
@@ -380,10 +442,12 @@ if( is_admin() ) {
 						delete_transient( WPSC_CE_PREFIX . '_debug_log' );
 						$export_log = base64_decode( $export_log );
 					}
-					$output .= '<h3>' . __( 'Export Details' ) . '</h3>';
-					$output .= '<textarea id="export_log">' . print_r( $export, true ) . '</textarea><hr />';
-					$output .= '<h3>' . sprintf( __( 'Export Log: %s', 'wpsc_ce' ), $export->filename ) . '</h3>';
-					$output .= '<textarea id="export_log">' . $export_log . '</textarea>';
+					$output = '
+<h3>' . __( 'Export Details' ) . '</h3>
+<textarea id="export_log">' . print_r( $export, true ) . '</textarea><hr />
+<h3>' . sprintf( __( 'Export Log: %s', 'wpsc_ce' ), $export->filename ) . '</h3>
+<textarea id="export_log">' . $export_log . '</textarea>
+';
 				}
 				echo $output;
 
@@ -405,6 +469,9 @@ if( is_admin() ) {
 		$tab = false;
 		if( isset( $_GET['tab'] ) )
 			$tab = $_GET['tab'];
+		// If Skip Overview is set then jump to Export screen
+		else if( wpsc_ce_get_option( 'skip_overview', false ) )
+			$tab = 'export';
 		$url = add_query_arg( 'page', 'wpsc_ce' );
 		wpsc_ce_fail_notices();
 		switch( wpsc_get_major_version() ) {

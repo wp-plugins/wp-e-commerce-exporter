@@ -5,7 +5,7 @@
 </ul>
 <br class="clear" />
 <p><?php _e( 'Select an export type from the list below to export entries. Once you have selected an export type you may select the fields you would like to export and optional filters available for each export type. When you click the export button below, Store Exporter will create a CSV file for you to save to your computer.', 'wpsc_ce' ); ?></p>
-<form method="post" action="<?php echo add_query_arg( array( 'failed' => null, 'empty' => null ) ); ?>" id="postform">
+<form method="post" action="<?php echo add_query_arg( array( 'failed' => null, 'empty' => null, 'message' => null ) ); ?>" id="postform">
 	<div id="poststuff">
 
 		<div class="postbox" id="export-type">
@@ -52,7 +52,7 @@
 						<td>
 							<span class="description">(<?php echo $orders; ?>)</span>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
-							<span class="description"> - <?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?></span>
+							<span class="description"> - <?php printf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?></span>
 <?php } ?>
 						</td>
 					</tr>
@@ -65,7 +65,7 @@
 						<td>
 							<span class="description">(<?php echo $customers; ?>)</span>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
-							<span class="description"> - <?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?></span>
+							<span class="description"> - <?php printf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?></span>
 <?php } ?>
 						</td>
 					</tr>
@@ -78,7 +78,7 @@
 						<td>
 							<span class="description">(<?php echo $coupons; ?>)</span>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
-							<span class="description"> - <?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?></span>
+							<span class="description"> - <?php printf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?></span>
 <?php } ?>
 						</td>
 					</tr>
@@ -284,10 +284,10 @@
 			<!-- .postbox -->
 
 			<div id="export-tags-filters" class="postbox">
-				<h3 class="hndle"><?php _e( 'Tag Filters', 'wpsc_ce' ); ?></h3>
+				<h3 class="hndle"><?php _e( 'Product Tag Filters', 'wpsc_ce' ); ?></h3>
 				<div class="inside">
 
-					<p><label><?php _e( 'Tag Sorting', 'wpsc_ce' ); ?></label></p>
+					<p><label><?php _e( 'Product Tag Sorting', 'wpsc_ce' ); ?></label></p>
 					<div>
 						<select name="tag_orderby">
 							<option value="id"<?php selected( 'id', $tag_orderby ); ?>><?php _e( 'Term ID', 'wpsc_ce' ); ?></option>
@@ -297,7 +297,7 @@
 							<option value="ASC"<?php selected( 'ASC', $tag_order ); ?>><?php _e( 'Ascending', 'wpsc_ce' ); ?></option>
 							<option value="DESC"<?php selected( 'DESC', $tag_order ); ?>><?php _e( 'Descending', 'wpsc_ce' ); ?></option>
 						</select>
-						<p class="description"><?php _e( 'Select the sorting of Tags within the exported file. By default this is set to export Tags by Term ID in Desending order.', 'wpsc_ce' ); ?></p>
+						<p class="description"><?php _e( 'Select the sorting of Product Tags within the exported file. By default this is set to export Product Tags by Term ID in Desending order.', 'wpsc_ce' ); ?></p>
 					</div>
 
 				</div>
@@ -446,141 +446,30 @@
 		<div class="postbox" id="export-options">
 			<h3 class="hndle"><?php _e( 'Export Options', 'wpsc_ce' ); ?></h3>
 			<div class="inside">
+				<p class="description"><?php _e( 'You can find additional export options under the Settings tab at the top of this screen.', 'wpsc_ce' ); ?></p>
+
+				<?php do_action( 'wpsc_ce_export_options_before' ); ?>
+
 				<table class="form-table">
 
 					<?php do_action( 'wpsc_ce_export_options' ); ?>
 
 					<tr>
 						<th>
-							<label for="delimiter"><?php _e( 'Field delimiter', 'wpsc_ce' ); ?></label>
+							<label for="offset"><?php _e( 'Volume offset', 'wpsc_ce' ); ?></label> / <label for="limit_volume"><?php _e( 'Limit volume', 'wpsc_ce' ); ?></label>
 						</th>
 						<td>
-							<input type="text" size="3" id="delimiter" name="delimiter" value="<?php echo $delimiter; ?>" size="1" maxlength="1" class="text" />
-							<p class="description"><?php _e( 'The field delimiter is the character separating each cell in your CSV. This is typically the \',\' (comma) character.', 'wpsc_ce' ); ?></p>
+							<input type="text" size="3" id="offset" name="offset" value="<?php echo $offset; ?>" size="5" class="text" /> <?php _e( 'to', 'wpsc_ce' ); ?> <input type="text" size="3" id="limit_volume" name="limit_volume" value="<?php echo $limit_volume; ?>" size="5" class="text" />
+							<p class="description"><?php _e( 'Volume offset and limit allows for partial exporting of a dataset (e.g. records 0 to 500, etc.). This is useful when encountering timeout and/or memory errors during the a large or memory intensive export. To be used effectively both fields must be filled. By default this is not used and is left empty.', 'wpsc_ce' ); ?></p>
 						</td>
 					</tr>
 
-					<tr>
-						<th>
-							<label for="category_separator"><?php _e( 'Category separator', 'wpsc_ce' ); ?></label>
-						</th>
-						<td>
-							<input type="text" size="3" id="category_separator" name="category_separator" value="<?php echo $category_separator; ?>" size="1" class="text" />
-							<p class="description"><?php _e( 'The Product Category separator allows you to assign individual Products to multiple Product Categories/Tags/Images at a time. It is suggested to use the \'|\' (vertical pipe) character between each item. For instance: <code>Clothing|Mens|Shirts</code>.', 'wpsc_ce' ); ?></p>
-						</td>
-					</tr>
-
-					<tr>
-						<th>
-							<label for="escape_formatting"><?php _e( 'Field escape formatting', 'wpsc_ce' ); ?>: </label>
-						</th>
-						<td>
-							<label><input type="radio" name="escape_formatting" value="all"<?php checked( $escape_formatting, 'all' ); ?> />&nbsp;<?php _e( 'Escape all fields', 'wpsc_ce' ); ?></label><br />
-							<label><input type="radio" name="escape_formatting" value="excel"<?php checked( $escape_formatting, 'excel' ); ?> />&nbsp;<?php _e( 'Escape fields as Excel would', 'wpsc_ce' ); ?></label>
-							<p class="description"><?php _e( 'Choose the field escape format that suits your spreadsheet software (e.g. Excel).', 'wpsc_ce' ); ?></p>
-						</td>
-					</tr>
-
-					<tr>
-						<th>
-							<label for="offset"><?php _e( 'Volume offset', 'wpsc_ce' ); ?></label>
-						</th>
-						<td>
-							<input type="text" size="3" id="offset" name="offset" value="<?php echo $offset; ?>" size="5" class="text" />
-							<p class="description"><?php _e( 'Volume offset allows for partial exporting of a dataset, to be used in conjuction with Limit volme option above. By default this is not used and is left empty.', 'wps_ce' ); ?></p>
-						</td>
-					</tr>
-
-					<tr>
-						<th>
-							<label for="limit_volume"><?php _e( 'Limit volume', 'wpsc_ce' ); ?></label>
-						</th>
-						<td>
-							<input type="text" size="3" id="limit_volume" name="limit_volume" value="<?php echo $limit_volume; ?>" size="5" class="text" />
-							<p class="description"><?php _e( 'Limit volume allows for partial exporting of a dataset. This is useful when encountering timeout and/or memory errors during the default export. By default this is not used and is left empty.', 'wpsc_pc' ); ?></p>
-						</td>
-					</tr>
-
-					<tr>
-						<th>
-							<label for="bom"><?php _e( 'Add BOM character', 'wpsc_ce' ); ?>: </label>
-						</th>
-						<td>
-							<select id="bom" name="bom">
-								<option value="1"<?php selected( $bom, 1 ); ?>><?php _e( 'Yes', 'wpsc_ce' ); ?></option>
-								<option value="0"<?php selected( $bom, 0 ); ?>><?php _e( 'No', 'wpsc_ce' ); ?></option>
-							</select>
-							<p class="description"><?php _e( 'Mark the CSV file as UTF8 by adding a byte order mark (BOM) to the export, useful for non-English character sets.', 'wpsc_ce' ); ?></p>
-						</td>
-					</tr>
-
-					<tr>
-						<th>
-							<label for="encoding"><?php _e( 'Character encoding', 'wpsc_ce' ); ?>: </label>
-						</th>
-						<td>
-<?php if( $file_encodings ) { ?>
-							<select id="encoding" name="encoding">
-								<option value=""><?php _e( 'System default', 'wpsc_ce' ); ?></option>
-	<?php foreach( $file_encodings as $key => $chr ) { ?>
-								<option value="<?php echo $chr; ?>"<?php selected( $chr, $encoding ); ?>><?php echo $chr; ?></option>
-	<?php } ?>
-							</select>
-<?php } else { ?>
-							<p class="description"><?php _e( 'Character encoding options are unavailable in PHP 4, contact your hosting provider to update your site install to use PHP 5 or higher.', 'wpsc_ce' ); ?></p>
-<?php } ?>
-						</td>
-					</tr>
-
-					<tr>
-						<th>
-							<label for="delete_temporary_csv"><?php _e( 'Delete temporary CSV after export', 'wpsc_ce' ); ?></label>
-						</th>
-						<td>
-							<select id="delete_temporary_csv" name="delete_temporary_csv">
-								<option value="1"<?php selected( $delete_csv, 1 ); ?>><?php _e( 'Yes', 'wpsc_ce' ); ?></option>
-								<option value="0"<?php selected( $delete_csv, 0 ); ?>><?php _e( 'No', 'wpsc_ce' ); ?></option>
-							</select>
-						</td>
-					</tr>
-
-<?php if( !ini_get( 'safe_mode' ) ) { ?>
-					<tr>
-						<th>
-							<label for="timeout"><?php _e( 'Script timeout', 'wpsc_ce' ); ?>: </label>
-						</th>
-						<td>
-							<select id="timeout" name="timeout">
-								<option value="600"<?php selected( $timeout, 600 ); ?>><?php echo sprintf( __( '%s minutes', 'wpsc_ce' ), 10 ); ?></option>
-								<option value="1800"<?php selected( $timeout, 1800 ); ?>><?php echo sprintf( __( '%s minutes', 'wpsc_ce' ), 30 ); ?></option>
-								<option value="3600"<?php selected( $timeout, 3600 ); ?>><?php echo sprintf( __( '%s hour', 'wpsc_ce' ), 1 ); ?></option>
-								<option value="0"<?php selected( $timeout, 0 ); ?>><?php _e( 'Unlimited', 'wpsc_ce' ); ?></option>
-							</select>
-							<p class="description"><?php _e( 'Script timeout defines how long WP e-Commerce Exporter is \'allowed\' to process your CSV file, once the time limit is reached the export process halts.', 'wpsc_ce' ); ?></p>
-						</td>
-					</tr>
-<?php } ?>
-
-					<tr>
-						<th><?php _e( 'Date Format', 'wpsc_ce' ); ?></th>
-						<td>
-							<fieldset>
-								<label title="F j, Y"><input type="radio" name="date_format" value="F j, Y"<?php checked( $date_format, 'F j, Y' ); ?>> <span><?php echo date( 'F j, Y' ); ?></span></label><br>
-								<label title="Y/m/d"><input type="radio" name="date_format" value="Y/m/d"<?php checked( $date_format, 'Y/m/d' ); ?>> <span><?php echo date( 'Y/m/d' ); ?></span></label><br>
-								<label title="m/d/Y"><input type="radio" name="date_format" value="m/d/Y"<?php checked( $date_format, 'm/d/Y' ); ?>> <span><?php echo date( 'm/d/Y' ); ?></span></label><br>
-								<label title="d/m/Y"><input type="radio" name="date_format" value="d/m/Y"<?php checked( $date_format, 'd/m/Y' ); ?>> <span><?php echo date( 'd/m/Y' ); ?></span></label><br>
-<!--
-								<label><input type="radio" name="date_format" id="date_format_custom_radio" value="\c\u\s\t\o\m"> Custom: </label><input type="text" name="date_format_custom" value="F j, Y" class="small-text"> <span class="example"> January 6, 2014</span> <span class="spinner"></span>
-								<p><a href="http://codex.wordpress.org/Formatting_Date_and_Time"><?php _e( 'Documentation on date and time formatting', 'wpsc_ce' ); ?></a>.</p>
--->
-							</fieldset>
-							<p class="description"><?php _e( 'The date format option affects how date\'s are presented within your CSV file. Default is set to DD/MM/YYYY.', 'wpsc_ce' ); ?></p>
-						</td>
-					</tr>
-
-					<?php do_action( 'wpsc_ce_export_options_after' ); ?>
+					<?php do_action( 'wpsc_ce_export_options_table_after' ); ?>
 
 				</table>
+
+				<?php do_action( 'wpsc_ce_export_options_after' ); ?>
+
 			</div>
 		</div>
 		<!-- .postbox -->

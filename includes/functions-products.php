@@ -9,8 +9,8 @@ function wpsc_ce_get_product_assoc_tags( $product_id = 0 ) {
 	if( $tags = wp_get_object_terms( $product_id, $term_taxonomy ) ) {
 		$size = count( $tags );
 		for( $i = 0; $i < $size; $i++ ) {
-			$tag = get_term( $tags[$i]->term_id, $term_taxonomy );
-			$output .= $tag->name . $export->category_separator;
+			if( $tag = get_term( $tags[$i]->term_id, $term_taxonomy ) )
+				$output .= $tag->name . $export->category_separator;
 		}
 		$output = substr( $output, 0, -1 );
 	}
@@ -228,7 +228,7 @@ function wpsc_ce_get_product_fields( $format = 'full' ) {
 	// Allow Plugin/Theme authors to add support for additional Product columns
 	$fields = apply_filters( 'wpsc_ce_product_fields', $fields );
 
-	/* Advanced Google Product Feed */
+	// Advanced Google Product Feed
 	if( function_exists( 'wpec_gpf_install' ) ) {
 		$fields[] = array(
 			'name' => 'gpf_availability',
@@ -287,7 +287,7 @@ function wpsc_ce_get_product_fields( $format = 'full' ) {
 		);
 	}
 
-	/* All in One SEO Pack */
+	// All in One SEO Pack
 	if( function_exists( 'aioseop_activate' ) ) {
 		$fields[] = array(
 			'name' => 'aioseop_keywords',
@@ -316,7 +316,7 @@ function wpsc_ce_get_product_fields( $format = 'full' ) {
 		);
 	}
 
-	/* Custom Fields */
+	// Custom Fields
 	if( function_exists( 'wpsc_cf_install' ) ) {
 		$attributes = maybe_unserialize( get_option( 'wpsc_cf_data' ) );
 		if( !empty( $attributes ) ) {
@@ -331,7 +331,7 @@ function wpsc_ce_get_product_fields( $format = 'full' ) {
 		}
 	}
 
-	/* Related Products */
+	// Related Products
 	if( function_exists( 'wpsc_rp_pd_options_addons' ) ) {
 		$fields[] = array(
 			'name' => 'related_products',
@@ -340,7 +340,7 @@ function wpsc_ce_get_product_fields( $format = 'full' ) {
 		);
 	}
 
-	/* Simple Product Options */
+	// Simple Product Options
 	if( class_exists( 'wpec_simple_product_options_admin' ) ) {
 		$args = array(
 			'hide_empty' => false,
@@ -380,6 +380,7 @@ function wpsc_ce_get_product_fields( $format = 'full' ) {
 		case 'full':
 		default:
 			return $fields;
+			break;
 
 	}
 

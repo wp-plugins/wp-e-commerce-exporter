@@ -139,42 +139,10 @@ if( is_admin() ) {
 	}
 
 	// Saves the state of Export fields for next export
-	function wpsc_ce_save_fields( $dataset, $fields = array() ) {
+	function wpsc_ce_save_fields( $type, $fields = array() ) {
 
-		if( $dataset && !empty( $fields ) ) {
-			$type = $dataset[0];
+		if( $type && !empty( $fields ) )
 			wpsc_ce_update_option( $type . '_fields', $fields );
-		}
-
-	}
-
-	// File output header for CSV file
-	function wpsc_ce_generate_csv_header( $dataset = '' ) {
-
-		global $export;
-
-		if( $filename = wpsc_ce_generate_csv_filename( $dataset ) ) {
-			header( sprintf( 'Content-Encoding: %s', $export->encoding ) );
-			header( sprintf( 'Content-Type: text/csv; charset=%s', $export->encoding ) );
-			header( 'Content-Transfer-Encoding: binary' );
-			header( 'Content-Disposition: attachment; filename=' . $filename );
-			header( 'Pragma: no-cache' );
-			header( 'Expires: 0' );
-		}
-
-	}
-
-	// Function to generate filename of CSV file based on the Export type
-	function wpsc_ce_generate_csv_filename( $dataset = '' ) {
-
-		$date = date( 'Ymd' );
-		$output = sprintf( 'wpsc-export_default-%s.csv', $date );
-		if( $dataset ) {
-			$filename = sprintf( 'wpsc-export_%s-%s.csv', $dataset, $date );
-			if( $filename )
-				$output = $filename;
-		}
-		return $output;
 
 	}
 
@@ -208,8 +176,18 @@ if( is_admin() ) {
 			$handle = fopen( $filepath, "r" );
 			$contents = stream_get_contents( $handle );
 			fclose( $handle );
+		} else {
+			// This resets the _wp_attached_file Post meta key to the correct value
+			update_attached_file( $post->ID, $post->guid );
+			// Try grabbing the file contents again
+			$filepath = get_attached_file( $post->ID );
+			if( file_exists( $filepath ) ) {
+				$handle = fopen( $filepath, "r" );
+				$contents = stream_get_contents( $handle );
+				fclose( $handle );
+			}
 		}
-		if( $contents )
+		if( !empty( $contents ) )
 			include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-media_csv_file.php' );
 
 		$dataset = get_post_meta( $post->ID, '_wpsc_export_type', true );
@@ -225,17 +203,6 @@ if( is_admin() ) {
 
 	}
 	add_action( 'edit_form_after_editor', 'wpsc_ce_read_csv_file' );
-
-	if( !function_exists( 'wpsc_ce_current_memory_usage' ) ) {
-		function wpsc_ce_current_memory_usage() {
-
-			$output = '';
-			if( function_exists( 'memory_get_usage' ) )
-				$output = round( memory_get_usage() / 1024 / 1024, 2 );
-			return $output;
-
-		}
-	}
 
 	// List of Export types used on Store Exporter screen
 	function wpsc_ce_return_export_types() {
@@ -268,27 +235,6 @@ if( is_admin() ) {
 
 	}
 
-	// Returns a list of allowed Export type statuses, can be overridden on a per-Export type basis
-	function wpsc_ce_post_statuses( $extra_status = array(), $override = false ) {
-
-		$output = array(
-			'publish',
-			'pending',
-			'draft',
-			'future',
-			'private',
-			'trash'
-		);
-		if( $override ) {
-			$output = $extra_status;
-		} else {
-			if( $extra_status )
-				$output = array_merge( $output, $extra_status );
-		}
-		return $output;
-
-	}
-
 	function wpsc_ce_get_checkout_fields( $format = 'full' ) {
 
 		global $wpdb;
@@ -318,6 +264,7 @@ if( is_admin() ) {
 			case 'full':
 			default:
 				return $fields;
+				break;
 
 		}
 
@@ -351,6 +298,8 @@ if( is_admin() ) {
 
 		if( isset( $_GET['tab'] ) && !$tab )
 			$tab = $_GET['tab'];
+		else if( !isset( $_GET['tab'] ) && wpsc_ce_get_option( 'skip_overview', false ) )
+			$tab = 'export';
 		else
 			$tab = 'overview';
 
@@ -381,6 +330,10 @@ if( is_admin() ) {
 
 		switch( $tab ) {
 
+			case 'overview':
+				$skip_overview = wpsc_ce_get_option( 'skip_overview', false );
+				break;
+
 			case 'export':
 
 				global $wpsc_purchlog_statuses;
@@ -401,8 +354,14 @@ if( is_admin() ) {
 						if( !isset( $product_fields[$key]['disabled'] ) )
 							$product_fields[$key]['disabled'] = 0;
 					}
-					$product_categories = wpsc_ce_get_product_categories();
-					$product_tags = wpsc_ce_get_product_tags();
+					$args = array(
+						'hide_empty' => 1
+					);
+					$product_categories = wpsc_ce_get_product_categories( $args );
+					$args = array(
+						'hide_empty' => 1
+					);
+					$product_tags = wpsc_ce_get_product_tags( $args );
 					$product_statuses = get_post_statuses();
 					$product_statuses['trash'] = __( 'Trash', 'wpsc_ce' );
 					$product_orderby = wpsc_ce_get_option( 'product_orderby', 'ID' );
@@ -421,19 +380,33 @@ if( is_admin() ) {
 				$customer_fields = wpsc_ce_get_customer_fields();
 				$coupon_fields = wpsc_ce_get_coupon_fields();
 
+				// These fields will likely be moved to Settings tab
+				$limit_volume = wpsc_ce_get_option( 'limit_volume' );
+				$offset = wpsc_ce_get_option( 'offset' );
+				break;
+
+			case 'archive':
+				if( isset( $_GET['deleted'] ) ) {
+					$message = __( 'Archived export has been deleted.', 'wpsc_ce' );
+					wpsc_ce_admin_notice( $message );
+				}
+				if( $files = wpsc_ce_get_archive_files() ) {
+					foreach( $files as $key => $file )
+						$files[$key] = wpsc_ce_get_archive_file( $file );
+				}
+				break;
+
+			case 'settings':
+				$export_filename = wpsc_ce_get_option( 'export_filename', 'wpsc-export_%dataset%-%date%.csv' );
+				$delete_csv = wpsc_ce_get_option( 'delete_csv', 0 );
 				$delimiter = wpsc_ce_get_option( 'delimiter', ',' );
 				$category_separator = wpsc_ce_get_option( 'category_separator', '|' );
 				$bom = wpsc_ce_get_option( 'bom', 1 );
 				$escape_formatting = wpsc_ce_get_option( 'escape_formatting', 'all' );
-				$limit_volume = wpsc_ce_get_option( 'limit_volume' );
-				$offset = wpsc_ce_get_option( 'offset' );
-				$timeout = wpsc_ce_get_option( 'timeout', 0 );
-				$delete_csv = wpsc_ce_get_option( 'delete_csv', 0 );
-				$file_encodings = false;
-				if( function_exists( 'mb_list_encodings' ) )
-					$file_encodings = mb_list_encodings();
+				$date_format = wpsc_ce_get_option( 'date_format', 'd/m/Y' );
+				$file_encodings = ( function_exists( 'mb_list_encodings' ) ? mb_list_encodings() : false );
 				$encoding = wpsc_ce_get_option( 'encoding', 'UTF-8' );
-				$date_format = wpsc_ce_get_option( 'date_format', 'm/d/Y' );
+				$timeout = wpsc_ce_get_option( 'timeout', 0 );
 				break;
 
 			case 'tools':
@@ -455,52 +428,9 @@ if( is_admin() ) {
 				}
 				break;
 
-			case 'archive':
-				if( isset( $_GET['deleted'] ) ) {
-					$message = __( 'Archived export has been deleted.', 'wpsc_ce' );
-					wpsc_ce_admin_notice( $message );
-				}
-				if( $files = wpsc_ce_get_archive_files() ) {
-					foreach( $files as $key => $file )
-						$files[$key] = wpsc_ce_get_archive_file( $file );
-				}
-				break;
-
 		}
 		if( $tab )
 			include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-export_' . $tab . '.php' );
-
-	}
-
-	// Returns the Post object of the CSV file saved as an attachment to the WordPress Media library
-	function wpsc_ce_save_csv_file_attachment( $filename = '' ) {
-
-		$output = 0;
-		if( !empty( $filename ) ) {
-			$post_type = 'wpsc-export';
-			$args = array(
-				'post_title' => $filename,
-				'post_type' => $post_type,
-				'post_mime_type' => 'text/csv'
-			);
-			if( $post_ID = wp_insert_attachment( $args, $filename ) )
-				$output = $post_ID;
-		}
-		return $output;
-
-	}
-
-	// Updates the GUID of the CSV file attachment to match the correct CSV URL
-	function wpsc_ce_save_csv_file_guid( $post_ID, $export_type, $upload_url ) {
-
-		add_post_meta( $post_ID, '_wpsc_export_type', $export_type );
-		if( !empty( $upload_url ) ) {
-			$args = array(
-				'ID' => $post_ID,
-				'guid' => $upload_url
-			);
-			wp_update_post( $args );
-		}
 
 	}
 
@@ -526,15 +456,6 @@ if( is_admin() ) {
 
 	}
 
-	// Returns a list of WordPress User Roles
-	function wpsc_ce_get_user_roles() {
-
-		global $wp_roles;
-		$user_roles = $wp_roles->roles;
-		return $user_roles;
-
-	}
-
 	// Displays a HTML notice where the memory allocated to WordPress falls below 64MB
 	function wpsc_ce_memory_prompt() {
 
@@ -555,11 +476,11 @@ if( is_admin() ) {
 	function wpsc_ce_fail_notices() {
 
 		wpsc_ce_memory_prompt();
+		$troubleshooting_url = 'http://www.visser.com.au/documentation/store-exporter-deluxe/usage/';
 		if( isset( $_GET['failed'] ) ) {
 			$message = '';
 			if( isset( $_GET['message'] ) )
 				$message = urldecode( $_GET['message'] );
-			$troubleshooting_url = 'http://www.visser.com.au/documentation/store-exporter-deluxe/usage/';
 			if( $message )
 				$message = __( 'A WordPress or server error caused the exporter to fail, the exporter was provided with a reason: ', 'wpsc_ce' ) . '<em>' . $message . '</em>' . ' (<a href="' . $troubleshooting_url . '" target="_blank">' . __( 'Need help?', 'wpsc_ce' ) . '</a>)';
 			else
@@ -570,15 +491,22 @@ if( is_admin() ) {
 			$message = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
 			wpsc_ce_admin_notice( $message, 'error' );
 		}
+		if( get_transient( WPSC_CE_PREFIX . '_running' ) ) {
+			$message = __( 'A WordPress or server error caused the exporter to fail with a blank screen, this is either a memory or timeout issue, please get in touch so we can reproduce and resolve this.', 'wpsc_ce' ) . ' (<a href="' . $troubleshooting_url . '" target="_blank">' . __( 'Need help?', 'wpsc_ce' ) . '</a>)';
+			wpsc_ce_admin_notice( $message, 'error' );
+		}
+
 	}
 
 	// Returns a list of archived exports
 	function wpsc_ce_get_archive_files() {
 
+		$post_type = 'attachment';
+		$meta_key = '_wpsc_export_type';
 		$args = array(
-			'post_type' => 'attachment',
+			'post_type' => $post_type,
 			'post_mime_type' => 'text/csv',
-			'meta_key' => '_wpsc_export_type',
+			'meta_key' => $meta_key,
 			'meta_value' => null,
 			'posts_per_page' => -1,
 			'cache_results' => false,
@@ -662,6 +590,117 @@ if( is_admin() ) {
 }
 
 /* Start of: Common */
+
+// Function to generate filename of CSV file based on the Export type
+function wpsc_ce_generate_csv_filename( $dataset = '' ) {
+
+	// Get the filename from WordPress options
+	$filename = wpsc_ce_get_option( 'export_filename', 'wpsc-export_%dataset%-%date%.csv' );
+
+	// Populate the available tags
+	$date = date( 'Y_m_d' );
+	$time = date( 'H_i_s' );
+	$store_name = sanitize_title( get_bloginfo( 'name' ) );
+
+	// Switch out the tags for filled values
+	$filename = str_replace( '%dataset%', $dataset, $filename );
+	$filename = str_replace( '%date%', $date, $filename );
+	$filename = str_replace( '%time%', $time, $filename );
+	$filename = str_replace( '%store_name%', $store_name, $filename );
+
+	// Return the filename
+	return $filename;
+
+}
+
+// File output header for CSV file
+function wpsc_ce_generate_csv_header( $dataset = '' ) {
+
+	global $export;
+
+	if( $filename = wpsc_ce_generate_csv_filename( $dataset ) ) {
+		header( sprintf( 'Content-Encoding: %s', $export->encoding ) );
+		header( sprintf( 'Content-Type: text/csv; charset=%s', $export->encoding ) );
+		header( 'Content-Transfer-Encoding: binary' );
+		header( sprintf( 'Content-Disposition: attachment; filename=%s', $filename ) );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+	}
+
+}
+
+// Returns the Post object of the CSV file saved as an attachment to the WordPress Media library
+function wpsc_ce_save_csv_file_attachment( $filename = '' ) {
+
+	$output = 0;
+	if( !empty( $filename ) ) {
+		$post_type = 'wpsc-export';
+		$args = array(
+			'post_title' => $filename,
+			'post_type' => $post_type,
+			'post_mime_type' => 'text/csv'
+		);
+		if( $post_ID = wp_insert_attachment( $args, $filename ) )
+			$output = $post_ID;
+	}
+	return $output;
+
+}
+
+// Updates the GUID of the CSV file attachment to match the correct CSV URL
+function wpsc_ce_save_csv_file_guid( $post_ID, $export_type, $upload_url ) {
+
+	add_post_meta( $post_ID, '_wpsc_export_type', $export_type );
+	if( !empty( $upload_url ) ) {
+		$args = array(
+			'ID' => $post_ID,
+			'guid' => $upload_url
+		);
+		wp_update_post( $args );
+	}
+
+}
+
+// Returns a list of allowed Export type statuses, can be overridden on a per-Export type basis
+function wpsc_ce_post_statuses( $extra_status = array(), $override = false ) {
+
+	$output = array(
+		'publish',
+		'pending',
+		'draft',
+		'future',
+		'private',
+		'trash'
+	);
+	if( $override ) {
+		$output = $extra_status;
+	} else {
+		if( $extra_status )
+			$output = array_merge( $output, $extra_status );
+	}
+	return $output;
+
+}
+
+// Returns a list of WordPress User Roles
+function wpsc_ce_get_user_roles() {
+
+	global $wp_roles;
+	$user_roles = $wp_roles->roles;
+	return $user_roles;
+
+}
+
+if( !function_exists( 'wpsc_ce_current_memory_usage' ) ) {
+	function wpsc_ce_current_memory_usage() {
+
+		$output = '';
+		if( function_exists( 'memory_get_usage' ) )
+			$output = round( memory_get_usage( true ) / 1024 / 1024, 2 );
+		return $output;
+
+	}
+}
 
 function wpsc_ce_add_missing_mime_type( $mime_types = array(), $user ) {
 

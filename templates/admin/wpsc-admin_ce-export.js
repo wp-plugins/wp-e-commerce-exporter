@@ -1,3 +1,4 @@
+// @mod - This may be deprecated and if required removed
 function showProgress() {
 	window.scrollTo(0,0);
 	document.getElementById('progress').style.display = 'block';
@@ -8,6 +9,13 @@ function showProgress() {
 var $j = jQuery.noConflict();
 $j(function() {
 
+	// This controls the Skip Overview link on the Overview screen
+	$j('#skip_overview').click(function(){
+		$j('#skip_overview_form').submit();
+	});
+
+	// @mod - This may be deprecated and if required removed
+	// This controls the progress bar that is displayed for non-saved exports (print to browser only)
 	$j('#postform').submit(function() {
 		if( $j('#delete_temporary_csv').val() == 1 ) {
 			showProgress();
@@ -25,6 +33,7 @@ $j(function() {
 		search_contains: true
 	});
 
+	// Show Products as default export type
 	$j('#export-products').show();
 	// Categories
 	$j('#export-products-filters-categories').hide();
@@ -79,6 +88,7 @@ $j(function() {
 	});
 
 	// Export types
+	// Change visibility of export type options
 	$j('#products').click(function(){
 		$j('#export-products').show();
 		$j('#export-categories').hide();
@@ -86,7 +96,11 @@ $j(function() {
 		$j('#export-orders').hide();
 		$j('#export-customers').hide();
 		$j('#export-coupons').hide();
+
+		$j('.export-options').hide();
+		$j('.product-options').show();
 	});
+	// Change visibility of export type options
 	$j('#categories').click(function(){
 		$j('#export-products').hide();
 		$j('#export-categories').show();
@@ -94,7 +108,11 @@ $j(function() {
 		$j('#export-orders').hide();
 		$j('#export-customers').hide();
 		$j('#export-coupons').hide();
+
+		$j('.export-options').hide();
+		$j('.category-options').show();
 	});
+	// Change visibility of export type options
 	$j('#tags').click(function(){
 		$j('#export-products').hide();
 		$j('#export-categories').hide();
@@ -102,7 +120,11 @@ $j(function() {
 		$j('#export-orders').hide();
 		$j('#export-customers').hide();
 		$j('#export-coupons').hide();
+
+		$j('.export-options').hide();
+		$j('.tag-options').show();
 	});
+	// Change visibility of export type options
 	$j('#orders').click(function(){
 		$j('#export-products').hide();
 		$j('#export-categories').hide();
@@ -110,7 +132,11 @@ $j(function() {
 		$j('#export-orders').show();
 		$j('#export-customers').hide();
 		$j('#export-coupons').hide();
+
+		$j('.export-options').hide();
+		$j('.order-options').show();
 	});
+	// Change visibility of export type options
 	$j('#customers').click(function(){
 		$j('#export-products').hide();
 		$j('#export-categories').hide();
@@ -118,7 +144,11 @@ $j(function() {
 		$j('#export-orders').hide();
 		$j('#export-customers').show();
 		$j('#export-coupons').hide();
+
+		$j('.export-options').hide();
+		$j('.customer-options').show();
 	});
+	// Change visibility of export type options
 	$j('#coupons').click(function(){
 		$j('#export-products').hide();
 		$j('#export-categories').hide();
@@ -126,6 +156,9 @@ $j(function() {
 		$j('#export-orders').hide();
 		$j('#export-customers').hide();
 		$j('#export-coupons').show();
+
+		$j('.export-options').hide();
+		$j('.coupon-options').show();
 	});
 
 	// Export button
@@ -142,12 +175,25 @@ $j(function() {
 		$j('input:radio[name=dataset]:nth(5)').attr('checked',true);
 	});
 
-	// Select all
+	// Select all field options for this export type
 	$j('.checkall').click(function () {
 		$j(this).closest('.postbox').find(':checkbox').attr('checked', true);
 	});
+	// Unselect all field options for this export type
 	$j('.uncheckall').click(function () {
 		$j(this).closest('.postbox').find(':checkbox').attr('checked', false);
+	});
+
+	// This auto-selects the export type based on the link from the Overview screen
+	$j(document).ready(function() {
+		var href = jQuery(location).attr('href');
+		if (href.toLowerCase().indexOf('tab=export') >= 0) {
+			if (href.toLowerCase().indexOf('#') >= 0 ) {
+				var type = href.substr(href.indexOf("#") + 1)
+				var type = type.replace('export-','');
+				$j('#'+type).trigger('click');
+			}
+		}
 	});
 
 });

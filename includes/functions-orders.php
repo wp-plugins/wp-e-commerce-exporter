@@ -149,6 +149,7 @@ function wpsc_ce_get_order_fields( $format = 'full' ) {
 		case 'full':
 		default:
 			return $fields;
+			break;
 
 	}
 
@@ -181,6 +182,7 @@ function wpsc_ce_get_order_field( $name = null, $format = 'name' ) {
 	return $output;
 
 }
+
 // HTML template for disabled Filter Orders by Date widget on Store Exporter screen
 function wpsc_ce_orders_filter_by_date() {
 
@@ -242,7 +244,7 @@ function wpsc_ce_orders_filter_by_status() {
 <div id="export-orders-filters-status" class="separator">
 	<ul>
 <?php foreach( $order_statuses as $order_status ) { ?>
-		<li><label><input type="checkbox" name="order_filter_status[<?php echo $order_status['order']; ?>]" value="<?php echo $order_status['order']; ?>" /> <?php echo $order_status['label']; ?></label></li>
+		<li><label><input type="checkbox" name="order_filter_status[<?php echo $order_status['order']; ?>]" value="<?php echo $order_status['order']; ?>" disabled="disabled" /> <?php echo $order_status['label']; ?></label></li>
 <?php } ?>
 	</ul>
 	<p class="description"><?php _e( 'Select the Order Status you want to filter exported Orders by. Default is to include all Order Status options.', 'wpsc_ce' ); ?></p>

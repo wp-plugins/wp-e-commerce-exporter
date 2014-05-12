@@ -15,19 +15,19 @@
 		<li>
 			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-orders"><?php _e( 'Export Orders', 'wpsc_ce' ); ?></a>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
-			<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
+			<span class="description">(<?php printf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
 <?php } ?>
 		</li>
 		<li>
 			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-customers"><?php _e( 'Export Customers', 'wpsc_ce' ); ?></a>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
-			<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
+			<span class="description">(<?php printf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
 <?php } ?>
 		</li>
 		<li>
 			<a href="<?php echo add_query_arg( 'tab', 'export' ); ?>#export-coupons"><?php _e( 'Export Coupons', 'wpsc_ce' ); ?></a>
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
-			<span class="description">(<?php echo sprintf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
+			<span class="description">(<?php printf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?>)</span>
 <?php } ?>
 		</li>
 	</ul>
@@ -35,8 +35,25 @@
 	<h3><a href="<?php echo add_query_arg( 'tab', 'archive' ); ?>"><?php _e( 'Archives', 'wpsc_ce' ); ?></a></h3>
 	<p><?php _e( 'Download copies of prior store exports.', 'wpsc_ce' ); ?></p>
 
+	<h3><a href="<?php echo add_query_arg( 'tab', 'settings' ); ?>"><?php _e( 'Settings', 'wpsc_ce' ); ?></a></h3>
+	<p><?php _e( 'Manage CSV export options from a single detailed screen.', 'wpsc_ce' ); ?></p>
+
 	<h3><a href="<?php echo add_query_arg( 'tab', 'tools' ); ?>"><?php _e( 'Tools', 'wpsc_ce' ); ?></a></h3>
 	<p><?php _e( 'Export tools for WP e-Commerce.', 'wpsc_ce' ); ?></p>
+
+	<hr />
+<?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
+	<label class="description">
+		<input type="checkbox" disabled="disabled" /> <?php _e( 'Jump to Export screen in the future', 'wpsc_ce' ); ?>
+		<span class="description"> - <?php printf( __( 'available in %s', 'wpsc_ce' ), $wpsc_cd_link ); ?></span>
+	</label>
+<?php } else { ?>
+	<form id="skip_overview_form" method="post">
+		<label><input type="checkbox" id="skip_overview" name="skip_overview"<?php checked( $skip_overview ); ?> /> <?php _e( 'Jump to Export screen in the future', 'wpsc_ce' ); ?></label>
+		<input type="hidden" name="action" value="skip_overview" />
+	</form>
+<?php } ?>
+
 </div>
 <!-- .overview-left -->
 <?php if( !function_exists( 'wpsc_cd_admin_init' ) ) { ?>
@@ -54,6 +71,7 @@
 		<li><?php _e( 'Select Customer fields to export', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Export Coupons', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Select Coupon fields to export', 'wpsc_ce' ); ?></li>
+		<li><?php _e( 'CRON / Scheduled Exports', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Premium Support', 'wpsc_ce' ); ?></li>
 	</ul>
 	<p>
@@ -61,5 +79,5 @@
 		<a href="<?php echo $wpsc_cd_url; ?>" target="_blank" class="button button-primary"><?php _e( 'Buy Now', 'wpsc_ce' ); ?></a>
 	</p>
 </div>
-<?php } ?>
 <!-- .overview-right -->
+<?php } ?>

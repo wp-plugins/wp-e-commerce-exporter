@@ -94,7 +94,7 @@ if( !function_exists( 'wpsc_get_major_version' ) ) {
 if( !function_exists( 'wpsc_is_wpsc_activated' ) ) {
 	function wpsc_is_wpsc_activated() {
 
-		if( class_exists( 'WP_eCommerce' ) )
+		if( class_exists( 'WP_eCommerce' ) || defined( 'WPSC_VERSION' ) )
 			return true;
 
 	}

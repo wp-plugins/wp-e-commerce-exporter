@@ -9,6 +9,8 @@ function wpsc_ce_file_encoding( $content = '' ) {
 		$from_encoding = 'ISO-8859-1';
 		if( !empty( $to_encoding ) )
 			$content = mb_convert_encoding( trim( $content ), $to_encoding, $from_encoding );
+		if( $to_encoding == 'UTF-8' )
+			$content = utf8_decode( $content );
 	}
 	return $content;
 
@@ -21,16 +23,6 @@ function wpsc_ce_clean_html( $content = '' ) {
 	// $content = str_replace( "\n", '<br />', $content );
 	return $content;
 
-}
-
-if( !function_exists( 'escape_csv_value' ) ) {
-	function escape_csv_value( $value ) {
-
-		$value = str_replace( '"', '""', $value ); // First off escape all " and make them ""
-		$value = str_replace( PHP_EOL, ' ', $value );
-		return '"' . $value . '"'; // If I have new lines or commas escape them
-
-	}
 }
 
 function wpsc_ce_display_memory( $memory = 0 ) {

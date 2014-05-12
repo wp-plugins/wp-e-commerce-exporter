@@ -18,27 +18,27 @@
 		</tr>
 		<tr>
 			<th><?php _e( 'Total columns', 'wpsc_ce' ); ?></th>
-			<td><?php echo $columns; ?></td>
+			<td><?php echo ( ( $columns != false ) ? $columns : '-' ); ?></td>
 		</tr>
 		<tr>
 			<th><?php _e( 'Total rows', 'wpsc_ce' ); ?></th>
-			<td><?php echo $rows; ?></td>
+			<td><?php echo ( ( $rows != false ) ? $rows : '-' ); ?></td>
 		</tr>
 		<tr>
 			<th><?php _e( 'Process time', 'wpsc_ce' ); ?></th>
-			<td><?php echo wpsc_ce_display_time_elapsed( $start_time, $end_time ); ?></td>
+			<td><?php echo ( ( ( $start_time != false ) && ( $end_time != false ) ) ? wpsc_ce_display_time_elapsed( $start_time, $end_time ) : '-' ); ?></td>
 		</tr>
 		<tr>
 			<th><?php _e( 'Idle memory usage (start)', 'wpsc_ce' ); ?></th>
-			<td><?php wpsc_ce_display_memory( $idle_memory_start ); ?></td>
+			<td><?php echo ( ( $idle_memory_start != false ) ? wpsc_ce_display_memory( $idle_memory_start ) : '-' ); ?></td>
 		</tr>
 		<tr>
 			<th><?php _e( 'Memory usage prior to loading dataset', 'wpsc_ce' ); ?></th>
-			<td><?php wpsc_ce_display_memory( $data_memory_start ); ?></td>
+			<td><?php echo ( ( $data_memory_start != false ) ? wpsc_ce_display_memory( $data_memory_start ) : '-' ); ?></td>
 		</tr>
 		<tr>
 			<th><?php _e( 'Memory usage after loading dataset', 'wpsc_ce' ); ?></th>
-			<td><?php wpsc_ce_display_memory( $data_memory_end ); ?></td>
+			<td><?php echo ( ( $data_memory_end != false ) ? wpsc_ce_display_memory( $data_memory_end ) : '-' ); ?></td>
 		</tr>
 		<tr>
 			<th><?php _e( 'Memory usage at render time', 'wpsc_ce' ); ?></th>
@@ -46,7 +46,7 @@
 		</tr>
 		<tr>
 			<th><?php _e( 'Idle memory usage (end)', 'wpsc_ce' ); ?></th>
-			<td><?php wpsc_ce_display_memory( $idle_memory_end ); ?></td>
+			<td><?php echo ( ( $idle_memory_end != false ) ? wpsc_ce_display_memory( $idle_memory_end ) : '-' ); ?></td>
 		</tr>
 
 	</tbody>

@@ -4,8 +4,8 @@ Contributors: visser
 Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 3.9
-Stable tag: 1.5.5
+Tested up to: 3.9.1
+Stable tag: 1.5.6
 
 == Description ==
 
@@ -26,6 +26,8 @@ Features include:
 * Export Coupons (**)
 * Toggle and save export fields
 * Works with WordPress Multisite
+* Supports external CRON commands
+* Supports scheduled exports
 
 (*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products, Simple Product Options and more.
 (**) Requries the Pro upgrade to enable additional store export functionality.
@@ -66,6 +68,11 @@ http://www.visser.com.au/wp-ecommerce/forums/
 4. A range of global export options are included.
 
 == Changelog ==
+
+= 1.5.6 =
+* Changed: Using WP_Query instead of get_posts for bulk export
+* Changed: Moved export function into common space for CRON and scheduled exports
+* Added: Toggle visibility of each export types fields within Export Options
 
 = 1.5.5 =
 * Changed: Improved support for legacy WP e-Commerce 3.7

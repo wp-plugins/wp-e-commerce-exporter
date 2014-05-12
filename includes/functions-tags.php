@@ -2,16 +2,13 @@
 // Returns a list of WP e-Commerce Product Tags to export process
 function wpsc_ce_get_product_tags( $args = array() ) {
 
-	if( $args ) {
-		$orderby = $args['tag_orderby'];
-		$order = $args['tag_order'];
-	}
 	$term_taxonomy = 'product_tag';
-	$args = array(
-		'orderby' => $orderby,
-		'order' => $order,
+	$defaults = array(
+		'orderby' => 'name',
+		'order' => 'ASC',
 		'hide_empty' => 0
 	);
+	$args = wp_parse_args( $args, $defaults );
 	if( $tags = get_terms( $term_taxonomy, $args ) ) {
 		$size = count( $tags );
 		for( $i = 0; $i < $size; $i++ ) {

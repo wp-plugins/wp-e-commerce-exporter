@@ -3,8 +3,6 @@
 .store_page_wpsc_ce h2 .nav-tab,
 .wpsc-product_page_wpsc_ce h2 .nav-tab {
 	font-size: 16px;
-	line-height:20px;
-	padding:3px 6px 3px;
 	margin-right:0;
 }
 
@@ -41,12 +39,12 @@
 .store_page_wpsc_ce .overview-left,
 .wpsc-product_page_wpsc_ce .overview-left {
 	float:left;
-	width:75%;
+	width:73%;
 }
 .store_page_wpsc_ce .overview-right,
 .wpsc-product_page_wpsc_ce .overview-right {
 	float:left;
-	width:23%;
+	width:24%;
 }
 	.store_page_wpsc_ce .overview-right h3,
 	.wpsc-product_page_wpsc_ce .overview-right h3 {
@@ -76,7 +74,6 @@
 .wpsc-product_page_wpsc_ce .support-donate_rate {
 	display:block;
 	float:right;
-	margin-right:1em;
 }
 .store_page_wpsc_ce .support-donate_rate p,
 .wpsc-product_page_wpsc_ce .support-donate_rate p {

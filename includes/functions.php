@@ -6,6 +6,8 @@ include_once( WPSC_CE_PATH . 'includes/functions-orders.php' );
 include_once( WPSC_CE_PATH . 'includes/functions-coupons.php' );
 include_once( WPSC_CE_PATH . 'includes/functions-customers.php' );
 
+include_once( WPSC_CE_PATH . 'includes/functions-csv.php' );
+
 if( is_admin() ) {
 
 	/* Start of: WordPress Administration */
@@ -434,6 +436,24 @@ if( is_admin() ) {
 
 	}
 
+	function wpsc_ce_export_options_export_format() {
+
+		ob_start(); ?>
+<tr>
+	<th>
+		<label><?php _e( 'Export Format', 'wpsc_ce' ); ?></label>
+	</th>
+	<td>
+		<label><input type="radio" name="export_format" value="csv"<?php checked( 'csv', 'csv' ); ?> /> <?php _e( 'CSV', 'wpsc_ce' ); ?> <span class="description"><?php _e( '(Comma separated values)', 'wpsc_ce' ); ?></span></label><br />
+		<label><input type="radio" name="export_format" value="xml" disabled="disabled" /> <?php _e( 'XML', 'wpsc_ce' ); ?> <span class="description"><?php _e( '(EXtensible Markup Language)', 'wpsc_ce' ); ?></label>
+		<p class="description"><?php _e( 'Adjust the export format to generate different export file formats.', 'wpsc_ce' ); ?></p>
+	</td>
+</tr>
+<?php
+		ob_end_flush();
+
+	}
+
 	// Save critical export details against the archived export
 	function wpsc_ce_save_csv_file_details( $post_ID ) {
 
@@ -591,44 +611,6 @@ if( is_admin() ) {
 }
 
 /* Start of: Common */
-
-// Function to generate filename of CSV file based on the Export type
-function wpsc_ce_generate_csv_filename( $dataset = '' ) {
-
-	// Get the filename from WordPress options
-	$filename = wpsc_ce_get_option( 'export_filename', 'wpsc-export_%dataset%-%date%.csv' );
-
-	// Populate the available tags
-	$date = date( 'Y_m_d' );
-	$time = date( 'H_i_s' );
-	$store_name = sanitize_title( get_bloginfo( 'name' ) );
-
-	// Switch out the tags for filled values
-	$filename = str_replace( '%dataset%', $dataset, $filename );
-	$filename = str_replace( '%date%', $date, $filename );
-	$filename = str_replace( '%time%', $time, $filename );
-	$filename = str_replace( '%store_name%', $store_name, $filename );
-
-	// Return the filename
-	return $filename;
-
-}
-
-// File output header for CSV file
-function wpsc_ce_generate_csv_header( $dataset = '' ) {
-
-	global $export;
-
-	if( $filename = wpsc_ce_generate_csv_filename( $dataset ) ) {
-		header( sprintf( 'Content-Encoding: %s', $export->encoding ) );
-		header( sprintf( 'Content-Type: text/csv; charset=%s', $export->encoding ) );
-		header( 'Content-Transfer-Encoding: binary' );
-		header( sprintf( 'Content-Disposition: attachment; filename=%s', $filename ) );
-		header( 'Pragma: no-cache' );
-		header( 'Expires: 0' );
-	}
-
-}
 
 // Returns the Post object of the CSV file saved as an attachment to the WordPress Media library
 function wpsc_ce_save_csv_file_attachment( $filename = '' ) {

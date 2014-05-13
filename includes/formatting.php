@@ -83,28 +83,6 @@ function wpsc_ce_escape_csv_value( $value = '', $delimiter = ',', $format = 'all
 
 }
 
-function wpsc_ce_count_object( $object = 0, $exclude_post_types = array() ) {
-
-	$count = 0;
-	if( is_object( $object ) ) {
-		if( $exclude_post_types ) {
-			$size = count( $exclude_post_types );
-			for( $i = 0; $i < $size; $i++ ) {
-				if( isset( $object->$exclude_post_types[$i] ) )
-					unset( $object->$exclude_post_types[$i] );
-			}
-		}
-		if( !empty( $object ) ) {
-			foreach( $object as $key => $item )
-				$count = $item + $count;
-		}
-	} else {
-		$count = $object;
-	}
-	return $count;
-
-}
-
 function wpsc_ce_format_product_status( $product_status = '', $product ) {
 
 	$output = $product_status;

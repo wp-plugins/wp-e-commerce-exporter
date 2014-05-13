@@ -2,8 +2,8 @@
 /*
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
-Description: Export store details out of WP e-Commerce into a CSV-formatted file.
-Version: 1.5.7
+Description: Export store details out of WP e-Commerce into simple, formatted files (e.g. CSV, XML, TXT, etc.).
+Version: 1.5.8
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -194,9 +194,12 @@ if( is_admin() ) {
 					if( $export->offset <> wpsc_ce_get_option( 'offset' ) )
 						wpsc_ce_update_option( 'offset', $export->offset );
 				}
+				if( function_exists( 'wpsc_cd_admin_init' ) )
+					wpsc_ce_update_option( 'export_format', (string)$_POST['export_format'] );
 
 				// Set default values for all export options to be later passed onto the export process
 				$export->fields = false;
+				$export->export_format = wpsc_ce_get_option( 'export_format', 'csv' );
 
 				// Product sorting
 				$export->product_categories = false;
@@ -337,69 +340,75 @@ if( is_admin() ) {
 						'order_order' => $export->order_order
 					);
 					wpsc_ce_save_fields( $export->type, $export->fields );
-					$export->filename = wpsc_ce_generate_csv_filename( $export->type );
+					if( $export->export_format == 'csv' )
+						$export->filename = wpsc_ce_generate_csv_filename( $export->type );
+					// Print file contents to debug export screen
 					if( WPSC_CE_DEBUG ) {
 
 						wpsc_ce_export_dataset( $export->type, $args );
 						$export->idle_memory_end = wpsc_ce_current_memory_usage();
 						$export->end_time = time();
 
+					// Print file contents to browser
 					} else {
+						if( $export->export_format == 'csv' ) {
 
-						// Generate CSV contents
-						$bits = wpsc_ce_export_dataset( $export->type, $args );
-						unset( $export->fields );
-						if( !$bits ) {
-							wp_redirect( add_query_arg( 'empty', true ) );
-							exit();
-						}
-						if( $export->delete_temporary_csv ) {
+							// Generate CSV contents
+							$bits = wpsc_ce_export_dataset( $export->type, $args );
+							unset( $export->fields );
+							if( !$bits ) {
+								wp_redirect( add_query_arg( 'empty', true ) );
+								exit();
+							}
+							if( $export->delete_temporary_csv ) {
 
-							// Print to browser
-							wpsc_ce_generate_csv_header( $export->type );
-							echo $bits;
-							exit();
+								// Print to browser
+								wpsc_ce_generate_csv_header( $export->type );
+								echo $bits;
+								exit();
 
-						} else {
+							} else {
 
-							// Save to file and insert to WordPress Media
-							if( $export->filename && $bits ) {
-								$post_ID = wpsc_ce_save_csv_file_attachment( $export->filename );
-								$upload = wp_upload_bits( $export->filename, null, $bits );
-								if( $upload['error'] ) {
-									wp_delete_attachment( $post_ID, true );
-									wp_redirect( add_query_arg( array( 'failed' => true, 'message' => urlencode( $upload['error'] ) ) ) );
-									return;
-								}
-								$attach_data = wp_generate_attachment_metadata( $post_ID, $upload['file'] );
-								wp_update_attachment_metadata( $post_ID, $attach_data );
-								update_attached_file( $post_ID, $upload['file'] );
-								if( $post_ID ) {
-									wpsc_ce_save_csv_file_guid( $post_ID, $export->type, $upload['url'] );
-									wpsc_ce_save_csv_file_details( $post_ID );
-								}
-								$export_type = $export->type;
-								unset( $export );
+								// Save to file and insert to WordPress Media
+								if( $export->filename && $bits ) {
+									$post_ID = wpsc_ce_save_csv_file_attachment( $export->filename );
+									$upload = wp_upload_bits( $export->filename, null, $bits );
+									if( $upload['error'] ) {
+										wp_delete_attachment( $post_ID, true );
+										wp_redirect( add_query_arg( array( 'failed' => true, 'message' => urlencode( $upload['error'] ) ) ) );
+										return;
+									}
+									$attach_data = wp_generate_attachment_metadata( $post_ID, $upload['file'] );
+									wp_update_attachment_metadata( $post_ID, $attach_data );
+									update_attached_file( $post_ID, $upload['file'] );
+									if( $post_ID ) {
+										wpsc_ce_save_csv_file_guid( $post_ID, $export->type, $upload['url'] );
+										wpsc_ce_save_csv_file_details( $post_ID );
+									}
+									$export_type = $export->type;
+									unset( $export );
 
-								// The end memory usage and time is collected at the very last opportunity prior to the CSV header being rendered to the screen
-								wpsc_ce_update_csv_file_detail( $post_ID, '_wpsc_idle_memory_end', wpsc_ce_current_memory_usage() );
-								wpsc_ce_update_csv_file_detail( $post_ID, '_wpsc_end_time', time() );
+									// The end memory usage and time is collected at the very last opportunity prior to the CSV header being rendered to the screen
+									wpsc_ce_update_csv_file_detail( $post_ID, '_wpsc_idle_memory_end', wpsc_ce_current_memory_usage() );
+									wpsc_ce_update_csv_file_detail( $post_ID, '_wpsc_end_time', time() );
 
-								// Generate CSV header
-								wpsc_ce_generate_csv_header( $export_type );
-								unset( $export_type );
+									// Generate CSV header
+									wpsc_ce_generate_csv_header( $export_type );
+									unset( $export_type );
 
-								// Print file contents to screen
-								if( $upload['file'] ) {
-									readfile( $upload['file'] );
+									// Print file contents to screen
+									if( $upload['file'] ) {
+										readfile( $upload['file'] );
+									} else {
+										wp_redirect( add_query_arg( 'failed', true ) );
+									}
+									unset( $upload );
 								} else {
 									wp_redirect( add_query_arg( 'failed', true ) );
 								}
-								unset( $upload );
-							} else {
-								wp_redirect( add_query_arg( 'failed', true ) );
+								exit();
+
 							}
-							exit();
 
 						}
 					}
@@ -414,6 +423,7 @@ if( is_admin() ) {
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_status' );
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_customer' );
 				add_action( 'wpsc_ce_export_order_options_after_table', 'wpsc_ce_orders_order_sorting' );
+				add_action( 'wpsc_ce_export_options', 'wpsc_ce_export_options_export_format' );
 				break;
 
 		}

@@ -65,7 +65,10 @@ if( is_admin() ) {
 		}
 		if( isset( $count ) || $count_sql ) {
 			if( isset( $count ) ) {
-				$count = wpsc_ce_count_object( $count );
+				if( is_object( $count ) ) {
+					$count = (array)$count;
+					$count = (int)array_sum( $count );
+				}
 				return $count;
 			} else {
 				if( $count_sql )
@@ -132,20 +135,21 @@ if( is_admin() ) {
 /* Start of: Common */
 
 // Export process for CSV file
-function wpsc_ce_export_dataset( $dataset, $args = array() ) {
+function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 
 	global $wpdb, $export;
 
-	$csv = '';
-	if( $export->bom )
-		// $csv .= chr(239) . chr(187) . chr(191) . '';
-		$csv .= "\xEF\xBB\xBF";
+	if( $export->export_format == 'csv' ) {
+		$output = '';
+		if( $export->bom )
+			// $output .= chr(239) . chr(187) . chr(191) . '';
+			$output .= "\xEF\xBB\xBF";
+	}
 	$separator = $export->delimiter;
 	$export->args = $args;
 	$export->columns = array();
 	set_transient( WPSC_CE_PREFIX . '_running', time(), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 
-	$csv = '';
 	switch( $dataset ) {
 
 		// Products
@@ -183,14 +187,19 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 				$export->total_rows = count( $products );
 				$size = count( $export->columns );
 				$export->total_columns = $size;
-				for( $i = 0; $i < $size; $i++ ) {
-					if( $i == ( $size - 1 ) )
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
-					else
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
+				if( $export->export_format == 'csv' ) {
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
+						else
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
+					}
+					unset( $export->columns );
 				}
-				unset( $export->columns );
 				foreach( $products as $product ) {
+
+					if( $export->export_format == 'xml' )
+						$child = $output->addChild( substr( $export->type, 0, -1 ) );
 
 					$product->sku = get_product_meta( $product->ID, 'sku' );
 					$product->slug = get_product_meta( $product->ID, 'url_name' );
@@ -209,37 +218,42 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 					$product->category = wpsc_ce_get_product_assoc_categories( $product->ID );
 					$product->tags = wpsc_ce_get_product_assoc_tags( $product->ID );
 
-					foreach( $product as $key => $value )
-						$product->$key = wpsc_ce_escape_csv_value( $value );
+					foreach( $product as $key => $value ) {
+						if( $export->export_format == 'csv' )
+							$product->$key = wpsc_ce_escape_csv_value( $value );
+						else if( $export->export_format == 'xml' )
+							$child->addChild( $key, htmlspecialchars( $product->$value ) );
+					}
 
-					$csv .= 
-						$product->sku . $separator . 
-						$product->name . $separator . 
-						$product->description . $separator . 
-						$product->additional_description . $separator . 
-						$product->price . $separator . 
-						$product->sale_price . $separator . 
-						$product->permalink . $separator . 
-						$product->weight . $separator . 
-						$product->weight_unit . $separator . 
-						$product->height . $separator . 
-						$product->height_unit . $separator . 
-						$product->width . $separator . 
-						$product->width_unit . $separator . 
-						$product->length . $separator . 
-						$product->length_unit . $separator . 
-						$product->category . $separator . 
-						$product->tag . $separator . 
-						$product->image . $separator . 
-						$product->quantity . $separator . 
-						$product->file_download . $separator . 
-						$product->external_link . $separator . 
-						$product->merchant_notes . $separator . 
-						$product->local_shipping . $separator . 
-						$product->international_shipping . $separator . 
-						$product->status . 
-					"\n";
-
+					if( $export->export_format == 'csv' ) {
+						$output .= 
+							$product->sku . $separator . 
+							$product->name . $separator . 
+							$product->description . $separator . 
+							$product->additional_description . $separator . 
+							$product->price . $separator . 
+							$product->sale_price . $separator . 
+							$product->permalink . $separator . 
+							$product->weight . $separator . 
+							$product->weight_unit . $separator . 
+							$product->height . $separator . 
+							$product->height_unit . $separator . 
+							$product->width . $separator . 
+							$product->width_unit . $separator . 
+							$product->length . $separator . 
+							$product->length_unit . $separator . 
+							$product->category . $separator . 
+							$product->tag . $separator . 
+							$product->image . $separator . 
+							$product->quantity . $separator . 
+							$product->file_download . $separator . 
+							$product->external_link . $separator . 
+							$product->merchant_notes . $separator . 
+							$product->local_shipping . $separator . 
+							$product->international_shipping . $separator . 
+							$product->status . 
+						"\n";
+					}
 				}
 				unset( $products, $product );
 			}
@@ -248,23 +262,32 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 
 		// Categories
 		case 'categories':
-			$export->data_memory_start = wpsc_ce_current_memory_usage();
 			$export->columns = array(
 				__( 'Category', 'wpsc_ce' )
 			);
+			$export->data_memory_start = wpsc_ce_current_memory_usage();
 			if( $categories = wpsc_ce_get_product_categories() ) {
 				$export->total_rows = count( $categories );
 				$size = count( $export->columns );
 				$export->total_columns = $size;
-				for( $i = 0; $i < $size; $i++ ) {
-					if( $i == ( $size - 1 ) )
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
-					else
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
+				if( $export->export_format == 'csv' ) {
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
+						else
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
+					}
+					unset( $export->columns );
 				}
-				unset( $export->columns );
 				foreach( $categories as $category ) {
-					$csv .= wpsc_ce_escape_csv_value( $category->name, $export->delimiter, $export->escape_formatting ) . "\n";
+
+					if( $export->export_format == 'xml' )
+						$child = $output->addChild( str_replace( 'ies', 'y', $export->type ) );
+
+					if( $export->export_format == 'csv' )
+						$output .= wpsc_ce_escape_csv_value( $category->name, $export->delimiter, $export->escape_formatting ) . "\n";
+					else if( $export->export_format == 'xml' )
+						$child->addChild( $key, htmlspecialchars( $category->name ) );
 				}
 				unset( $categories, $category );
 			}
@@ -273,10 +296,10 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 
 		// Tags
 		case 'tags':
-			$export->data_memory_start = wpsc_ce_current_memory_usage();
 			$export->columns = array(
 				__( 'Tags', 'wpsc_ce' )
 			);
+			$export->data_memory_start = wpsc_ce_current_memory_usage();
 			$tag_args = array(
 				'orderby' => ( isset( $args['tag_orderby'] ) ? $args['tag_orderby'] : 'ID' ),
 				'order' => ( isset( $args['tag_order'] ) ? $args['tag_order'] : 'ASC' ),
@@ -285,15 +308,24 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 				$export->total_rows = count( $tags );
 				$size = count( $export->columns );
 				$export->total_columns = $size;
-				for( $i = 0; $i < $size; $i++ ) {
-					if( $i == ( $size - 1 ) )
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
-					else
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
+				if( $export->export_format == 'csv' ) {
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
+						else
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
+					}
+					unset( $export->columns );
 				}
-				unset( $export->columns );
 				foreach( $tags as $tag ) {
-					$csv .= wpsc_ce_escape_csv_value( $tag->name, $export->delimiter, $export->escape_formatting ) . "\n";
+
+					if( $export->export_format == 'xml' )
+						$child = $output->addChild( substr( $export->type, 0, -1 ) );
+
+					if( $export->export_format == 'csv' )
+						$output .= wpsc_ce_escape_csv_value( $tag->name, $export->delimiter, $export->escape_formatting ) . "\n";
+					else if( $export->export_format == 'xml' )
+						$child->addChild( $key, htmlspecialchars( $tag->$name ) );
 				}
 				unset( $tags, $tag );
 			}
@@ -306,18 +338,19 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 		case 'customers':
 		// Coupons
 		case 'coupons':
-			$csv = apply_filters( 'wpsc_ce_export_dataset', $export->type, $export );
+			$output = apply_filters( 'wpsc_ce_export_dataset', $export->type, $output );
 			break;
 
 	}
 	// Export completed successfully
 	delete_transient( WPSC_CE_PREFIX . '_running' );
-	if( $csv ) {
-		$csv = wpsc_ce_file_encoding( $csv );
+	if( $output ) {
+		if( $export->export_format == 'csv' )
+			$output = wpsc_ce_file_encoding( $output );
 		if( WPSC_CE_DEBUG )
-			set_transient( WPSC_CE_PREFIX . '_debug_log', base64_encode( $csv ), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
+			set_transient( WPSC_CE_PREFIX . '_debug_log', base64_encode( $output ), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 		else
-			return $csv;
+			return $output;
 	}
 
 }

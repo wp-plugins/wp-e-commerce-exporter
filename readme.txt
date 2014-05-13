@@ -5,11 +5,11 @@ Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.9.1
-Stable tag: 1.5.7
+Stable tag: 1.5.8
 
 == Description ==
 
-Export store details out of WP e-Commerce into a CSV-formatted file.
+Export store details out of WP e-Commerce into simple, formatted files (e.g. CSV, XML, TXT, etc.).
 
 Features include:
 
@@ -26,8 +26,10 @@ Features include:
 * Export Coupons (**)
 * Toggle and save export fields
 * Works with WordPress Multisite
-* Supports external CRON commands
-* Supports scheduled exports
+* Export to CSV file
+* Export to XML file (**)
+* Supports external CRON commands (**)
+* Supports scheduled exports (**)
 
 (*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products, Simple Product Options and more.
 (**) Requries the Pro upgrade to enable additional store export functionality.
@@ -71,6 +73,15 @@ http://www.visser.com.au/wp-ecommerce/forums/
 7. Download achived copies of previous exports.
 
 == Changelog ==
+
+= 1.5.8 =
+* Added: Disabled support for XML Export Format under Export Option
+* Changed: Created new functions-csv.php file
+* Changed: Moved wpsc_ce_generate_csv_filename() to functions-csv.php
+* Changed: Moved wpsc_ce_generate_csv_header() to functions-csv.php
+* Added: General Settings header to Settings screen
+* Added: CSV Settings header to Settings screen
+* Changed: Re-ordered field options on Settings screen
 
 = 1.5.7 =
 * Fixed: Export error prompt displaying due to WordPress transient

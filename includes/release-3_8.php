@@ -90,7 +90,10 @@ if( is_admin() ) {
 		}
 		if( isset( $count ) || $count_sql ) {
 			if( isset( $count ) ) {
-				$count = wpsc_ce_count_object( $count );
+				if( is_object( $count ) ) {
+					$count = (array)$count;
+					$count = (int)array_sum( $count );
+				}
 				return $count;
 			} else {
 				if( $count_sql )
@@ -112,20 +115,21 @@ if( is_admin() ) {
 /* Start of: Common */
 
 // Export process for CSV file
-function wpsc_ce_export_dataset( $dataset, $args = array() ) {
+function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 
-	global $wpdb, $export;
+	global $export;
 
-	$csv = '';
-	if( $export->bom )
-		// $csv .= chr(239) . chr(187) . chr(191) . '';
-		$csv .= "\xEF\xBB\xBF";
+	if( $export->export_format == 'csv' ) {
+		$output = '';
+		if( $export->bom )
+			// $output .= chr(239) . chr(187) . chr(191) . '';
+			$output .= "\xEF\xBB\xBF";
+	}
 	$separator = $export->delimiter;
 	$export->args = $args;
 	$export->columns = array();
 	set_transient( WPSC_CE_PREFIX . '_running', time(), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 
-	$csv = '';
 	switch( $dataset ) {
 
 		// Products
@@ -149,30 +153,44 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 				$export->total_rows = count( $products );
 				$size = count( $export->columns );
 				$export->total_columns = $size;
-				for( $i = 0; $i < $size; $i++ ) {
-					if( $i == ( $size - 1 ) )
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
-					else
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
+				if( $export->export_format == 'csv' ) {
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
+						else
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
+					}
+					unset( $export->columns );
 				}
-				unset( $export->columns );
 				foreach( $products as $product ) {
+
+					if( $export->export_format == 'xml' )
+						$child = $output->addChild( substr( $export->type, 0, -1 ) );
 
 					$product = wpsc_ce_get_product_data( $product, $export->args );
 					foreach( $export->fields as $key => $field ) {
 						if( isset( $product->$key ) ) {
 							if( is_array( $field ) ) {
 								foreach( $field as $array_key => $array_value ) {
-									if( !is_array( $array_value ) )
-										$csv .= wpsc_ce_escape_csv_value( $array_value, $export->delimiter, $export->escape_formatting );
+									if( !is_array( $array_value ) ) {
+										if( $export->export_format == 'csv' )
+											$output .= wpsc_ce_escape_csv_value( $array_value, $export->delimiter, $export->escape_formatting );
+										else if( $export->export_format == 'xml' )
+											$child->addChild( $array_key, htmlspecialchars( $array_value ) );
+									}
 								}
 							} else {
-								$csv .= wpsc_ce_escape_csv_value( $product->$key, $export->delimiter, $export->escape_formatting );
+								if( $export->export_format == 'csv' )
+									$output .= wpsc_ce_escape_csv_value( $product->$key, $export->delimiter, $export->escape_formatting );
+								else if( $export->export_format == 'xml' )
+									$child->addChild( $key, htmlspecialchars( $product->$key ) );
 							}
 						}
-						$csv .= $separator;
+						if( $export->export_format == 'csv' )
+							$output .= $separator;
 					}
-					$csv = substr( $csv, 0, -1 ) . "\n";
+					if( $export->export_format == 'csv' )
+						$output = substr( $output, 0, -1 ) . "\n";
 				}
 				unset( $products, $product );
 			}
@@ -191,20 +209,32 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 				$export->total_rows = count( $categories );
 				$size = count( $export->columns );
 				$export->total_columns = $size;
-				for( $i = 0; $i < $size; $i++ ) {
-					if( $i == ( $size - 1 ) )
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
-					else
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
-				}
-				unset( $export->columns );
-				foreach( $categories as $category ) {
-					foreach( $export->fields as $key => $field ) {
-						if( isset( $category->$key ) )
-							$csv .= wpsc_ce_escape_csv_value( wpsc_ce_clean_html( $category->$key ), $export->delimiter, $export->escape_formatting );
-						$csv .= $separator;
+				if( $export->export_format == 'csv' ) {
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
+						else
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
 					}
-					$csv = substr( $csv, 0, -1 ) . "\n";
+					unset( $export->columns );
+				}
+				foreach( $categories as $category ) {
+
+					if( $export->export_format == 'xml' )
+						$child = $output->addChild( str_replace( 'ies', 'y', $export->type ) );
+
+					foreach( $export->fields as $key => $field ) {
+						if( isset( $category->$key ) ) {
+							if( $export->export_format == 'csv' )
+								$output .= wpsc_ce_escape_csv_value( $category->$key, $export->delimiter, $export->escape_formatting );
+							else if( $export->export_format == 'xml' )
+								$child->addChild( $key, htmlspecialchars( $category->$key ) );
+						}
+						if( $export->export_format == 'csv' )
+							$output .= $separator;
+					}
+					if( $export->export_format == 'csv' )
+						$output = substr( $output, 0, -1 ) . "\n";
 				}
 				unset( $categories, $category );
 			}
@@ -227,20 +257,32 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 				$export->total_rows = count( $tags );
 				$size = count( $export->columns );
 				$export->total_columns = $size;
-				for( $i = 0; $i < $size; $i++ ) {
-					if( $i == ( $size - 1 ) )
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
-					else
-						$csv .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
-				}
-				unset( $export->columns );
-				foreach( $tags as $tag ) {
-					foreach( $export->fields as $key => $field ) {
-						if( isset( $tag->$key ) )
-							$csv .= wpsc_ce_escape_csv_value( wpsc_ce_clean_html( $tag->$key ), $export->delimiter, $export->escape_formatting );
-						$csv .= $separator;
+				if( $export->export_format == 'csv' ) {
+					for( $i = 0; $i < $size; $i++ ) {
+						if( $i == ( $size - 1 ) )
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . "\n";
+						else
+							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
 					}
-					$csv = substr( $csv, 0, -1 ) . "\n";
+					unset( $export->columns );
+				}
+				foreach( $tags as $tag ) {
+
+					if( $export->export_format == 'xml' )
+						$child = $output->addChild( substr( $export->type, 0, -1 ) );
+
+					foreach( $export->fields as $key => $field ) {
+						if( isset( $tag->$key ) ) {
+							if( $export->export_format == 'csv' )
+								$output .= wpsc_ce_escape_csv_value( $tag->$key, $export->delimiter, $export->escape_formatting );
+							else if( $export->export_format == 'xml' )
+								$child->addChild( $key, htmlspecialchars( $tag->$key ) );
+						}
+						if( $export->export_format == 'csv' )
+							$output .= $separator;
+					}
+					if( $export->export_format == 'csv' )
+						$output = substr( $output, 0, -1 ) . "\n";
 				}
 				unset( $tags, $tag );
 			}
@@ -253,18 +295,19 @@ function wpsc_ce_export_dataset( $dataset, $args = array() ) {
 		case 'customers':
 		// Coupons
 		case 'coupons':
-			$csv = apply_filters( 'wpsc_ce_export_dataset', $export->type, $export );
+			$output = apply_filters( 'wpsc_ce_export_dataset', $export->type, $output );
 			break;
 
 	}
 	// Export completed successfully
 	delete_transient( WPSC_CE_PREFIX . '_running' );
-	if( $csv ) {
-		$csv = wpsc_ce_file_encoding( $csv );
+	if( $output ) {
+		if( $export->export_format == 'csv' )
+			$output = wpsc_ce_file_encoding( $output );
 		if( WPSC_CE_DEBUG )
-			set_transient( WPSC_CE_PREFIX . '_debug_log', base64_encode( $csv ), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
+			set_transient( WPSC_CE_PREFIX . '_debug_log', base64_encode( $output ), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 		else
-			return $csv;
+			return $output;
 	}
 
 }

@@ -5,7 +5,7 @@ Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, xml, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.9.1
-Stable tag: 1.5.9
+Stable tag: 1.6
 
 == Description ==
 
@@ -73,6 +73,9 @@ http://www.visser.com.au/wp-ecommerce/forums/
 7. Download achived copies of previous exports.
 
 == Changelog ==
+
+= 1.6 =
+* Fixed: Fatal error if Store Exporter is not activated
 
 = 1.5.9 =
 * Changed: Replaced wpsc_ce_save_csv_file_attachment() with generic wpsc_ce_save_file_attachment()

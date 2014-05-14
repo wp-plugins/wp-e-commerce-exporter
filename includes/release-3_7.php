@@ -146,7 +146,6 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 			$output .= "\xEF\xBB\xBF";
 	}
 	$separator = $export->delimiter;
-	$export->args = $args;
 	$export->columns = array();
 	set_transient( WPSC_CE_PREFIX . '_running', time(), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 

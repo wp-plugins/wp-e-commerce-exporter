@@ -1,6 +1,6 @@
 <ul class="subsubsub">
 	<li><a href="#general-settings"><?php _e( 'General Settings', 'wpsc_ce' ); ?></a> |</li>
-	<li><a href="#csv-settings"><?php _e( 'CSV Settings', 'wpsc_ce' ); ?></a> |</li>
+	<li><a href="#csv-settings"><?php _e( 'CSV Settings', 'wpsc_ce' ); ?></a></li>
 	<?php do_action( 'wpsc_ce_export_settings_top' ); ?>
 </ul>
 <!-- .subsubsub -->
@@ -17,7 +17,7 @@
 			</tr>
 
 			<tr valign="top">
-				<th scope="row"><label for="export_filename"><?php _e( 'Export Filename', 'wpsc_ce' ); ?></label></th>
+				<th scope="row"><label for="export_filename"><?php _e( 'Export filename', 'wpsc_ce' ); ?></label></th>
 				<td>
 					<input name="export_filename" type="text" id="export_filename" value="<?php echo $export_filename; ?>" class="regular-text code" />
 					<p class="description"><?php _e( 'The filename of the exported dataset. Tags can be used: ', 'wpsc_ce' ); ?> <code>%dataset%</code>, <code>%date%</code>, <code>%time%</code>, <code>%store_name%</code>.</p>
@@ -26,7 +26,7 @@
 
 			<tr>
 				<th>
-					<label for="delete_temporary_csv"><?php _e( 'Enable Archives', 'wpsc_ce' ); ?></label>
+					<label for="delete_temporary_csv"><?php _e( 'Enable archives', 'wpsc_ce' ); ?></label>
 				</th>
 				<td>
 					<select id="delete_temporary_csv" name="delete_temporary_csv">
@@ -56,7 +56,7 @@
 			</tr>
 
 			<tr>
-				<th><?php _e( 'Date Format', 'wpsc_ce' ); ?></th>
+				<th><?php _e( 'Date format', 'wpsc_ce' ); ?></th>
 				<td>
 					<fieldset>
 						<label title="F j, Y"><input type="radio" name="date_format" value="F j, Y"<?php checked( $date_format, 'F j, Y' ); ?>> <span><?php echo date( 'F j, Y' ); ?></span></label><br>
@@ -75,7 +75,7 @@
 <?php if( !ini_get( 'safe_mode' ) ) { ?>
 			<tr>
 				<th>
-					<label for="timeout"><?php _e( 'Script Timeout', 'wpsc_ce' ); ?> </label>
+					<label for="timeout"><?php _e( 'Script timeout', 'wpsc_ce' ); ?> </label>
 				</th>
 				<td>
 					<select id="timeout" name="timeout">
@@ -84,7 +84,7 @@
 						<option value="3600"<?php selected( $timeout, 3600 ); ?>><?php printf( __( '%s hour', 'wpsc_ce' ), 1 ); ?></option>
 						<option value="0"<?php selected( $timeout, 0 ); ?>><?php _e( 'Unlimited', 'wpsc_ce' ); ?></option>
 					</select>
-					<p class="description"><?php _e( 'Script timeout defines how long WP e-Commerce Exporter is \'allowed\' to process your CSV file, once the time limit is reached the export process halts.', 'wpsc_ce' ); ?></p>
+					<p class="description"><?php _e( 'Script timeout defines how long Store Exporter is \'allowed\' to process your CSV file, once the time limit is reached the export process halts.', 'wpsc_ce' ); ?></p>
 				</td>
 			</tr>
 <?php } ?>

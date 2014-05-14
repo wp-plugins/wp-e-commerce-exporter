@@ -72,6 +72,7 @@
 		<li><?php _e( 'Export Coupons', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Select Coupon fields to export', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'CRON / Scheduled Exports', 'wpsc_ce' ); ?></li>
+		<li><?php _e( 'Export to XML', 'wpsc_ce' ); ?></li>
 		<li><?php _e( 'Premium Support', 'wpsc_ce' ); ?></li>
 	</ul>
 	<p>

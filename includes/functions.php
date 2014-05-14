@@ -441,7 +441,7 @@ if( is_admin() ) {
 		ob_start(); ?>
 <tr>
 	<th>
-		<label><?php _e( 'Export Format', 'wpsc_ce' ); ?></label>
+		<label><?php _e( 'Export format', 'wpsc_ce' ); ?></label>
 	</th>
 	<td>
 		<label><input type="radio" name="export_format" value="csv"<?php checked( 'csv', 'csv' ); ?> /> <?php _e( 'CSV', 'wpsc_ce' ); ?> <span class="description"><?php _e( '(Comma separated values)', 'wpsc_ce' ); ?></span></label><br />
@@ -451,28 +451,6 @@ if( is_admin() ) {
 </tr>
 <?php
 		ob_end_flush();
-
-	}
-
-	// Save critical export details against the archived export
-	function wpsc_ce_save_csv_file_details( $post_ID ) {
-
-		global $export;
-
-		add_post_meta( $post_ID, '_wpsc_start_time', $export->start_time );
-		add_post_meta( $post_ID, '_wpsc_idle_memory_start', $export->idle_memory_start );
-		add_post_meta( $post_ID, '_wpsc_columns', $export->total_columns );
-		add_post_meta( $post_ID, '_wpsc_rows', $export->total_rows );
-		add_post_meta( $post_ID, '_wpsc_data_memory_start', $export->data_memory_start );
-		add_post_meta( $post_ID, '_wpsc_data_memory_end', $export->data_memory_end );
-
-	}
-
-	// Update detail of existing archived export
-	function wpsc_ce_update_csv_file_detail( $post_ID, $detail, $value ) {
-
-		if( strstr( $detail, '_wpsc_' ) !== false )
-			update_post_meta( $post_ID, $detail, $value );
 
 	}
 
@@ -612,8 +590,8 @@ if( is_admin() ) {
 
 /* Start of: Common */
 
-// Returns the Post object of the CSV file saved as an attachment to the WordPress Media library
-function wpsc_ce_save_csv_file_attachment( $filename = '' ) {
+// Returns the Post object of the export file saved as an attachment to the WordPress Media library
+function wpsc_ce_save_file_attachment( $filename = '', $post_mime_type = 'text/csv' ) {
 
 	$output = 0;
 	if( !empty( $filename ) ) {
@@ -621,7 +599,7 @@ function wpsc_ce_save_csv_file_attachment( $filename = '' ) {
 		$args = array(
 			'post_title' => $filename,
 			'post_type' => $post_type,
-			'post_mime_type' => 'text/csv'
+			'post_mime_type' => $post_mime_type
 		);
 		if( $post_ID = wp_insert_attachment( $args, $filename ) )
 			$output = $post_ID;
@@ -630,8 +608,8 @@ function wpsc_ce_save_csv_file_attachment( $filename = '' ) {
 
 }
 
-// Updates the GUID of the CSV file attachment to match the correct CSV URL
-function wpsc_ce_save_csv_file_guid( $post_ID, $export_type, $upload_url ) {
+// Updates the GUID of the export file attachment to match the correct file URL
+function wpsc_ce_save_file_guid( $post_ID, $export_type, $upload_url = '' ) {
 
 	add_post_meta( $post_ID, '_wpsc_export_type', $export_type );
 	if( !empty( $upload_url ) ) {
@@ -641,6 +619,28 @@ function wpsc_ce_save_csv_file_guid( $post_ID, $export_type, $upload_url ) {
 		);
 		wp_update_post( $args );
 	}
+
+}
+
+// Save critical export details against the archived export
+function wpsc_ce_save_file_details( $post_ID ) {
+
+	global $export;
+
+	add_post_meta( $post_ID, '_wpsc_start_time', $export->start_time );
+	add_post_meta( $post_ID, '_wpsc_idle_memory_start', $export->idle_memory_start );
+	add_post_meta( $post_ID, '_wpsc_columns', $export->total_columns );
+	add_post_meta( $post_ID, '_wpsc_rows', $export->total_rows );
+	add_post_meta( $post_ID, '_wpsc_data_memory_start', $export->data_memory_start );
+	add_post_meta( $post_ID, '_wpsc_data_memory_end', $export->data_memory_end );
+
+}
+
+// Update detail of existing archived export
+function wpsc_ce_update_file_detail( $post_ID, $detail, $value ) {
+
+	if( strstr( $detail, '_wpsc_' ) !== false )
+		update_post_meta( $post_ID, $detail, $value );
 
 }
 
@@ -695,12 +695,14 @@ function wpsc_ce_add_missing_mime_type( $mime_types = array(), $user ) {
 }
 add_filter( 'upload_mimes', 'wpsc_ce_add_missing_mime_type', 10, 2 );
 
-function wpsc_ce_get_option( $option = null, $default = false ) {
+function wpsc_ce_get_option( $option = null, $default = false, $allow_empty = false ) {
 
 	$output = '';
 	if( isset( $option ) ) {
 		$separator = '_';
 		$output = get_option( WPSC_CE_PREFIX . $separator . $option, $default );
+		if( $allow_empty == false && ( $output == false || $output == '' ) )
+			$output = $default;
 	}
 	return $output;
 

@@ -2,8 +2,8 @@
 /*
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
-Description: Export store details out of WP e-Commerce into simple, formatted files (e.g. CSV, XML, TXT, etc.).
-Version: 1.5.8
+Description: Export store details out of WP e-Commerce into simple formatted files (e.g. CSV, XML, TXT, etc.).
+Version: 1.5.9
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -316,7 +316,7 @@ if( is_admin() ) {
 					@ini_set( 'memory_limit', WP_MAX_MEMORY_LIMIT );
 					@ini_set( 'max_execution_time', (int)$timeout );
 
-					$args = array(
+					$export->args = array(
 						'limit_volume' => $export->limit_volume,
 						'offset' => $export->offset,
 						'encoding' => $export->encoding,
@@ -345,7 +345,7 @@ if( is_admin() ) {
 					// Print file contents to debug export screen
 					if( WPSC_CE_DEBUG ) {
 
-						wpsc_ce_export_dataset( $export->type, $args );
+						wpsc_ce_export_dataset( $export->type, $export->args );
 						$export->idle_memory_end = wpsc_ce_current_memory_usage();
 						$export->end_time = time();
 
@@ -354,7 +354,7 @@ if( is_admin() ) {
 						if( $export->export_format == 'csv' ) {
 
 							// Generate CSV contents
-							$bits = wpsc_ce_export_dataset( $export->type, $args );
+							$bits = wpsc_ce_export_dataset( $export->type, $export->args );
 							unset( $export->fields );
 							if( !$bits ) {
 								wp_redirect( add_query_arg( 'empty', true ) );
@@ -371,7 +371,7 @@ if( is_admin() ) {
 
 								// Save to file and insert to WordPress Media
 								if( $export->filename && $bits ) {
-									$post_ID = wpsc_ce_save_csv_file_attachment( $export->filename );
+									$post_ID = wpsc_ce_save_file_attachment( $export->filename, 'text/csv' );
 									$upload = wp_upload_bits( $export->filename, null, $bits );
 									if( $upload['error'] ) {
 										wp_delete_attachment( $post_ID, true );
@@ -382,26 +382,25 @@ if( is_admin() ) {
 									wp_update_attachment_metadata( $post_ID, $attach_data );
 									update_attached_file( $post_ID, $upload['file'] );
 									if( $post_ID ) {
-										wpsc_ce_save_csv_file_guid( $post_ID, $export->type, $upload['url'] );
-										wpsc_ce_save_csv_file_details( $post_ID );
+										wpsc_ce_save_file_guid( $post_ID, $export->type, $upload['url'] );
+										wpsc_ce_save_file_details( $post_ID );
 									}
 									$export_type = $export->type;
 									unset( $export );
 
 									// The end memory usage and time is collected at the very last opportunity prior to the CSV header being rendered to the screen
-									wpsc_ce_update_csv_file_detail( $post_ID, '_wpsc_idle_memory_end', wpsc_ce_current_memory_usage() );
-									wpsc_ce_update_csv_file_detail( $post_ID, '_wpsc_end_time', time() );
+									wpsc_ce_update_file_detail( $post_ID, '_wpsc_idle_memory_end', wpsc_ce_current_memory_usage() );
+									wpsc_ce_update_file_detail( $post_ID, '_wpsc_end_time', time() );
 
 									// Generate CSV header
 									wpsc_ce_generate_csv_header( $export_type );
 									unset( $export_type );
 
 									// Print file contents to screen
-									if( $upload['file'] ) {
+									if( $upload['file'] )
 										readfile( $upload['file'] );
-									} else {
+									else
 										wp_redirect( add_query_arg( 'failed', true ) );
-									}
 									unset( $upload );
 								} else {
 									wp_redirect( add_query_arg( 'failed', true ) );

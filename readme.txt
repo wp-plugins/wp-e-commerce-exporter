@@ -2,14 +2,14 @@
 
 Contributors: visser
 Donate link: http://www.visser.com.au/#donations
-Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, customers, products, sales, coupons
+Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, xml, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.9.1
-Stable tag: 1.5.8
+Stable tag: 1.5.9
 
 == Description ==
 
-Export store details out of WP e-Commerce into simple, formatted files (e.g. CSV, XML, TXT, etc.).
+Export store details out of WP e-Commerce into simple formatted files (e.g. CSV, XML, TXT, etc.).
 
 Features include:
 
@@ -73,6 +73,14 @@ http://www.visser.com.au/wp-ecommerce/forums/
 7. Download achived copies of previous exports.
 
 == Changelog ==
+
+= 1.5.9 =
+* Changed: Replaced wpsc_ce_save_csv_file_attachment() with generic wpsc_ce_save_file_attachment()
+* Changed: Replaced wpsc_ce_save_csv_file_guid() with generic wpsc_ce_save_file_guid()
+* Changed: Replaced wpsc_ce_save_csv_file_details() with generic wpsc_ce_save_file_details()
+* Changed: Replaced wpsc_ce_update_csv_file_detail() with generic wpsc_ce_update_file_detail()
+* Changed: Moved wpsc_ce_save_file_details() into common Plugin space
+* Changed: Added third allow_empty property to custom get_option()
 
 = 1.5.8 =
 * Added: Disabled support for XML Export Format under Export Option

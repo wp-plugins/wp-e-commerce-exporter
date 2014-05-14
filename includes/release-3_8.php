@@ -126,7 +126,6 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 			$output .= "\xEF\xBB\xBF";
 	}
 	$separator = $export->delimiter;
-	$export->args = $args;
 	$export->columns = array();
 	set_transient( WPSC_CE_PREFIX . '_running', time(), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 
@@ -763,8 +762,7 @@ function wpsc_ce_get_category_fields( $format = 'full' ) {
 	// Allow Plugin/Theme authors to add support for additional Category columns
 	$fields = apply_filters( 'wpsc_ce_category_fields', $fields );
 
-	$remember = wpsc_ce_get_option( 'categories_fields' );
-	if( $remember ) {
+	if( $remember = wpsc_ce_get_option( 'categories_fields' ) ) {
 		$remember = maybe_unserialize( $remember );
 		$size = count( $fields );
 		for( $i = 0; $i < $size; $i++ ) {
@@ -786,6 +784,7 @@ function wpsc_ce_get_category_fields( $format = 'full' ) {
 		case 'full':
 		default:
 			return $fields;
+			break;
 
 	}
 

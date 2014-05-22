@@ -5,134 +5,111 @@ function wpsc_ce_get_order_fields( $format = 'full' ) {
 	$fields = array();
 	$fields[] = array(
 		'name' => 'purchase_id',
-		'label' => __( 'Purchase ID', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Purchase ID', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'purchase_total',
-		'label' => __( 'Purchase Total', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Purchase Total', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'payment_gateway',
-		'label' => __( 'Payment Gateway', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Payment Gateway', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'shipping_method',
-		'label' => __( 'Shipping Method', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Shipping Method', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'payment_status',
-		'label' => __( 'Payment Status', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Payment Status', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'payment_status_int',
-		'label' => __( 'Payment Status (number)', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Payment Status (number)', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'purchase_date',
-		'label' => __( 'Purchase Date', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Purchase Date', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'purchase_time',
-		'label' => __( 'Purchase Time', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Purchase Time', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'tracking_id',
-		'label' => __( 'Tracking ID', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Tracking ID', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'transaction_id',
-		'label' => __( 'Transaction ID', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Transaction ID', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'session_id',
-		'label' => __( 'Session ID', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Session ID', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'order_personalisation',
-		'label' => __( 'Order Personalisation', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Order Personalisation', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'user_id',
-		'label' => __( 'User ID', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'User ID', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'username',
-		'label' => __( 'Username', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Username', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'user_role',
-		'label' => __( 'User Role', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'User Role', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'notes',
-		'label' => __( 'Notes', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Notes', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'referral',
-		'label' => __( 'Referral Source', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Referral Source', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'order_items_product_id',
-		'label' => __( 'Order Items: Product ID', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Order Items: Product ID', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'order_items_sku',
-		'label' => __( 'Order Items: SKU', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Order Items: SKU', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'order_items_product_name',
-		'label' => __( 'Order Items: Product Name', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Order Items: Product Name', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'order_items_product_quantity',
-		'label' => __( 'Order Items: Product Quantity', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Order Items: Product Quantity', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'order_items_product_personalisation',
-		'label' => __( 'Order Items: Product Personalisation', 'wpsc_ce' ),
-		'default' => 0
+		'label' => __( 'Order Items: Product Personalisation', 'wpsc_ce' )
 	);
 	$fields = array_merge_recursive( $fields, wpsc_ce_get_checkout_fields() );
 /*
 	$fields[] = array(
 		'name' => '',
-		'label' => __( '', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( '', 'wpsc_ce' )
 	);
 */
 
 	// Allow Plugin/Theme authors to add support for additional Order columns
 	$fields = apply_filters( 'wpsc_ce_order_fields', $fields );
 
-	if( $remember = wpsc_ce_get_option( 'orders_fields' ) ) {
+	if( $remember = wpsc_ce_get_option( 'orders_fields', array() ) ) {
 		$remember = maybe_unserialize( $remember );
 		$size = count( $fields );
 		for( $i = 0; $i < $size; $i++ ) {
-			if( $fields[$i] ) {
-				if( !array_key_exists( $fields[$i]['name'], $remember ) )
-					$fields[$i]['default'] = 0;
-			}
+			$fields[$i]['disabled'] = 0;
+			$fields[$i]['default'] = 1;
+			if( !array_key_exists( $fields[$i]['name'], $remember ) )
+				$fields[$i]['default'] = 0;
 		}
 	}
 
@@ -182,6 +159,64 @@ function wpsc_ce_get_order_field( $name = null, $format = 'name' ) {
 	return $output;
 
 }
+
+function wpsc_ce_get_checkout_fields( $format = 'full' ) {
+
+	global $wpdb;
+
+	$fields = array();
+	$checkout_fields_sql = "SELECT * FROM `" . $wpdb->prefix . "wpsc_checkout_forms` WHERE `active` = 1 AND `type` <> 'heading'";
+	$checkout_fields = $wpdb->get_results( $checkout_fields_sql );
+	if( $checkout_fields ) {
+		foreach( $checkout_fields as $key => $checkout_field ) {
+			$fields[] = array(
+				'name' => sprintf( 'checkout_%d', $checkout_field->id ),
+				'label' => sprintf( 'Checkout: %s', $checkout_field->name )
+			);
+		}
+	}
+	switch( $format ) {
+
+		case 'summary':
+			$output = array();
+			$size = count( $fields );
+			for( $i = 0; $i < $size; $i++ )
+				$output[$fields[$i]['name']] = 'on';
+			return $output;
+			break;
+
+		case 'full':
+		default:
+			return $fields;
+			break;
+
+	}
+
+}
+
+function wpsc_ce_get_submited_form_data( $checkout_fields = '', $order_id = 0 ) {
+
+	global $wpdb;
+
+	$output = array();
+	if( $checkout_fields ) {
+		foreach( $checkout_fields as $checkout_key => $checkout_field ) {
+			$key = str_replace( 'checkout_', '', $checkout_key );
+			if( $key ) {
+				$value_sql = $wpdb->prepare( "SELECT `value` FROM `" . $wpdb->prefix . "wpsc_submited_form_data` WHERE `form_id` = %d AND `log_id` = %d LIMIT 1", $key, $order_id );
+				$value = $wpdb->get_var( $value_sql );
+				if( $value )
+					$checkout_fields[$checkout_key] = $value;
+				else
+					unset( $checkout_fields[$checkout_key] );
+			}
+		}
+		$output = $checkout_fields;
+	}
+	return $output;
+
+}
+
 
 // HTML template for disabled Filter Orders by Date widget on Store Exporter screen
 function wpsc_ce_orders_filter_by_date() {
@@ -255,6 +290,28 @@ function wpsc_ce_orders_filter_by_status() {
 
 }
 
+// HTML template for disabled Filter Orders by Product widget on Store Exporter screen
+function wpsc_ce_orders_filter_by_product() {
+
+	$order_products = wpsc_ce_get_products();
+	ob_start(); ?>
+<p><label><input type="checkbox" id="orders-filters-product" /> <?php _e( 'Filter Orders by Product', 'wpsc_ce' ); ?></label></p>
+<div id="export-orders-filters-product" class="separator">
+<?php if( $order_products ) { ?>
+	<ul>
+	<?php foreach( $order_products as $order_product ) { ?>
+		<li><label><input type="checkbox" name="order_filter_product[<?php echo $order_product; ?>]" value="<?php echo $order_product; ?>" disabled="disabled" /> <?php printf( '%s (#%d)', get_the_title( $order_product ), $order_product ); ?></label></li>
+	<?php } ?>
+	</ul>
+<?php } ?>
+	<p class="description"><?php _e( 'Filter Orders by Product(s) to be included in the export. Default is to include all Products.', 'wpsc_ce' ); ?></p>
+</div>
+<!-- #export-orders-filters-product -->
+<?php
+	ob_end_flush();
+
+}
+
 // HTML template for disabled Filter Orders by User Role widget on Store Exporter screen
 function wpsc_ce_orders_filter_by_user_role() {
 
@@ -296,6 +353,6 @@ function wpsc_ce_orders_order_sorting() {
 </div>
 <?php
 	ob_end_flush();
-	
+
 }
 ?>

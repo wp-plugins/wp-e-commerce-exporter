@@ -18,12 +18,12 @@ if( is_admin() ) {
 	add_filter( 'wpsc_sm_store_admin_page', 'wpsc_ce_admin_page_item', 1 );
 
 	// Returns number of an Export type prior to export, used on Store Exporter screen
-	function wpsc_ce_return_count( $dataset ) {
+	function wpsc_ce_return_count( $export_type ) {
 
 		global $wpdb;
 
 		$count_sql = null;
-		switch( $dataset ) {
+		switch( $export_type ) {
 
 			case 'products':
 				$post_type = 'wpsc-product';
@@ -115,26 +115,22 @@ if( is_admin() ) {
 /* Start of: Common */
 
 // Export process for CSV file
-function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
+function wpsc_ce_export_dataset( $export_type, &$output = null ) {
 
 	global $export;
 
-	if( $export->export_format == 'csv' ) {
-		$output = '';
-		if( $export->bom )
-			// $output .= chr(239) . chr(187) . chr(191) . '';
-			$output .= "\xEF\xBB\xBF";
-	}
 	$separator = $export->delimiter;
 	$export->columns = array();
+	$export->total_rows = 0;
+	$export->total_columns = 0;
 	set_transient( WPSC_CE_PREFIX . '_running', time(), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 
-	switch( $dataset ) {
+	switch( $export_type ) {
 
 		// Products
 		case 'products':
 			$fields = wpsc_ce_get_product_fields( 'summary' );
-			if( $export->fields = array_intersect_assoc( $fields, $export->fields ) ) {
+			if( $export->fields = array_intersect_assoc( $fields, (array)$export->fields ) ) {
 				if( function_exists( 'wpsc_cf_install' ) )
 					$export->args['custom_fields'] = array();
 				if( class_exists( 'wpec_simple_product_options_admin' ) )
@@ -150,8 +146,7 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 			$export->data_memory_start = wpsc_ce_current_memory_usage();
 			if( $products = wpsc_ce_get_products( $export->args ) ) {
 				$export->total_rows = count( $products );
-				$size = count( $export->columns );
-				$export->total_columns = $size;
+				$export->total_columns = $size = count( $export->columns );
 				if( $export->export_format == 'csv' ) {
 					for( $i = 0; $i < $size; $i++ ) {
 						if( $i == ( $size - 1 ) )
@@ -159,37 +154,39 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 						else
 							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
 					}
-					unset( $export->columns );
 				}
-				foreach( $products as $product ) {
+				if( !empty( $export->fields ) ) {
+					foreach( $products as $product ) {
 
-					if( $export->export_format == 'xml' )
-						$child = $output->addChild( substr( $export->type, 0, -1 ) );
+						if( $export->export_format == 'xml' )
+							$child = $output->addChild( substr( $export->type, 0, -1 ) );
 
-					$product = wpsc_ce_get_product_data( $product, $export->args );
-					foreach( $export->fields as $key => $field ) {
-						if( isset( $product->$key ) ) {
-							if( is_array( $field ) ) {
-								foreach( $field as $array_key => $array_value ) {
-									if( !is_array( $array_value ) ) {
-										if( $export->export_format == 'csv' )
-											$output .= wpsc_ce_escape_csv_value( $array_value, $export->delimiter, $export->escape_formatting );
-										else if( $export->export_format == 'xml' )
-											$child->addChild( $array_key, htmlspecialchars( $array_value ) );
+						$product = wpsc_ce_get_product_data( $product, $export->args );
+						foreach( $export->fields as $key => $field ) {
+							if( isset( $product->$key ) ) {
+								if( is_array( $field ) ) {
+									foreach( $field as $array_key => $array_value ) {
+										if( !is_array( $array_value ) ) {
+											if( $export->export_format == 'csv' )
+												$output .= wpsc_ce_escape_csv_value( $array_value, $export->delimiter, $export->escape_formatting );
+											else if( $export->export_format == 'xml' )
+												$child->addChild( $array_key, htmlspecialchars( $array_value ) );
+										}
 									}
+								} else {
+									if( $export->export_format == 'csv' )
+										$output .= wpsc_ce_escape_csv_value( $product->$key, $export->delimiter, $export->escape_formatting );
+									else if( $export->export_format == 'xml' )
+										$child->addChild( $key, htmlspecialchars( $product->$key ) );
 								}
-							} else {
-								if( $export->export_format == 'csv' )
-									$output .= wpsc_ce_escape_csv_value( $product->$key, $export->delimiter, $export->escape_formatting );
-								else if( $export->export_format == 'xml' )
-									$child->addChild( $key, htmlspecialchars( $product->$key ) );
 							}
+							if( $export->export_format == 'csv' )
+								$output .= $separator;
 						}
+
 						if( $export->export_format == 'csv' )
-							$output .= $separator;
+							$output = substr( $output, 0, -1 ) . "\n";
 					}
-					if( $export->export_format == 'csv' )
-						$output = substr( $output, 0, -1 ) . "\n";
 				}
 				unset( $products, $product );
 			}
@@ -199,15 +196,14 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 		// Categories
 		case 'categories':
 			$fields = wpsc_ce_get_category_fields( 'summary' );
-			if( $export->fields = array_intersect_assoc( $fields, $export->fields ) ) {
+			if( $export->fields = array_intersect_assoc( $fields, (array)$export->fields ) ) {
 				foreach( $export->fields as $key => $field )
 					$export->columns[] = wpsc_ce_get_category_field( $key );
 			}
 			$export->data_memory_start = wpsc_ce_current_memory_usage();
 			if( $categories = wpsc_ce_get_product_categories( $export->args ) ) {
 				$export->total_rows = count( $categories );
-				$size = count( $export->columns );
-				$export->total_columns = $size;
+				$export->total_columns = $size = count( $export->columns );
 				if( $export->export_format == 'csv' ) {
 					for( $i = 0; $i < $size; $i++ ) {
 						if( $i == ( $size - 1 ) )
@@ -215,25 +211,26 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 						else
 							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
 					}
-					unset( $export->columns );
 				}
-				foreach( $categories as $category ) {
+				if( !empty( $export->fields ) ) {
+					foreach( $categories as $category ) {
 
-					if( $export->export_format == 'xml' )
-						$child = $output->addChild( str_replace( 'ies', 'y', $export->type ) );
+						if( $export->export_format == 'xml' )
+							$child = $output->addChild( str_replace( 'ies', 'y', $export->type ) );
 
-					foreach( $export->fields as $key => $field ) {
-						if( isset( $category->$key ) ) {
+						foreach( $export->fields as $key => $field ) {
+							if( isset( $category->$key ) ) {
+								if( $export->export_format == 'csv' )
+									$output .= wpsc_ce_escape_csv_value( $category->$key, $export->delimiter, $export->escape_formatting );
+								else if( $export->export_format == 'xml' )
+									$child->addChild( $key, htmlspecialchars( $category->$key ) );
+							}
 							if( $export->export_format == 'csv' )
-								$output .= wpsc_ce_escape_csv_value( $category->$key, $export->delimiter, $export->escape_formatting );
-							else if( $export->export_format == 'xml' )
-								$child->addChild( $key, htmlspecialchars( $category->$key ) );
+								$output .= $separator;
 						}
 						if( $export->export_format == 'csv' )
-							$output .= $separator;
+							$output = substr( $output, 0, -1 ) . "\n";
 					}
-					if( $export->export_format == 'csv' )
-						$output = substr( $output, 0, -1 ) . "\n";
 				}
 				unset( $categories, $category );
 			}
@@ -243,19 +240,18 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 		// Tags
 		case 'tags':
 			$fields = wpsc_ce_get_tag_fields( 'summary' );
-			if( $export->fields = array_intersect_assoc( $fields, $export->fields ) ) {
+			if( $export->fields = array_intersect_assoc( $fields, (array)$export->fields ) ) {
 				foreach( $export->fields as $key => $field )
 					$export->columns[] = wpsc_ce_get_tag_field( $key );
 			}
 			$export->data_memory_start = wpsc_ce_current_memory_usage();
 			$tag_args = array(
-				'orderby' => ( isset( $args['tag_orderby'] ) ? $args['tag_orderby'] : 'ID' ),
-				'order' => ( isset( $args['tag_order'] ) ? $args['tag_order'] : 'ASC' ),
+				'orderby' => ( isset( $export->args['tag_orderby'] ) ? $export->args['tag_orderby'] : 'ID' ),
+				'order' => ( isset( $export->args['tag_order'] ) ? $export->args['tag_order'] : 'ASC' ),
 			);
 			if( $tags = wpsc_ce_get_product_tags( $tag_args ) ) {
 				$export->total_rows = count( $tags );
-				$size = count( $export->columns );
-				$export->total_columns = $size;
+				$export->total_columns = $size = count( $export->columns );
 				if( $export->export_format == 'csv' ) {
 					for( $i = 0; $i < $size; $i++ ) {
 						if( $i == ( $size - 1 ) )
@@ -263,25 +259,26 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 						else
 							$output .= wpsc_ce_escape_csv_value( $export->columns[$i], $export->delimiter, $export->escape_formatting ) . $separator;
 					}
-					unset( $export->columns );
 				}
-				foreach( $tags as $tag ) {
+				if( !empty( $export->fields ) ) {
+					foreach( $tags as $tag ) {
 
-					if( $export->export_format == 'xml' )
-						$child = $output->addChild( substr( $export->type, 0, -1 ) );
+						if( $export->export_format == 'xml' )
+							$child = $output->addChild( substr( $export->type, 0, -1 ) );
 
-					foreach( $export->fields as $key => $field ) {
-						if( isset( $tag->$key ) ) {
+						foreach( $export->fields as $key => $field ) {
+							if( isset( $tag->$key ) ) {
+								if( $export->export_format == 'csv' )
+									$output .= wpsc_ce_escape_csv_value( $tag->$key, $export->delimiter, $export->escape_formatting );
+								else if( $export->export_format == 'xml' )
+									$child->addChild( $key, htmlspecialchars( $tag->$key ) );
+							}
 							if( $export->export_format == 'csv' )
-								$output .= wpsc_ce_escape_csv_value( $tag->$key, $export->delimiter, $export->escape_formatting );
-							else if( $export->export_format == 'xml' )
-								$child->addChild( $key, htmlspecialchars( $tag->$key ) );
+								$output .= $separator;
 						}
 						if( $export->export_format == 'csv' )
-							$output .= $separator;
+							$output = substr( $output, 0, -1 ) . "\n";
 					}
-					if( $export->export_format == 'csv' )
-						$output = substr( $output, 0, -1 ) . "\n";
 				}
 				unset( $tags, $tag );
 			}
@@ -294,15 +291,24 @@ function wpsc_ce_export_dataset( $dataset, $args = array(), &$output = null ) {
 		case 'customers':
 		// Coupons
 		case 'coupons':
-			$output = apply_filters( 'wpsc_ce_export_dataset', $export->type, $output );
+			if( $export->export_format == 'csv' )
+				$output = apply_filters( 'wpsc_ce_export_dataset', $export->type );
+			else if( $export->export_format == 'xml' )
+				$output = apply_filters( 'wpsc_ce_export_dataset', $export->type, $output );
 			break;
 
 	}
 	// Export completed successfully
 	delete_transient( WPSC_CE_PREFIX . '_running' );
-	if( $output ) {
-		if( $export->export_format == 'csv' )
+	// Check that the export file is populated, export columns have been assigned and rows counted
+	if( $output && $export->total_rows && !empty( $export->columns ) ) {
+		if( $export->export_format == 'csv' ) {
+			if( $export->bom ) {
+				// $output .= chr(239) . chr(187) . chr(191) . '';
+				$output = "\xEF\xBB\xBF" . $output;
+			}
 			$output = wpsc_ce_file_encoding( $output );
+		}
 		if( WPSC_CE_DEBUG )
 			set_transient( WPSC_CE_PREFIX . '_debug_log', base64_encode( $output ), wpsc_ce_get_option( 'timeout', MINUTE_IN_SECONDS ) );
 		else
@@ -386,7 +392,7 @@ function wpsc_ce_get_products( $args = array() ) {
 function wpsc_ce_get_product_data( $product_id = 0, $args = array() ) {
 
 	$product = get_post( $product_id );
-	$product_data = wpsc_ce_get_product_meta( $product->ID );
+	$product_data = wpsc_ce_get_product_meta( $product_id );
 
 	$product->parent_id = '';
 	$product->parent_sku = '';
@@ -485,10 +491,7 @@ function wpsc_ce_get_product_data( $product_id = 0, $args = array() ) {
 	$product->product_status = wpsc_ce_format_product_status( $product->post_status, $product );
 	$product->comment_status = wpsc_ce_format_comment_status( $product->comment_status, $product );
 
-	/* Allow Plugin/Theme authors to add support for additional Product columns */
-	$product = apply_filters( 'wpsc_ce_product_item', $product, $product->ID );
-
-	// Advanced Google Product Feed
+	// Advanced Google Product Feed - http://plugins.leewillis.co.uk/downloads/wp-e-commerce-product-feeds/
 	if( function_exists( 'wpec_gpf_install' ) ) {
 		$product->gpf_data = get_post_meta( $product->ID, '_wpec_gpf_data', true );
 		$product->gpf_availability = ( isset( $product->gpf_data['availability'] ) ? wpsc_ce_format_gpf_availability( $product->gpf_data['availability'] ) : '' );
@@ -504,7 +507,7 @@ function wpsc_ce_get_product_data( $product_id = 0, $args = array() ) {
 		$product->gpf_size = ( isset( $product->gpf_data['size'] ) ? $product->gpf_data['size'] : '' );
 	}
 
-	// All in One SEO Pack
+	// All in One SEO Pack - http://wordpress.org/extend/plugins/all-in-one-seo-pack/
 	if( function_exists( 'aioseop_activate' ) ) {
 		$product->aioseop_keywords = get_post_meta( $product->ID, '_aioseop_keywords', true );
 		$product->aioseop_description = get_post_meta( $product->ID, '_aioseop_description', true );
@@ -513,21 +516,32 @@ function wpsc_ce_get_product_data( $product_id = 0, $args = array() ) {
 		$product->aioseop_menulabel = get_post_meta( $product->ID, '_aioseop_menulabel', true );
 	}
 
-	// Custom Fields
+	// Custom Fields - http://wordpress.org/plugins/wp-e-commerce-custom-fields/
 	if( isset( $custom_fields ) ) {
 		foreach( $custom_fields as $custom_field )
 			$product->{'attribute_' . $custom_field} = get_product_meta( $product->ID, $custom_field, true );
 	}
 
-	// Related Products
+	// Related Products - http://www.visser.com.au/plugins/related-products/
 	if( isset( $product_data['wpsc_rp_manual'] ) )
 		$product->related_products = wpsc_ce_get_product_assoc_related_products( $product->ID );
 
-	// Simple Product Options
+	// Simple Product Options - http://wordpress.org/plugins/wp-e-commerce-simple-product-options/
 	if( isset( $simple_product_options ) ) {
 		foreach( $simple_product_options as $simple_product_option )
 			$product->{'simple_product_option_' . $simple_product_option} = wpsc_ce_get_product_assoc_simple_product_options( $product->ID, $simple_product_option );
 	}
+
+	// WordPress SEO - http://wordpress.org/plugins/wordpress-seo/
+	if( function_exists( 'wpseo_admin_init' ) ) {
+		$product->wpseo_focuskw = get_post_meta( $product->ID, '_yoast_wpseo_focuskw', true );
+		$product->wpseo_metadesc = get_post_meta( $product->ID, '_yoast_wpseo_metadesc', true );
+		$product->wpseo_title = get_post_meta( $product->ID, '_yoast_wpseo_title', true );
+		$product->wpseo_googleplus_description = get_post_meta( $product->ID, '_yoast_wpseo_google-plus-description', true );
+		$product->wpseo_opengraph_description = get_post_meta( $product->ID, '_yoast_wpseo_opengraph-description', true );
+	}
+
+	// Allow Plugin/Theme authors to add support for additional Product columns
 	return apply_filters( 'wpsc_ce_product_item', $product, $product->ID );
 
 }
@@ -732,40 +746,37 @@ function wpsc_ce_get_category_fields( $format = 'full' ) {
 	$fields = array();
 	$fields[] = array(
 		'name' => 'term_id',
-		'label' => __( 'Term ID', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Term ID', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'name',
-		'label' => __( 'Category Name', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Category Name', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'slug',
-		'label' => __( 'Category Slug', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Category Slug', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'parent_id',
-		'label' => __( 'Parent Term ID', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( 'Parent Term ID', 'wpsc_ce' )
 	);
 
 /*
 	$fields[] = array(
 		'name' => '',
-		'label' => __( '', 'wpsc_ce' ),
-		'default' => 1
+		'label' => __( '', 'wpsc_ce' )
 	);
 */
 
 	// Allow Plugin/Theme authors to add support for additional Category columns
 	$fields = apply_filters( 'wpsc_ce_category_fields', $fields );
 
-	if( $remember = wpsc_ce_get_option( 'categories_fields' ) ) {
+	if( $remember = wpsc_ce_get_option( 'categories_fields', array() ) ) {
 		$remember = maybe_unserialize( $remember );
 		$size = count( $fields );
 		for( $i = 0; $i < $size; $i++ ) {
+			$fields[$i]['disabled'] = 0;
+			$fields[$i]['default'] = 1;
 			if( !array_key_exists( $fields[$i]['name'], $remember ) )
 				$fields[$i]['default'] = 0;
 		}

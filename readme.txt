@@ -5,7 +5,7 @@ Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, xml, customers, products, sales, coupons
 Requires at least: 2.9.2
 Tested up to: 3.9.1
-Stable tag: 1.6
+Stable tag: 1.6.2
 
 == Description ==
 
@@ -21,6 +21,7 @@ Features include:
 * Export Orders (**)
 * Export Orders by Order Status (**)
 * Export Orders by Order Date (**)
+* Export Orders by Product (**)
 * Export Orders by Customers (**)
 * Export Customers (**)
 * Export Coupons (**)
@@ -31,7 +32,7 @@ Features include:
 * Supports external CRON commands (**)
 * Supports scheduled exports (**)
 
-(*) Compatible with Product Importer Deluxe, All in One SEO Pack, Advanced Google Product Feed, Custom Fields, Related Products, Simple Product Options and more.
+(*) Compatible with Product Importer Deluxe, All in One SEO Pack, Ultimate SEO, WordPress SEO by Yoast, Advanced Google Product Feed, Custom Fields, Related Products, Simple Product Options and more.
 (**) Requries the Pro upgrade to enable additional store export functionality.
 
 For more information visit: http://www.visser.com.au/wp-ecommerce/
@@ -39,20 +40,17 @@ For more information visit: http://www.visser.com.au/wp-ecommerce/
 == Installation ==
 
 1. Upload the folder 'wp-e-commerce-exporter' to the '/wp-content/plugins/' directory
+2. Activate 'WP e-Commerce - Store Exporter' through the 'Plugins' menu in WordPress
 
-2. Activate 'WP e-Commerce - Exporter' through the 'Plugins' menu in WordPress
-
-That's it!
+See Usage section before for instructions on how to generate export files.
 
 == Usage ==
 
 1. Open Products > Store Export from the WordPress Administration
-
 2. Select the Export tab on the Store Exporter screen
-
-3. Select which data type and WP e-Commerce details you would like to export and click Export
-
-4. Download archived copies of previous exports from the Archives tab
+3. Select which data type and WP e-Commerce details you would like to export
+4. Click Export
+5. Download archived copies of previous exports from the Archives tab
 
 Done!
 
@@ -73,6 +71,23 @@ http://www.visser.com.au/wp-ecommerce/forums/
 7. Download achived copies of previous exports.
 
 == Changelog ==
+
+= 1.6.2 =
+* Fixed: Coupon export as XML
+* Fixed: Order export as XML
+* Fixed: Customer export as XML
+* Fixed: Compatibility with WordPress 3.9.1
+* Added: Product export support for Advanced Google Product Feed
+* Added: Product export support for All in One SEO Pack
+* Added: Product export support for WordPress SEO
+* Added: Product export support for Ultimate SEO
+* Fixed: Fatal error affecting CRON export for XML export
+* Added: Filter export Orders by Product
+
+= 1.6.1 =
+* Fixed: Clearing the Limit Volume or Offset values would not be saved
+* Fixed: Force file extension if removed from the Filename option on Settings screen
+* Changed: Reduced memory load by storing $args in $export global
 
 = 1.6 =
 * Fixed: Fatal error if Store Exporter is not activated

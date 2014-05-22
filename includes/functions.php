@@ -6,6 +6,8 @@ include_once( WPSC_CE_PATH . 'includes/functions-orders.php' );
 include_once( WPSC_CE_PATH . 'includes/functions-coupons.php' );
 include_once( WPSC_CE_PATH . 'includes/functions-customers.php' );
 
+include_once( WPSC_CE_PATH . 'includes/formatting.php' );
+
 include_once( WPSC_CE_PATH . 'includes/functions-csv.php' );
 
 if( is_admin() ) {
@@ -143,7 +145,9 @@ if( is_admin() ) {
 	// Saves the state of Export fields for next export
 	function wpsc_ce_save_fields( $type, $fields = array() ) {
 
-		if( $type && !empty( $fields ) )
+		if( $fields == false )
+			$fields = array();
+		if( $type && isset( $fields ) )
 			wpsc_ce_update_option( $type . '_fields', $fields );
 
 	}
@@ -192,7 +196,7 @@ if( is_admin() ) {
 		if( !empty( $contents ) )
 			include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-media_csv_file.php' );
 
-		$dataset = get_post_meta( $post->ID, '_wpsc_export_type', true );
+		$export_type = get_post_meta( $post->ID, '_wpsc_export_type', true );
 		$columns = get_post_meta( $post->ID, '_wpsc_columns', true );
 		$rows = get_post_meta( $post->ID, '_wpsc_rows', true );
 		$start_time = get_post_meta( $post->ID, '_wpsc_start_time', true );
@@ -234,64 +238,6 @@ if( is_admin() ) {
 			echo $output;
 		else
 			return $output;
-
-	}
-
-	function wpsc_ce_get_checkout_fields( $format = 'full' ) {
-
-		global $wpdb;
-
-		$fields = array();
-		$checkout_fields_sql = "SELECT * FROM `" . $wpdb->prefix . "wpsc_checkout_forms` WHERE `active` = 1 AND `type` <> 'heading'";
-		$checkout_fields = $wpdb->get_results( $checkout_fields_sql );
-		if( $checkout_fields ) {
-			foreach( $checkout_fields as $key => $checkout_field ) {
-				$fields[] = array(
-					'name' => sprintf( 'checkout_%d', $checkout_field->id ),
-					'label' => sprintf( 'Checkout: %s', $checkout_field->name ),
-					'default' => 1
-				);
-			}
-		}
-		switch( $format ) {
-
-			case 'summary':
-				$output = array();
-				$size = count( $fields );
-				for( $i = 0; $i < $size; $i++ )
-					$output[$fields[$i]['name']] = 'on';
-				return $output;
-				break;
-
-			case 'full':
-			default:
-				return $fields;
-				break;
-
-		}
-
-	}
-
-	function wpsc_ce_get_submited_form_data( $checkout_fields = '', $order_id = 0 ) {
-
-		global $wpdb;
-
-		$output = array();
-		if( $checkout_fields ) {
-			foreach( $checkout_fields as $checkout_key => $checkout_field ) {
-				$key = str_replace( 'checkout_', '', $checkout_key );
-				if( $key ) {
-					$value_sql = $wpdb->prepare( "SELECT `value` FROM `" . $wpdb->prefix . "wpsc_submited_form_data` WHERE `form_id` = %d AND `log_id` = %d LIMIT 1", $key, $order_id );
-					$value = $wpdb->get_var( $value_sql );
-					if( $value )
-						$checkout_fields[$checkout_key] = $value;
-					else
-						unset( $checkout_fields[$checkout_key] );
-				}
-			}
-			$output = $checkout_fields;
-		}
-		return $output;
 
 	}
 
@@ -340,9 +286,7 @@ if( is_admin() ) {
 
 				global $wpsc_purchlog_statuses;
 
-				$dataset = 'products';
-				if( isset( $_POST['dataset'] ) )
-					$dataset = $_POST['dataset'];
+				$export_type = ( isset( $_POST['dataset'] ) ? $_POST['dataset'] : 'products' );
 
 				$products = wpsc_ce_return_count( 'products' );
 				$categories = wpsc_ce_return_count( 'categories' );
@@ -382,7 +326,6 @@ if( is_admin() ) {
 				$customer_fields = wpsc_ce_get_customer_fields();
 				$coupon_fields = wpsc_ce_get_coupon_fields();
 
-				// These fields will likely be moved to Settings tab
 				$limit_volume = wpsc_ce_get_option( 'limit_volume' );
 				$offset = wpsc_ce_get_option( 'offset' );
 				break;
@@ -401,14 +344,14 @@ if( is_admin() ) {
 			case 'settings':
 				$export_filename = wpsc_ce_get_option( 'export_filename', 'wpsc-export_%dataset%-%date%.csv' );
 				$delete_csv = wpsc_ce_get_option( 'delete_csv', 0 );
+				$timeout = wpsc_ce_get_option( 'timeout', 0 );
+				$encoding = wpsc_ce_get_option( 'encoding', 'UTF-8' );
+				$bom = wpsc_ce_get_option( 'bom', 1 );
 				$delimiter = wpsc_ce_get_option( 'delimiter', ',' );
 				$category_separator = wpsc_ce_get_option( 'category_separator', '|' );
-				$bom = wpsc_ce_get_option( 'bom', 1 );
 				$escape_formatting = wpsc_ce_get_option( 'escape_formatting', 'all' );
 				$date_format = wpsc_ce_get_option( 'date_format', 'd/m/Y' );
 				$file_encodings = ( function_exists( 'mb_list_encodings' ) ? mb_list_encodings() : false );
-				$encoding = wpsc_ce_get_option( 'encoding', 'UTF-8' );
-				$timeout = wpsc_ce_get_option( 'timeout', 0 );
 				break;
 
 			case 'tools':
@@ -568,9 +511,10 @@ if( is_admin() ) {
 
 		$output = '0';
 		$post_type = 'attachment';
+		$meta_key = '_wpsc_export_type';
 		$args = array(
 			'post_type' => $post_type,
-			'meta_key' => '_wpsc_export_type',
+			'meta_key' => $meta_key,
 			'meta_value' => null,
 			'numberposts' => -1,
 			'cache_results' => false,
@@ -674,6 +618,16 @@ function wpsc_ce_get_user_roles() {
 
 }
 
+function wpsc_ce_add_missing_mime_type( $mime_types = array() ) {
+
+	// Add CSV mime type if it has been removed
+	if( !isset( $mime_types['csv'] ) )
+		$mime_types['csv'] = 'text/csv';
+	return $mime_types;
+
+}
+add_filter( 'upload_mimes', 'wpsc_ce_add_missing_mime_type', 10, 1 );
+
 if( !function_exists( 'wpsc_ce_current_memory_usage' ) ) {
 	function wpsc_ce_current_memory_usage() {
 
@@ -685,23 +639,13 @@ if( !function_exists( 'wpsc_ce_current_memory_usage' ) ) {
 	}
 }
 
-function wpsc_ce_add_missing_mime_type( $mime_types = array(), $user ) {
-
-	// Add CSV mime type if it has been removed
-	if( !isset( $mime_types['csv'] ) )
-		$mime_types['csv'] = 'text/csv';
-	return $mime_types;
-
-}
-add_filter( 'upload_mimes', 'wpsc_ce_add_missing_mime_type', 10, 2 );
-
 function wpsc_ce_get_option( $option = null, $default = false, $allow_empty = false ) {
 
 	$output = '';
 	if( isset( $option ) ) {
 		$separator = '_';
 		$output = get_option( WPSC_CE_PREFIX . $separator . $option, $default );
-		if( $allow_empty == false && ( $output == false || $output == '' ) )
+		if( $allow_empty == false && $output != 0 && ( $output == false || $output == '' ) )
 			$output = $default;
 	}
 	return $output;

@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into simple formatted files (e.g. CSV, XML, TXT, etc.).
-Version: 1.6
+Version: 1.6.2
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -102,8 +102,6 @@ if( is_admin() ) {
 
 		global $export, $wp_roles;
 
-		include_once( WPSC_CE_PATH . 'includes/formatting.php' );
-
 		$action = wpsc_get_action();
 		switch( $action ) {
 
@@ -129,46 +127,6 @@ if( is_admin() ) {
 				}
 				break;
 
-			// Save changes on Settings screen
-			case 'save':
-				wpsc_ce_update_option( 'export_filename', (string)$_POST['export_filename'] );
-				wpsc_ce_update_option( 'delete_csv', (int)$_POST['delete_temporary_csv'] );
-				wpsc_ce_update_option( 'delimiter', (string)$_POST['delimiter'] );
-				wpsc_ce_update_option( 'category_separator', (string)$_POST['category_separator'] );
-				wpsc_ce_update_option( 'bom', (string)$_POST['bom'] );
-				wpsc_ce_update_option( 'encoding', (string)$_POST['encoding'] );
-				wpsc_ce_update_option( 'escape_formatting', (string)$_POST['escape_formatting'] );
-				wpsc_ce_update_option( 'date_format', (string)$_POST['date_format'] );
-
-				// Save Store Exporter Deluxe options if present
-				if( function_exists( 'wpsc_cd_admin_init' ) ) {
-					// Display additional notice if Enabled Scheduled Exports is enabled/disabled
-					if( wpsc_ce_get_option( 'enable_auto', 0 ) <> (int)$_POST['enable_auto'] ) {
-						$message = sprintf( __( 'Scheduled exports has been %s.', 'wpsc_ce' ), ( ( (int)$_POST['enable_auto'] == 1 ) ? sprintf( __( 'activated, next scheduled export will run in %d minutes', 'wpsc_ce' ), (int)$_POST['auto_interval'] ) : __( 'de-activated, no further automated exports will occur', 'wpsc_ce' ) ) );
-						wpsc_ce_admin_notice( $message );
-					}
-					wpsc_ce_update_option( 'enable_auto', (int)$_POST['enable_auto'] );
-					wpsc_ce_update_option( 'auto_type', (string)$_POST['auto_type'] );
-					wpsc_ce_update_option( 'auto_interval', (int)$_POST['auto_interval'] );
-					wpsc_ce_update_option( 'auto_method', (string)$_POST['auto_method'] );
-					// Display additional notice if Enabled CRON is enabled/disabled
-					if( wpsc_ce_get_option( 'enable_cron', 0 ) <> (int)$_POST['enable_cron'] ) {
-						// Remove from WP-CRON schedule if disabled
-						if( (int)$POST['enable_cron'] == 0 && function_exists( 'wpsc_cd_admin_init' ) )
-							wpsc_cd_cron_activation();
-						$message = sprintf( __( 'CRON support has been %s.', 'wpsc_ce' ), ( ( (int)$_POST['enable_cron'] == 1 ) ? __( 'enabled', 'wpsc_ce' ) : __( 'disabled', 'wpsc_ce' ) ) );
-						wpsc_ce_admin_notice( $message );
-					}
-					wpsc_ce_update_option( 'enable_cron', (int)$_POST['enable_cron'] );
-					wpsc_ce_update_option( 'secret_key', (string)$_POST['secret_key'] );
-					wpsc_ce_update_option( 'email_to', (string)$_POST['email_to'] );
-					wpsc_ce_update_option( 'post_to', (string)$_POST['post_to'] );
-				}
-
-				$message = __( 'Changes have been saved.', 'wpsc_ce' );
-				wpsc_ce_admin_notice( $message );
-				break;
-
 			// This is where the magic happens
 			case 'export':
 
@@ -177,26 +135,24 @@ if( is_admin() ) {
 				$export->start_time = time();
 				$export->idle_memory_start = wpsc_ce_current_memory_usage();
 				$export->delete_temporary_csv = wpsc_ce_get_option( 'delete_csv', 0 );
+				$export->encoding = wpsc_ce_get_option( 'encoding', get_option( 'blog_charset', 'UTF-8' ) );
+				if( $export->encoding == '' )
+					$export->encoding = 'UTF-8';
 				$export->delimiter = wpsc_ce_get_option( 'delimiter', ',' );
 				$export->category_separator = wpsc_ce_get_option( 'category_separator', '|' );
 				$export->bom = wpsc_ce_get_option( 'bom', 1 );
-				$export->encoding = wpsc_ce_get_option( 'encoding', get_option( 'blog_charset' ) );
 				$export->escape_formatting = wpsc_ce_get_option( 'escape_formatting', 'all' );
 				$export->date_format = wpsc_ce_get_option( 'date_format', 'd/m/Y' );
 
 				// Save export option changes made on the Export screen
-				$export->limit_volume = -1;
-				if( !empty( $_POST['limit_volume'] ) ) {
-					$export->limit_volume = $_POST['limit_volume'];
-					if( $export->limit_volume <> wpsc_ce_get_option( 'limit_volume' ) )
-						wpsc_ce_update_option( 'limit_volume', $export->limit_volume );
-				}
-				$export->offset = 0;
-				if( !empty( $_POST['offset'] ) ) {
-					$export->offset = (int)$_POST['offset'];
-					if( $export->offset <> wpsc_ce_get_option( 'offset' ) )
-						wpsc_ce_update_option( 'offset', $export->offset );
-				}
+				$export->limit_volume = ( isset( $_POST['limit_volume'] ) ? $_POST['limit_volume'] : '' );
+				wpsc_ce_update_option( 'limit_volume', $export->limit_volume );
+				if( $export->limit_volume == '' )
+					$export->limit_volume = -1;
+				$export->offset = ( isset( $_POST['offset'] ) ? $_POST['offset'] : '' );
+				wpsc_ce_update_option( 'offset', $export->offset );
+				if( $export->offset == '' )
+					$export->offset = 0;
 				if( function_exists( 'wpsc_cd_admin_init' ) )
 					wpsc_ce_update_option( 'export_format', (string)$_POST['export_format'] );
 
@@ -226,6 +182,7 @@ if( is_admin() ) {
 				$export->order_status = false;
 				$export->order_customer = false;
 				$export->order_user_roles = false;
+				$export->order_product = false;
 				$export->order_orderby = false;
 				$export->order_order = false;
 
@@ -284,6 +241,7 @@ if( is_admin() ) {
 						$export->order_status = ( isset( $_POST['order_filter_status'] ) ? wpsc_ce_format_product_filters( $_POST['order_filter_status'] ) : false );
 						$export->order_customer = ( isset( $_POST['order_customer'] ) ? $_POST['order_customer'] : false );
 						$export->order_user_roles = ( isset( $_POST['order_filter_user_role'] ) ? wpsc_ce_format_user_role_filters( $_POST['order_filter_user_role'] ) : false );
+						$export->order_product = ( isset( $_POST['order_filter_product'] ) ? wpsc_ce_format_product_filters( $_POST['order_filter_product'] ) : false );
 						$export->order_orderby = ( isset( $_POST['order_orderby'] ) ? $_POST['order_orderby'] : false );
 						$export->order_order = ( isset( $_POST['order_order'] ) ? $_POST['order_order'] : false );
 
@@ -339,6 +297,7 @@ if( is_admin() ) {
 						'order_dates_to' => wpsc_ce_format_order_date( $export->order_dates_to ),
 						'order_customer' => $export->order_customer,
 						'order_user_roles' => $export->order_user_roles,
+						'order_product' => $export->order_product,
 						'order_orderby' => $export->order_orderby,
 						'order_order' => $export->order_order
 					);
@@ -348,7 +307,7 @@ if( is_admin() ) {
 					// Print file contents to debug export screen
 					if( WPSC_CE_DEBUG ) {
 
-						wpsc_ce_export_dataset( $export->type, $export->args );
+						wpsc_ce_export_dataset( $export->type );
 						$export->idle_memory_end = wpsc_ce_current_memory_usage();
 						$export->end_time = time();
 
@@ -357,7 +316,7 @@ if( is_admin() ) {
 						if( $export->export_format == 'csv' ) {
 
 							// Generate CSV contents
-							$bits = wpsc_ce_export_dataset( $export->type, $export->args );
+							$bits = wpsc_ce_export_dataset( $export->type );
 							unset( $export->fields );
 							if( !$bits ) {
 								wp_redirect( add_query_arg( 'empty', true ) );
@@ -417,12 +376,58 @@ if( is_admin() ) {
 				}
 				break;
 
+			// Save changes on Settings screen
+			case 'save':
+				wpsc_ce_update_option( 'export_filename', (string)$_POST['export_filename'] );
+				wpsc_ce_update_option( 'delete_csv', (int)$_POST['delete_temporary_csv'] );
+				wpsc_ce_update_option( 'delimiter', (string)$_POST['delimiter'] );
+				wpsc_ce_update_option( 'category_separator', (string)$_POST['category_separator'] );
+				wpsc_ce_update_option( 'bom', (string)$_POST['bom'] );
+				wpsc_ce_update_option( 'encoding', (string)$_POST['encoding'] );
+				wpsc_ce_update_option( 'escape_formatting', (string)$_POST['escape_formatting'] );
+				wpsc_ce_update_option( 'date_format', (string)$_POST['date_format'] );
+
+				// Save Store Exporter Deluxe options if present
+				if( function_exists( 'wpsc_cd_admin_init' ) ) {
+					wpsc_ce_update_option( 'xml_attribute_url', (int)$_POST['xml_attribute_url'] );
+					wpsc_ce_update_option( 'xml_attribute_title', (int)$_POST['xml_attribute_title'] );
+					wpsc_ce_update_option( 'xml_attribute_date', (int)$_POST['xml_attribute_date'] );
+					wpsc_ce_update_option( 'xml_attribute_time', (int)$_POST['xml_attribute_time'] );
+					wpsc_ce_update_option( 'xml_attribute_export', (int)$_POST['xml_attribute_export'] );
+					// Display additional notice if Enabled Scheduled Exports is enabled/disabled
+					if( wpsc_ce_get_option( 'enable_auto', 0 ) <> (int)$_POST['enable_auto'] ) {
+						$message = sprintf( __( 'Scheduled exports has been %s.', 'wpsc_ce' ), ( ( (int)$_POST['enable_auto'] == 1 ) ? sprintf( __( 'activated, next scheduled export will run in %d minutes', 'wpsc_ce' ), (int)$_POST['auto_interval'] ) : __( 'de-activated, no further automated exports will occur', 'wpsc_ce' ) ) );
+						wpsc_ce_admin_notice( $message );
+					}
+					wpsc_ce_update_option( 'enable_auto', (int)$_POST['enable_auto'] );
+					wpsc_ce_update_option( 'auto_type', (string)$_POST['auto_type'] );
+					wpsc_ce_update_option( 'auto_interval', (int)$_POST['auto_interval'] );
+					wpsc_ce_update_option( 'auto_method', (string)$_POST['auto_method'] );
+					// Display additional notice if Enabled CRON is enabled/disabled
+					if( wpsc_ce_get_option( 'enable_cron', 0 ) <> (int)$_POST['enable_cron'] ) {
+						// Remove from WP-CRON schedule if disabled
+						if( (int)$POST['enable_cron'] == 0 && function_exists( 'wpsc_cd_admin_init' ) )
+							wpsc_cd_cron_activation();
+						$message = sprintf( __( 'CRON support has been %s.', 'wpsc_ce' ), ( ( (int)$_POST['enable_cron'] == 1 ) ? __( 'enabled', 'wpsc_ce' ) : __( 'disabled', 'wpsc_ce' ) ) );
+						wpsc_ce_admin_notice( $message );
+					}
+					wpsc_ce_update_option( 'enable_cron', (int)$_POST['enable_cron'] );
+					wpsc_ce_update_option( 'secret_key', (string)$_POST['secret_key'] );
+					wpsc_ce_update_option( 'email_to', (string)$_POST['email_to'] );
+					wpsc_ce_update_option( 'post_to', (string)$_POST['post_to'] );
+				}
+
+				$message = __( 'Changes have been saved.', 'wpsc_ce' );
+				wpsc_ce_admin_notice( $message );
+				break;
+
 			default:
 				// Detect other platform versions
 				wpsc_ce_detect_non_wpsc_install();
 
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_date' );
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_status' );
+				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_product' );
 				add_action( 'wpsc_ce_export_order_options_before_table', 'wpsc_ce_orders_filter_by_customer' );
 				add_action( 'wpsc_ce_export_order_options_after_table', 'wpsc_ce_orders_order_sorting' );
 				add_action( 'wpsc_ce_export_options', 'wpsc_ce_export_options_export_format' );
@@ -447,8 +452,8 @@ if( is_admin() ) {
 			case 'export':
 				$message = __( 'Chosen WP e-Commerce details have been exported from your store.', 'wpsc_ce' );
 				wpsc_ce_admin_notice( $message );
-				$output = '';
 				if( WPSC_CE_DEBUG ) {
+					$output = '';
 					if( false === ( $export_log = get_transient( WPSC_CE_PREFIX . '_debug_log' ) ) ) {
 						$export_log = __( 'No export entries were found, please try again with different export filters.', 'wpsc_ce' );
 					} else {
@@ -461,8 +466,8 @@ if( is_admin() ) {
 <h3>' . sprintf( __( 'Export Log: %s', 'wpsc_ce' ), $export->filename ) . '</h3>
 <textarea id="export_log">' . $export_log . '</textarea>
 ';
+					echo $output;
 				}
-				echo $output;
 
 				wpsc_ce_manage_form();
 				break;

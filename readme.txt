@@ -4,7 +4,7 @@ Contributors: visser
 Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, xml, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 3.9.1
+Tested up to: 4.0
 Stable tag: 1.6.2
 
 == Description ==

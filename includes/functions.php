@@ -1,14 +1,14 @@
 <?php
-include_once( WPSC_CE_PATH . 'includes/functions-products.php' );
-include_once( WPSC_CE_PATH . 'includes/functions-categories.php' );
-include_once( WPSC_CE_PATH . 'includes/functions-tags.php' );
-include_once( WPSC_CE_PATH . 'includes/functions-orders.php' );
-include_once( WPSC_CE_PATH . 'includes/functions-coupons.php' );
-include_once( WPSC_CE_PATH . 'includes/functions-customers.php' );
+include_once( WPSC_CE_PATH . 'includes/product.php' );
+include_once( WPSC_CE_PATH . 'includes/category.php' );
+include_once( WPSC_CE_PATH . 'includes/tag.php' );
+include_once( WPSC_CE_PATH . 'includes/order.php' );
+include_once( WPSC_CE_PATH . 'includes/customer.php' );
+include_once( WPSC_CE_PATH . 'includes/coupon.php' );
 
 include_once( WPSC_CE_PATH . 'includes/formatting.php' );
 
-include_once( WPSC_CE_PATH . 'includes/functions-csv.php' );
+include_once( WPSC_CE_PATH . 'includes/export-csv.php' );
 
 if( is_admin() ) {
 
@@ -32,6 +32,7 @@ if( is_admin() ) {
 		if( $pagenow == 'plugins.php' ) {
 			if( wpsc_is_woo_activated() || wpsc_is_jigo_activated() ) {
 				$r_plugins = array(
+					'wp-e-commerce-store-exporter/exporter.php',
 					'wp-e-commerce-exporter/exporter.php'
 				);
 				$i_plugins = get_plugins();
@@ -194,7 +195,7 @@ if( is_admin() ) {
 			}
 		}
 		if( !empty( $contents ) )
-			include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-media_csv_file.php' );
+			include_once( WPSC_CE_PATH . 'templates/admin/media-csv_file.php' );
 
 		$export_type = get_post_meta( $post->ID, '_wpsc_export_type', true );
 		$columns = get_post_meta( $post->ID, '_wpsc_columns', true );
@@ -205,7 +206,7 @@ if( is_admin() ) {
 		$data_memory_start = get_post_meta( $post->ID, '_wpsc_data_memory_start', true );
 		$data_memory_end = get_post_meta( $post->ID, '_wpsc_data_memory_end', true );
 		$idle_memory_end = get_post_meta( $post->ID, '_wpsc_idle_memory_end', true );
-		include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-media_export_details.php' );
+		include_once( WPSC_CE_PATH . 'templates/admin/media-export_details.php' );
 
 	}
 	add_action( 'edit_form_after_editor', 'wpsc_ce_read_csv_file' );
@@ -375,7 +376,7 @@ if( is_admin() ) {
 
 		}
 		if( $tab )
-			include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-export_' . $tab . '.php' );
+			include_once( WPSC_CE_PATH . 'templates/admin/tabs-' . $tab . '.php' );
 
 	}
 
@@ -532,8 +533,6 @@ if( is_admin() ) {
 
 }
 
-/* Start of: Common */
-
 // Returns the Post object of the export file saved as an attachment to the WordPress Media library
 function wpsc_ce_save_file_attachment( $filename = '', $post_mime_type = 'text/csv' ) {
 
@@ -613,6 +612,7 @@ function wpsc_ce_post_statuses( $extra_status = array(), $override = false ) {
 function wpsc_ce_get_user_roles() {
 
 	global $wp_roles;
+
 	$user_roles = $wp_roles->roles;
 	return $user_roles;
 
@@ -662,6 +662,4 @@ function wpsc_ce_update_option( $option = null, $value = null ) {
 	return $output;
 
 }
-
-/* End of: Common */
 ?>

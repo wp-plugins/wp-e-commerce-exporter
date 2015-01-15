@@ -4,8 +4,8 @@ Contributors: visser
 Donate link: http://www.visser.com.au/#donations
 Tags: e-commerce, wp e-commerce, shop, cart, ecommerce, export, csv, xml, customers, products, sales, coupons
 Requires at least: 2.9.2
-Tested up to: 4.0
-Stable tag: 1.6.2
+Tested up to: 4.1
+Stable tag: 1.6.4
 
 == Description ==
 
@@ -71,6 +71,15 @@ http://www.visser.com.au/wp-ecommerce/forums/
 7. Download achived copies of previous exports.
 
 == Changelog ==
+
+= 1.6.4 =
+* Fixed: Compatibility with WP e-Commerce 3.9+
+
+= 1.6.3 =
+* Fixed: User Role missing from Orders and Customers export
+* Added: Order Items: Total to Orders export
+* Added: Order Items: Tax to Orders export
+* Added: Order Items: Shipping to Orders export
 
 = 1.6.2 =
 * Fixed: Coupon export as XML

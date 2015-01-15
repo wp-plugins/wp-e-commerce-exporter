@@ -84,8 +84,28 @@ function wpsc_ce_get_order_fields( $format = 'full' ) {
 		'label' => __( 'Order Items: Product Name', 'wpsc_ce' )
 	);
 	$fields[] = array(
-		'name' => 'order_items_product_quantity',
-		'label' => __( 'Order Items: Product Quantity', 'wpsc_ce' )
+		'name' => 'order_items_price',
+		'label' => __( 'Order Items: Price', 'wpsc_ce' )
+	);
+	$fields[] = array(
+		'name' => 'order_items_rrp',
+		'label' => __( 'Order Items: RRP', 'wpsc_ce' )
+	);
+	$fields[] = array(
+		'name' => 'order_items_quantity',
+		'label' => __( 'Order Items: Quantity', 'wpsc_ce' )
+	);
+	$fields[] = array(
+		'name' => 'order_items_shipping',
+		'label' => __( 'Order Items: Shipping', 'wpsc_ce' )
+	);
+	$fields[] = array(
+		'name' => 'order_items_tax',
+		'label' => __( 'Order Items: Tax', 'wpsc_ce' )
+	);
+	$fields[] = array(
+		'name' => 'order_items_total',
+		'label' => __( 'Order Items: Total', 'wpsc_ce' )
 	);
 	$fields[] = array(
 		'name' => 'order_items_product_personalisation',

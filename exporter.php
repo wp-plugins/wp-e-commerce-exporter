@@ -3,7 +3,7 @@
 Plugin Name: WP e-Commerce - Store Exporter
 Plugin URI: http://www.visser.com.au/wp-ecommerce/plugins/exporter/
 Description: Export store details out of WP e-Commerce into simple formatted files (e.g. CSV, XML, TXT, etc.).
-Version: 1.6.2
+Version: 1.6.4
 Author: Visser Labs
 Author URI: http://www.visser.com.au/about/
 License: GPL2
@@ -30,6 +30,7 @@ switch( wpsc_get_major_version() ) {
 		break;
 
 	case '3.8':
+	case '3.9':
 		include_once( WPSC_CE_PATH . 'includes/release-3_8.php' );
 		break;
 
@@ -77,12 +78,18 @@ if( is_admin() ) {
 			wp_enqueue_style( 'jquery-ui-datepicker', plugins_url( '/templates/admin/jquery-ui-datepicker.css', __FILE__ ) );
 
 			// Chosen
-			wp_enqueue_script( 'jquery-chosen', plugins_url( '/js/chosen.jquery.js', __FILE__ ), array( 'jquery' ) );
+			wp_enqueue_script( 'jquery-chosen', plugins_url( '/js/jquery.chosen.js', __FILE__ ), array( 'jquery' ) );
 			wp_enqueue_style( 'jquery-chosen', plugins_url( '/templates/admin/chosen.css', __FILE__ ) );
 
 			// Common
-			wp_enqueue_style( 'wpsc_ce_styles', plugins_url( '/templates/admin/wpsc-admin_ce-export.css', __FILE__ ) );
-			wp_enqueue_script( 'wpsc_ce_scripts', plugins_url( '/templates/admin/wpsc-admin_ce-export.js', __FILE__ ), array( 'jquery' ) );
+			wp_enqueue_style( 'wpsc_ce_styles', plugins_url( '/templates/admin/export.css', __FILE__ ) );
+			wp_enqueue_script( 'wpsc_ce_scripts', plugins_url( '/templates/admin/export.js', __FILE__ ), array( 'jquery' ) );
+
+			if( WPSC_CE_DEBUG ) {
+				wp_enqueue_style( 'jquery-csvToTable', plugins_url( '/templates/admin/jquery-csvtable.css', WPSC_CE_RELPATH ) );
+				wp_enqueue_script( 'jquery-csvToTable', plugins_url( '/js/jquery.csvToTable.js', WPSC_CE_RELPATH ), array( 'jquery' ) );
+			}
+
 		}
 
 	}
@@ -461,10 +468,24 @@ if( is_admin() ) {
 						$export_log = base64_decode( $export_log );
 					}
 					$output = '
-<h3>' . __( 'Export Details' ) . '</h3>
-<textarea id="export_log">' . print_r( $export, true ) . '</textarea><hr />
-<h3>' . sprintf( __( 'Export Log: %s', 'wpsc_ce' ), $export->filename ) . '</h3>
-<textarea id="export_log">' . $export_log . '</textarea>
+<script>
+	$j(function() {
+		$j(\'#export_sheet\').CSVToTable(\'\', { startLine: 0 });
+	});
+</script>
+<h3>' . sprintf( __( 'Export Details: %s', 'wpsc_ce' ), $export->filename ) . '</h3>
+<p>' . __( 'This prints the $export global that contains the different export options and filters to help reproduce this on another instance of WordPress. Very useful for debugging blank or unexpected exports.', 'wpsc_ce' ) . '</p>
+<textarea id="export_log">' . print_r( $export, true ) . '</textarea>
+<hr />
+<h3>' . __( 'Export', 'wpsc_ce' ) . '</h3>
+<p>' . __( 'We use the <a href="http://code.google.com/p/jquerycsvtotable/" target="_blank"><em>CSV to Table plugin</em></a> to see first hand formatting errors or unexpected values within the export file.', 'wpsc_ce' ) . '</p>
+<div id="export_sheet" style="margin-bottom:1em;">' . $export_log . '</div>
+<p class="description">' . __( 'This jQuery plugin can fail with <code>\'Item count (28) does not match header count\'</code> notices which simply mean the number of headers detected does not match the number of cell contents.', 'wpsc_ce' ) . '</p>
+<hr />
+<h3>' . __( 'Export Log', 'wpsc_ce' ) . '</h3>
+<p>' . __( 'This prints the raw export contents and is helpful when the jQuery plugin above fails due to major formatting errors.', 'wpsc_ce' ) . '</p>
+<textarea id="export_log" wrap="off">' . $export_log . '</textarea>
+<hr />
 ';
 					echo $output;
 				}
@@ -495,6 +516,7 @@ if( is_admin() ) {
 		switch( wpsc_get_major_version() ) {
 
 			case '3.8':
+			case '3.9':
 				$wpsc_ce_url = add_query_arg( array( 'post_type' => 'wpsc-product', 'page' => 'wpsc_ce' ), 'edit.php' );
 				break;
 
@@ -503,7 +525,7 @@ if( is_admin() ) {
 				break;
 
 		}
-		include_once( WPSC_CE_PATH . 'templates/admin/wpsc-admin_ce-export.php' );
+		include_once( WPSC_CE_PATH . 'templates/admin/tabs.php' );
 
 	}
 
